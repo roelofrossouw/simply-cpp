@@ -27,7 +27,6 @@ target_link_libraries(${PROJECT_NAME} rjr-base64)
 ## TESTS ##
 
 project(test_base64)
-add_executable(${PROJECT_NAME} test/base64.cpp
-        src/rjr.cpp)
+add_executable(${PROJECT_NAME} test/base64.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE rjr)
 

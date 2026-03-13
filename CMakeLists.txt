@@ -12,21 +12,29 @@ set(BASE64_ENABLE_TESTING OFF)
 add_subdirectory(third_party/base64 base64 EXCLUDE_FROM_ALL)
 
 ## LIBRARIES ##
-
-include_directories("src")
-
-project(rjr-base64)
-add_library(${PROJECT_NAME} STATIC src/base64.cpp src/base64.h)
+project(scpp-base64)
+add_library(${PROJECT_NAME} STATIC src/base64.cpp include/base64.h)
+set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
+target_include_directories(${PROJECT_NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include")
 target_link_libraries(${PROJECT_NAME} base64)
 
 # Combined libary for easy usage
-project(rjr)
-add_library(${PROJECT_NAME} SHARED src/rjr.cpp src/rjr.h)
-target_link_libraries(${PROJECT_NAME} rjr-base64)
+project(scpp VERSION 1.0.0 DESCRIPTION "simply-cpp common shared library")
+add_library(${PROJECT_NAME} SHARED src/sc.cpp sc.h)
+set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
+target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR})
+target_link_libraries(${PROJECT_NAME} PUBLIC scpp-base64)
+
+# Combined static libary for easy usage
+project(scpp-static VERSION 1.0.0 DESCRIPTION "simply-cpp common static library")
+add_library(${PROJECT_NAME} STATIC src/sc.cpp sc.h)
+target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR})
+target_link_libraries(${PROJECT_NAME} PUBLIC scpp-base64)
+
 
 ## TESTS ##
 
 project(test_base64)
 add_executable(${PROJECT_NAME} test/base64.cpp)
-target_link_libraries(${PROJECT_NAME} PRIVATE rjr)
+target_link_libraries(${PROJECT_NAME} PRIVATE scpp)
 

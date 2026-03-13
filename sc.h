@@ -1,5 +1,5 @@
-#ifndef RJR_H
-#define RJR_H
+#ifndef SC_H
+#define SC_H
 
 // Include common standard libraries
 #include <iostream>
@@ -9,10 +9,10 @@
 #include <filesystem>
 
 // Include common libraries
-#include <base64.h>
+#include "include/base64.h"
 
 // Some common functions simplifying STL
-namespace rjr {
+namespace sc {
     std::string file_get_contents(const std::string &filename);
 
     std::string basename(const std::string &filename);
@@ -21,4 +21,4 @@ namespace rjr {
 }
 
 
-#endif //RJR_H
+#endif //SC_H

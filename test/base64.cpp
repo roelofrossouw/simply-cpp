@@ -1,12 +1,12 @@
-#include "rjr.h"
+#include "sc.h"
 
 using namespace std;
 
 int main() {
     string sample = "Hello World in Base64...";
     cout << "Source Text: " << sample << endl;
-    string encoded = rjr::base64::encode(sample);
+    auto encoded = sc::base64::encode("Hello");
     cout << "Encoded: " << encoded << endl;
-    auto decoded = rjr::base64::decode(encoded);
+    auto decoded = sc::base64::decode(encoded);
     cout << "Decoded: " << decoded << endl;
 }

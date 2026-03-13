@@ -24,15 +24,15 @@ set(SOURCE_OBJECTS
         $<TARGET_OBJECTS:scpp-base64>
 )
 
-# Combined libary for easy usage
-project(scpp VERSION ${SCPP_VERSION} DESCRIPTION "simply-cpp common shared library")
-add_library(${PROJECT_NAME} SHARED ${SOURCE_OBJECTS})
-set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
+# Combined static libary for easy usage
+project(scpp VERSION ${SCPP_VERSION} DESCRIPTION "simply-cpp common static library")
+add_library(${PROJECT_NAME} STATIC ${SOURCE_OBJECTS})
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR})
 
-# Combined static libary for easy usage
-project(scpp-static VERSION ${SCPP_VERSION} DESCRIPTION "simply-cpp common static library")
-add_library(${PROJECT_NAME} STATIC ${SOURCE_OBJECTS})
+# Combined shared libary for easy usage
+project(scpp-shared VERSION ${SCPP_VERSION} DESCRIPTION "simply-cpp common shared library")
+add_library(${PROJECT_NAME} SHARED ${SOURCE_OBJECTS})
+set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR})
 
 

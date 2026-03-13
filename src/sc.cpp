@@ -1,6 +1,6 @@
-#include "rjr.h"
+#include "sc.h"
 
-namespace rjr {
+namespace sc {
     std::string file_get_contents(const std::string &filename) {
         std::stringstream stream;
         std::ifstream input_file(filename.data());

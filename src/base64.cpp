@@ -1,7 +1,7 @@
 #include "base64.h"
 #include <base64.hpp>
 
-namespace rjr {
+namespace sc {
     std::string base64::decode(const std::string &encoded) {
         return ::base64::from_base64(encoded);
     }

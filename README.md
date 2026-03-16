@@ -34,7 +34,7 @@ target_link_libraries(trysc scpp)
 ```bash
 # If your project is a git repo, then
 git remote add scpp https://github.com/roelofrossouw/simply-cpp.git
-git subtree add --prefix=third_party/scpp scpp master --squash
+git subtree add --prefix=third_party/scpp scpp main --squash
 # otherwise you can clone it
 git clone https://github.com/roelofrossouw/simply-cpp.git third_party/scpp
 ```

@@ -1,4 +1,4 @@
-#include "sc.h"
+#include <sc.h>
 
 using namespace std;
 

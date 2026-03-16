@@ -12,6 +12,12 @@ set(SCPP_VERSION 1.0.1)
 set(BASE64_ENABLE_TESTING OFF)
 add_subdirectory(third_party/base64 base64 EXCLUDE_FROM_ALL)
 
+# git remote add lunasvg https://github.com/sammycage/lunasvg.git
+# git subtree add --prefix=third_party/lunasvg lunasvg master --squash
+set(LUNASVG_BUILD_STATIC ON)
+set(LUNASVG_BUILD_EXAMPLES OFF)
+add_subdirectory(third_party/lunasvg lunasvg EXCLUDE_FROM_ALL)
+
 ## LIBRARIES ##
 project(scpp-base64)
 add_library(${PROJECT_NAME} STATIC src/base64.cpp include/base64.h)
@@ -19,26 +25,56 @@ set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
 target_include_directories(${PROJECT_NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include")
 target_link_libraries(${PROJECT_NAME} base64)
 
+project(scpp-svg2png)
+add_library(${PROJECT_NAME} STATIC src/svg2png.cpp include/svg2png.h)
+set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
+target_include_directories(${PROJECT_NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include")
+target_link_libraries(${PROJECT_NAME} PUBLIC lunasvg)
+
+project(scpp-rest)
+add_library(${PROJECT_NAME} STATIC src/rest.cpp include/rest.h)
+set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
+target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR} "${PROJECT_SOURCE_DIR}/include")
+target_link_libraries(${PROJECT_NAME} PUBLIC curl)
+
+
 set(SOURCE_OBJECTS
         src/sc.cpp sc.h
         $<TARGET_OBJECTS:scpp-base64>
+        $<TARGET_OBJECTS:scpp-svg2png>
+        $<TARGET_OBJECTS:scpp-rest>
+)
+
+set(USED_LIBRARIES
+        base64
+        lunasvg
+        curl
 )
 
 # Combined static libary for easy usage
 project(scpp VERSION ${SCPP_VERSION} DESCRIPTION "simply-cpp common static library")
 add_library(${PROJECT_NAME} STATIC ${SOURCE_OBJECTS})
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${USED_LIBRARIES})
 
 # Combined shared libary for easy usage
 project(scpp-shared VERSION ${SCPP_VERSION} DESCRIPTION "simply-cpp common shared library")
 add_library(${PROJECT_NAME} SHARED ${SOURCE_OBJECTS})
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR})
-
+target_link_libraries(${PROJECT_NAME} PRIVATE ${USED_LIBRARIES})
 
 ## TESTS ##
 
 project(test_base64)
 add_executable(${PROJECT_NAME} test/base64.cpp)
+target_link_libraries(${PROJECT_NAME} PRIVATE scpp)
+
+project(test_rest)
+add_executable(${PROJECT_NAME} test/rest.cpp)
+target_link_libraries(${PROJECT_NAME} PRIVATE scpp)
+
+project(test_svg2png)
+add_executable(${PROJECT_NAME} test/svg2png.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE scpp)
 

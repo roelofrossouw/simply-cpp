@@ -3,6 +3,6 @@
 using namespace std;
 
 int main() {
-    sc::prepress_pdf("my.pdf");
-    return 0;
+    const auto data = sc::rest::fetch("https://www.1web.co.za/myip.php");
+    cout << data << endl;
 }

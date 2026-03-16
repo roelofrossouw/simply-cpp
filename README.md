@@ -3,6 +3,8 @@
 Library to simplify a variety of C++ libraries into a standard usage methodology.
 
 The idea of this library is to make it easier to use C++, especially for those who are new to C++.
+The concept is to create wrappers around existing libraries, not to implement them from scratch.
+This should keep maintenance to the minimum.
 
 Every library can be used on its own, or you can include the common library to include everything to get going.
 
@@ -52,3 +54,7 @@ And access any part of the library:
 ```cpp
 auto encoded = sc::base64::encode("Hello");
 ```
+
+## Requirements
+
+1. Curl - should be installed by default on most systems.

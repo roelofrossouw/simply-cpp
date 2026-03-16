@@ -17,30 +17,30 @@ Every library can be used on its own, or you can include the common library to i
 ```cmake
 include(FetchContent)
 FetchContent_Declare(
-        scpp
+        sc
         GIT_REPOSITORY https://github.com/roelofrossouw/simply-cpp.git
         GIT_TAG origin/main # Or a specific tag to stay stable #
         GIT_SHALLOW TRUE
         EXCLUDE_FROM_ALL
 )
-FetchContent_MakeAvailable(scpp)
+FetchContent_MakeAvailable(sc)
 
 add_executable(trysc main.cpp)
-target_link_libraries(trysc scpp)
+target_link_libraries(trysc sc)
 ```
 
 2. Or you can simply clone the repository and then include the library in your CMake project:
 
 ```bash
 # If your project is a git repo, then
-git remote add scpp https://github.com/roelofrossouw/simply-cpp.git
-git subtree add --prefix=third_party/scpp scpp main --squash
+git remote add sc https://github.com/roelofrossouw/simply-cpp.git
+git subtree add --prefix=third_party/sc sc main --squash
 # otherwise you can clone it
-git clone https://github.com/roelofrossouw/simply-cpp.git third_party/scpp
+git clone https://github.com/roelofrossouw/simply-cpp.git third_party/sc
 ```
 
 ```cmake
-add_subdirectory(third_party/scpp scpp EXCLUDE_FROM_ALL)
+add_subdirectory(third_party/sc sc EXCLUDE_FROM_ALL)
 ```
 
 Once you have simply-cpp included in your project include the header file:

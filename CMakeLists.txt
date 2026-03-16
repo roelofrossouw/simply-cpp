@@ -9,11 +9,13 @@ set(SCPP_VERSION 1.0.1)
 ## External Dependencies ##
 # git remote add base64 https://github.com/tobiaslocker/base64.git
 # git subtree add --prefix=third_party/base64 base64 master --squash
+# (Update with:  git fetch base64 master; git stash; git subtree pull --prefix=third_party/base64 base64 master --squash; git stash pop)
 set(BASE64_ENABLE_TESTING OFF)
 add_subdirectory(third_party/base64 base64 EXCLUDE_FROM_ALL)
 
 # git remote add lunasvg https://github.com/sammycage/lunasvg.git
 # git subtree add --prefix=third_party/lunasvg lunasvg master --squash
+# (Update with:   git fetch lunasvg master; git stash; git subtree pull --prefix=third_party/lunasvg lunasvg master --squash; git stash pop)
 set(LUNASVG_BUILD_STATIC ON)
 set(LUNASVG_BUILD_EXAMPLES OFF)
 add_subdirectory(third_party/lunasvg lunasvg EXCLUDE_FROM_ALL)

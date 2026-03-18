@@ -3,8 +3,11 @@ if (APPLE)
 else ()
     cmake_minimum_required(VERSION 3.10)
 endif ()
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set(SC_VERSION 1.0.1)
+set(SC_VERSION 1.0.2)
 
 ## External Dependencies ##
 # git remote add base64 https://github.com/tobiaslocker/base64.git

@@ -56,7 +56,24 @@ namespace sc {
 
     std::ostream &operator<<(std::ostream &lhs, timer &rhs) {
         rhs.lap();
-        lhs << rhs.impl->taken.count() << "ms";
+#if defined(__cpp_lib_format)
+        lhs << std::format("{:%H:%M:%S}", rhs.impl->taken);
+#else
+        auto ms = rhs.impl->taken;
+        auto h = std::chrono::duration_cast<std::chrono::hours>(ms);
+        ms -= h;
+        auto m = std::chrono::duration_cast<std::chrono::minutes>(ms);
+        ms -= m;
+        auto s = std::chrono::duration_cast<std::chrono::seconds>(ms);
+        ms -= s;
+        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(ms);
+
+        lhs << std::setfill('0')
+                << std::setw(2) << h.count() << ":"
+                << std::setw(2) << m.count() << ":"
+                << std::setw(2) << s.count() << "."
+                << std::setw(3) << millis.count();
+#endif
         return lhs;
     }
 } // sc

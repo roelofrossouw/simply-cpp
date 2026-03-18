@@ -39,12 +39,18 @@ set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR} "${PROJECT_SOURCE_DIR}/include")
 target_link_libraries(${PROJECT_NAME} PUBLIC curl)
 
+project(sc-timer)
+add_library(${PROJECT_NAME} STATIC src/timer.cpp include/timer.h)
+set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
+target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR} "${PROJECT_SOURCE_DIR}/include")
+
 
 set(SOURCE_OBJECTS
         src/sc.cpp sc.h
         $<TARGET_OBJECTS:sc-base64>
         $<TARGET_OBJECTS:sc-svg2png>
         $<TARGET_OBJECTS:sc-rest>
+        $<TARGET_OBJECTS:sc-timer>
 )
 
 set(USED_LIBRARIES
@@ -78,5 +84,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE sc)
 
 project(test_svg2png)
 add_executable(${PROJECT_NAME} test/svg2png.cpp)
+target_link_libraries(${PROJECT_NAME} PRIVATE sc)
+
+project(test_timer)
+add_executable(${PROJECT_NAME} test/timer.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE sc)
 

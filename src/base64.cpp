@@ -1,4 +1,7 @@
 #include "base64.h"
+#if __cplusplus >= 202002L
+typedef ssize_t rsize_t;
+#endif
 #include <base64.hpp>
 
 namespace sc {

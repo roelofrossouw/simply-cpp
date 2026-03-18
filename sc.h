@@ -12,6 +12,7 @@
 #include <include/base64.h>
 #include <include/svg2png.h>
 #include <include/rest.h>
+#include <include/timer.h>
 
 // Some common functions simplifying STL
 namespace sc {

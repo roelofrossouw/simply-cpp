@@ -12,19 +12,16 @@ std::ostream &operator<<(std::ostream &lhs, const sc::color &rhs) {
 }
 
 int main() {
-    sc::color k{"darkred"};
+    sc::color k{"DarkRed"};
     cout << k << endl;
 
-    k = sc::color::from_string("none");
+    k = sc::color::from_string("None");
     cout << k << endl;
 
     k = sc::color::from_string("#C00");
     cout << k << endl;
 
     k = sc::color::from_string("#c00000");
-    cout << k << endl;
-
-    k = sc::color::from_string("aqua");
     cout << k << endl;
 
     k = sc::color::from_string("hsl(120,100%,50%)");

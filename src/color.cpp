@@ -78,7 +78,6 @@ namespace sc {
 
     color color::from_string(const std::string &str) {
         if (str.empty()) return {0, 0, 0, 1};
-        if (str == "transparent" || str == "none") return {0, 0, 0, 0};
 
         if (str[0] == '#') {
             return from_hex(str);
@@ -114,6 +113,19 @@ namespace sc {
             auto [red,green,blue] = it->second;
             return from_web(red, green, blue, 1);
         }
+
+        if (str == "transparent" || str == "none") return {0, 0, 0, 0};
+
+        std::string lstr = str;
+        std::transform(lstr.begin(), lstr.end(), lstr.begin(), [](unsigned char c) { return std::tolower(c); });
+
+
+        it = NamedColors.find(lstr);
+        if (it != NamedColors.end()) {
+            auto [red,green,blue] = it->second;
+            return from_web(red, green, blue, 1);
+        }
+        if (lstr == "transparent" || lstr == "none") return {0, 0, 0, 0};
 
         return {0, 0, 0, 1}; // fallback: black
     }

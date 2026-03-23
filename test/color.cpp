@@ -15,6 +15,9 @@ int main() {
     sc::color k{"darkred"};
     cout << k << endl;
 
+    k = sc::color::from_string("none");
+    cout << k << endl;
+
     k = sc::color::from_string("#C00");
     cout << k << endl;
 

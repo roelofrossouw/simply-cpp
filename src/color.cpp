@@ -78,6 +78,7 @@ namespace sc {
 
     color color::from_string(const std::string &str) {
         if (str.empty()) return {0, 0, 0, 1};
+        if (str == "transparent" || str == "none") return {0, 0, 0, 0};
 
         if (str[0] == '#') {
             return from_hex(str);

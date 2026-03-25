@@ -165,6 +165,14 @@ namespace sc {
     void color::flatten(const color &background) {
     }
 
+    bool color::operator!=(const color &c2) const {
+        return !operator==(c2);
+    }
+
+    bool color::operator==(const color &c2) const {
+        return c == c2.c && y == c2.y && m == c2.m && k == c2.k && a == c2.a;
+    }
+
     const color color::Red = color(1.0, 0.0, 0.0);
     const color color::Green = color(0.0, 1.0, 0.0);
     const color color::Blue = color(0.0, 0.0, 1.0);

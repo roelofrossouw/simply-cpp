@@ -32,4 +32,13 @@ int main() {
 
     k = sc::color::from_web(255, 0, 200);
     cout << k << endl;
+
+    sc::color c1{"blue"};
+    sc::color c2{0,0,1};
+
+    if (c1 != c2) {
+        cout << "c1 != c2" << endl;
+    } else {
+        cout << "c1 == c2" << endl;
+    }
 }

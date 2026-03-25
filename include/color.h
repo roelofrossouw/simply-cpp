@@ -44,6 +44,10 @@ namespace sc {
 
         void flatten(const color &background);
 
+        bool operator!=(const color & c2) const;
+
+        bool operator==(const color & c2) const;
+
         // Standard color constants
         static const color Red;
         static const color Green;

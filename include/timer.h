@@ -22,6 +22,8 @@ namespace sc {
 
         void lap();
 
+        long long ms() const;
+
     private:
         impl::timer *impl;
 

@@ -53,6 +53,10 @@ namespace sc {
         impl->since = impl->until;
     }
 
+    long long timer::ms() const {
+        return impl->taken.count();
+    }
+
 
     std::ostream &operator<<(std::ostream &lhs, timer &rhs) {
         rhs.lap();

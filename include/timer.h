@@ -24,6 +24,8 @@ namespace sc {
 
         long long ms() const;
 
+        long long micro() const;
+
     private:
         impl::timer *impl;
 

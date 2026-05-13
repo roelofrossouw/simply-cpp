@@ -13,7 +13,7 @@ namespace sc {
             bool stopped = false;
             std::chrono::steady_clock::time_point since;
             std::chrono::steady_clock::time_point until;
-            std::chrono::milliseconds taken{};
+            std::chrono::microseconds taken{};
         };
     }
 
@@ -39,7 +39,7 @@ namespace sc {
     void timer::stop() {
         impl->until = std::chrono::steady_clock::now();
         impl->stopped = true;
-        impl->taken += std::chrono::duration_cast<std::chrono::milliseconds>(impl->until - impl->since);
+        impl->taken += std::chrono::duration_cast<std::chrono::microseconds>(impl->until - impl->since);
     }
 
     void timer::lap() {
@@ -49,11 +49,15 @@ namespace sc {
             return;
         }
         impl->until = std::chrono::steady_clock::now();
-        impl->taken += std::chrono::duration_cast<std::chrono::milliseconds>(impl->until - impl->since);
+        impl->taken += std::chrono::duration_cast<std::chrono::microseconds>(impl->until - impl->since);
         impl->since = impl->until;
     }
 
     long long timer::ms() const {
+        return impl->taken.count() / 1000;
+    }
+
+    long long timer::micro() const {
         return impl->taken.count();
     }
 
@@ -70,7 +74,7 @@ namespace sc {
         ms -= m;
         auto s = std::chrono::duration_cast<std::chrono::seconds>(ms);
         ms -= s;
-        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(ms);
+        auto millis = std::chrono::duration_cast<std::chrono::microseconds>(ms);
 
         lhs << std::setfill('0')
                 << std::setw(2) << h.count() << ":"

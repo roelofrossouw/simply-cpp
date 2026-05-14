@@ -22,12 +22,23 @@ namespace sc {
 
         void lap();
 
-        long long ms() const;
+        long long nanos() const;
 
-        long long micro() const;
+        long long micros() const;
+
+        long long millis() const;
+
+        long long secs() const;
+
+        long long mins() const;
+
+        long long hours() const;
 
     private:
         impl::timer *impl;
+
+        template <typename T>
+        long long getDuration() const;
 
         friend std::ostream &operator<<(std::ostream &lhs, timer &rhs);
     };

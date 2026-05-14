@@ -26,7 +26,7 @@ namespace sc {
 
     void timer::reset() {
         impl->startTime = std::chrono::steady_clock::now();
-        impl->taken.zero();
+        impl->taken = std::chrono::nanoseconds::zero();
     }
 
     void timer::start() {

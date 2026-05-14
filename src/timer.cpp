@@ -6,14 +6,13 @@ namespace sc {
         class timer {
         public:
             timer() {
-                since = std::chrono::steady_clock::now();
+                startTime = std::chrono::steady_clock::now();
                 stopped = false;
             }
 
             bool stopped = false;
-            std::chrono::steady_clock::time_point since;
-            std::chrono::steady_clock::time_point until;
-            std::chrono::microseconds taken{};
+            std::chrono::steady_clock::time_point startTime;
+            std::chrono::nanoseconds taken{};
         };
     }
 
@@ -26,20 +25,20 @@ namespace sc {
     }
 
     void timer::reset() {
-        impl->since = std::chrono::steady_clock::now();
+        impl->startTime = std::chrono::steady_clock::now();
         impl->taken.zero();
     }
 
     void timer::start() {
         if (!impl->stopped) return;
-        impl->since = std::chrono::steady_clock::now();
+        impl->startTime = std::chrono::steady_clock::now();
         impl->stopped = false;
     }
 
     void timer::stop() {
-        impl->until = std::chrono::steady_clock::now();
+        auto stopTime = std::chrono::steady_clock::now();
         impl->stopped = true;
-        impl->taken += std::chrono::duration_cast<std::chrono::microseconds>(impl->until - impl->since);
+        impl->taken += stopTime - impl->startTime;
     }
 
     void timer::lap() {
@@ -48,25 +47,42 @@ namespace sc {
             // reset();
             return;
         }
-        impl->until = std::chrono::steady_clock::now();
-        impl->taken += std::chrono::duration_cast<std::chrono::microseconds>(impl->until - impl->since);
-        impl->since = impl->until;
+        auto stopTime = std::chrono::steady_clock::now();
+        impl->taken += stopTime - impl->startTime;
+        impl->startTime = stopTime;
     }
 
-    long long timer::ms() const {
-        impl->until = std::chrono::steady_clock::now();
-        impl->taken += std::chrono::duration_cast<std::chrono::microseconds>(impl->until - impl->since);
-        impl->since = impl->until;
-        return impl->taken.count() / 1000;
+    template <typename T>
+    long long timer::getDuration() const {
+        auto currentTime = std::chrono::steady_clock::now();
+        impl->taken += currentTime - impl->startTime;
+        impl->startTime = currentTime;
+        return std::chrono::duration_cast<T>(impl->taken).count();
     }
 
-    long long timer::micro() const {
-        impl->until = std::chrono::steady_clock::now();
-        impl->taken += std::chrono::duration_cast<std::chrono::microseconds>(impl->until - impl->since);
-        impl->since = impl->until;
-        return impl->taken.count();
+    long long timer::nanos() const {
+        return getDuration<std::chrono::nanoseconds>();
     }
 
+    long long timer::micros() const {
+        return getDuration<std::chrono::microseconds>();
+    }
+
+    long long timer::millis() const {
+        return getDuration<std::chrono::milliseconds>();
+    }
+
+    long long timer::secs() const {
+        return getDuration<std::chrono::seconds>();
+    }
+
+    long long timer::mins() const {
+        return getDuration<std::chrono::minutes>();
+    }
+
+    long long timer::hours() const {
+        return getDuration<std::chrono::hours>();
+    }
 
     std::ostream &operator<<(std::ostream &lhs, timer &rhs) {
         rhs.lap();

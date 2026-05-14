@@ -36,6 +36,7 @@ namespace sc {
     }
 
     void timer::stop() {
+        if (impl->stopped) return;
         auto stopTime = std::chrono::steady_clock::now();
         impl->stopped = true;
         impl->taken += stopTime - impl->startTime;
@@ -54,9 +55,11 @@ namespace sc {
 
     template <typename T>
     long long timer::getDuration() const {
-        auto currentTime = std::chrono::steady_clock::now();
-        impl->taken += currentTime - impl->startTime;
-        impl->startTime = currentTime;
+        if (!impl->stopped) {
+            auto currentTime = std::chrono::steady_clock::now();
+            impl->taken += currentTime - impl->startTime;
+            impl->startTime = currentTime;
+        }
         return std::chrono::duration_cast<T>(impl->taken).count();
     }
 

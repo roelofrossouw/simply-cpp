@@ -7,7 +7,9 @@ int main() {
     // Do some work
     std::this_thread::sleep_for(0.1s);
     cout << "Some work took " << t << endl;
+    t2.stop();
     t2.reset();
+    t2.start();
     // Do more work
     std::this_thread::sleep_for(0.2s);
     t.stop();

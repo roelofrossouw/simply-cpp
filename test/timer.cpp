@@ -13,7 +13,7 @@ int main() {
     t.stop();
     t2.stop();
     // Some cleanup that we don't care about the timing
-    cout << "More work took " << t2 << " (" << t2.ms() << "ms, " << t2.micro() << "μs)" << endl;
+    cout << "More work took " << t2 << " (" << t2.millis() << "ms, " << t2.micros() << "μs)" << endl;
     cout << "Together took " << t << endl;
     return 0;
 }

@@ -56,12 +56,14 @@ namespace sc {
     long long timer::ms() const {
         impl->until = std::chrono::steady_clock::now();
         impl->taken += std::chrono::duration_cast<std::chrono::microseconds>(impl->until - impl->since);
+        impl->since = impl->until;
         return impl->taken.count() / 1000;
     }
 
     long long timer::micro() const {
         impl->until = std::chrono::steady_clock::now();
         impl->taken += std::chrono::duration_cast<std::chrono::microseconds>(impl->until - impl->since);
+        impl->since = impl->until;
         return impl->taken.count();
     }
 

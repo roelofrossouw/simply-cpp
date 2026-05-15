@@ -13,6 +13,7 @@
 #include <include/svg2png.h>
 #include <include/rest.h>
 #include <include/timer.h>
+#include <include/matrix.h>
 
 // Some common functions simplifying STL
 namespace sc {

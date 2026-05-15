@@ -8,7 +8,15 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(SC_VERSION 1.0.2)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+option(CMAKE_EXPORT_COMPILE_COMMANDS "Export compile commands for LSP" ON)
+if (CMAKE_EXPORT_COMPILE_COMMANDS)
+        cmake_language(DEFER CALL execute_process
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
+            "${CMAKE_BINARY_DIR}/compile_commands.json"
+            "${CMAKE_SOURCE_DIR}/compile_commands.json"
+        )
+endif()
 
 ## External Dependencies ##
 # git remote add base64 https://github.com/tobiaslocker/base64.git
@@ -59,7 +67,6 @@ project(sc-rect)
 add_library(${PROJECT_NAME} STATIC src/rect.cpp include/rect.h)
 set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR} "${PROJECT_SOURCE_DIR}/include")
-
 
 set(SOURCE_OBJECTS
         src/sc.cpp sc.h

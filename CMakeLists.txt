@@ -9,15 +9,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(SC_VERSION 1.0.2)
 
-option(CMAKE_EXPORT_COMPILE_COMMANDS "Export compile commands for LSP" ON)
-if (CMAKE_EXPORT_COMPILE_COMMANDS)
-        cmake_language(DEFER CALL execute_process
-        COMMAND ${CMAKE_COMMAND} -E create_symlink
-            "${CMAKE_BINARY_DIR}/compile_commands.json"
-            "${CMAKE_SOURCE_DIR}/compile_commands.json"
-        )
-endif()
-
 ## External Dependencies ##
 # git remote add base64 https://github.com/tobiaslocker/base64.git
 # git subtree add --prefix=third_party/base64 base64 master --squash

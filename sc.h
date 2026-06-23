@@ -14,6 +14,7 @@
 #include <include/rest.h>
 #include <include/timer.h>
 #include <include/matrix.h>
+#include <include/rect.h>
 
 // Some common functions simplifying STL
 namespace sc {

@@ -38,6 +38,8 @@ namespace sc {
 
         double center() const;
 
+        bool operator<(const rect &r) const;
+
     protected:
         double x, y, w, h;
     };

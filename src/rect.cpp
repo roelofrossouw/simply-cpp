@@ -77,4 +77,8 @@ namespace sc {
     double rect::center() const {
         return x + w / 2;
     }
+
+    bool rect::operator<(const rect &r) const {
+        return x < r.x || (x == r.x && y < r.y);
+    }
 }

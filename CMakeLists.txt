@@ -9,6 +9,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(SC_VERSION 1.0.2)
 
+set(SC_SETUP_VERSION_FILE "${CMAKE_BINARY_DIR}/setup_sc.version")
+if (NOT EXISTS "${SC_SETUP_VERSION_FILE}")
+    if (APPLE)
+        execute_process(COMMAND brew install nlohmann-json curl WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    else ()
+        execute_process(COMMAND apt -y install nlohmann-json3-dev libcurlpp-dev WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    endif ()
+    file(WRITE "${SC_SETUP_VERSION_FILE}" "1")
+endif ()
 
 ## External Dependencies ##
 # git remote add base64 https://github.com/tobiaslocker/base64.git

@@ -1,6 +1,9 @@
 #ifndef SC_RECT_H
 #define SC_RECT_H
 
+#include <iostream>
+#include <vector>
+
 namespace sc {
     class rect {
     public:
@@ -10,7 +13,7 @@ namespace sc {
 
         rect(const rect &r);
 
-        rect &operator=(const rect &r);
+        rect &operator=(const rect &r) = default;
 
         [[nodiscard]] double left() const;
 
@@ -24,9 +27,9 @@ namespace sc {
 
         [[nodiscard]] double top() const;
 
-        rect &operator+=(const rect &rect);
+        rect &operator+=(const rect &rhs);
 
-        rect &operator-=(const rect &rect);
+        rect &operator-=(const rect &rhs);
 
         rect operator+(int i) const;
 
@@ -39,6 +42,26 @@ namespace sc {
         double center() const;
 
         bool operator<(const rect &r) const;
+
+        friend std::ostream &operator<<(std::ostream &lhs, const sc::rect &rhs);
+
+        double area() const;
+
+        double iou(const rect &rhs) const;
+
+        void include(const rect &rhs);
+
+        double distance(double cx, double cy) const;
+
+        double distance(const rect &rhs) const;
+
+        rect intersect(const rect &rhs) const;
+
+        static rect from_points(double left, double top, double right, double bottom);
+
+        rect centroid() const;
+
+        static std::vector<std::pair<rect, std::vector<size_t> > > group(const std::vector<rect> &boxes, double min_iou = 0, double max_dist = 0);
 
     protected:
         double x, y, w, h;

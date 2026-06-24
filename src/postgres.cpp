@@ -35,6 +35,9 @@ namespace sc {
         class result {
         private:
             void get_metadata() {
+                if (!is_ok()) {
+                    throw std::runtime_error{error_msg()};
+                }
                 rows = PQntuples(res_);
                 fields = PQnfields(res_);
                 fieldname.reserve(fields);
@@ -42,9 +45,7 @@ namespace sc {
             }
 
         public:
-            explicit result(PGresult *res) : res_{res} {
-                get_metadata();
-            }
+            explicit result(PGresult *res, PGconn *conn) : res_{res}, conn_(conn) { get_metadata(); }
 
             ~result() noexcept { if (res_) { PQclear(res_); } }
 
@@ -57,15 +58,12 @@ namespace sc {
             }
 
             bool is_ok() const noexcept {
-                return res_ && PQresultStatus(res_) == PGRES_TUPLES_OK;
+                return res_ && (PQresultStatus(res_) == PGRES_TUPLES_OK || PQresultStatus(res_) == PGRES_COMMAND_OK);
             }
 
-            std::string error_msg(const connection &pg_conn) const noexcept {
-                return res_ ? std::string{PQerrorMessage(pg_conn.get())} : "No result";
+            std::string error_msg() const noexcept {
+                return res_ ? std::string{PQerrorMessage(conn_)} : "No result";
             }
-
-            // Helper to access underlying pointer for iteration
-            PGresult *get() const noexcept { return res_; }
 
             int row_count() const { return rows; }
 
@@ -77,6 +75,7 @@ namespace sc {
 
         private:
             PGresult *res_ = nullptr;
+            PGconn *conn_ = nullptr;
             int rows;
             int fields;
             std::vector<std::string> fieldname{};
@@ -89,8 +88,12 @@ namespace sc {
 
             connection conn;
 
-            result exec(const std::string &query, const std::vector<std::string> &vector) {
-                return result{PQexec(conn.get(), query.c_str())};
+            result exec(const std::string &query, const std::vector<std::string> &params) {
+                if (params.empty()) return result{PQexec(conn.get(), query.c_str()), conn.get()};
+
+                char *strings[params.size()];
+                for (int i{}; i < params.size(); i++) strings[i] = const_cast<char *>(params[i].c_str());
+                return result{PQexecParams(conn.get(), query.c_str(), params.size(), nullptr, strings, nullptr, nullptr, 0), conn.get()};
             }
         };
     }
@@ -105,9 +108,6 @@ namespace sc {
 
     std::vector<std::map<std::string, std::string> > postgres::exec(const std::string &query, const std::vector<std::string> &parameters) const {
         const auto res = impl->exec(query, parameters);
-
-        if (!res.is_ok()) throw std::runtime_error{res.error_msg(impl->conn)};
-
         if (!res.row_count()) return {};
 
         std::vector<std::map<std::string, std::string> > result(res.row_count());

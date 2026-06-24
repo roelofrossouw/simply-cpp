@@ -14,7 +14,7 @@ if (NOT EXISTS "${SC_SETUP_VERSION_FILE}")
     if (APPLE)
         execute_process(COMMAND brew install nlohmann-json curl WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
     else ()
-        execute_process(COMMAND apt -y install nlohmann-json3-dev libcurlpp-dev WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+        execute_process(COMMAND apt -y install nlohmann-json3-dev libcurlpp-dev postgresql-server-dev-16 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
     endif ()
     file(WRITE "${SC_SETUP_VERSION_FILE}" "1")
 endif ()
@@ -32,6 +32,16 @@ add_subdirectory(third_party/base64 base64 EXCLUDE_FROM_ALL)
 set(LUNASVG_BUILD_STATIC ON)
 set(LUNASVG_BUILD_EXAMPLES OFF)
 add_subdirectory(third_party/lunasvg lunasvg EXCLUDE_FROM_ALL)
+
+## Postgres ##
+#execute_process(COMMAND pg_config --includedir OUTPUT_VARIABLE PG_HEADERS OUTPUT_STRIP_TRAILING_WHITESPACE)
+#execute_process(COMMAND pg_config --libdir OUTPUT_VARIABLE PG_LIBDIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+if (APPLE)
+    set(PostgreSQL_ROOT "/opt/homebrew/opt/postgresql/lib/postgresql")
+endif ()
+find_package(PostgreSQL REQUIRED)
+#find_package(PkgConfig REQUIRED)
+#pkg_check_modules(PQ REQUIRED libpq IMPORTED_TARGET)
 
 ## LIBRARIES ##
 project(sc-base64)
@@ -69,6 +79,15 @@ add_library(${PROJECT_NAME} STATIC src/rect.cpp include/rect.h)
 set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR} "${PROJECT_SOURCE_DIR}/include")
 
+
+project(sc-postgres)
+add_library(${PROJECT_NAME} STATIC src/postgres.cpp include/postgres.h)
+set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
+target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR} "${PROJECT_SOURCE_DIR}/include")
+target_include_directories(${PROJECT_NAME} PUBLIC ${PostgreSQL_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PUBLIC PostgreSQL::PostgreSQL)
+target_link_directories(${PROJECT_NAME} PRIVATE ${PostgreSQL_LIBRARY_DIRS})
+
 set(SOURCE_OBJECTS
         src/sc.cpp sc.h
         $<TARGET_OBJECTS:sc-base64>
@@ -77,6 +96,7 @@ set(SOURCE_OBJECTS
         $<TARGET_OBJECTS:sc-timer>
         $<TARGET_OBJECTS:sc-color>
         $<TARGET_OBJECTS:sc-rect>
+        $<TARGET_OBJECTS:sc-postgres>
 )
 
 set(USED_LIBRARIES
@@ -90,6 +110,8 @@ project(sc VERSION ${SC_VERSION} DESCRIPTION "simply-cpp common static library")
 add_library(${PROJECT_NAME} STATIC ${SOURCE_OBJECTS})
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${USED_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PUBLIC PostgreSQL::PostgreSQL)
+target_link_directories(${PROJECT_NAME} PRIVATE ${PostgreSQL_LIBRARY_DIRS})
 
 # Combined shared libary for easy usage
 project(sc-shared VERSION ${SC_VERSION} DESCRIPTION "simply-cpp common shared library")
@@ -97,6 +119,8 @@ add_library(${PROJECT_NAME} SHARED ${SOURCE_OBJECTS})
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${USED_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PUBLIC PostgreSQL::PostgreSQL)
+target_link_directories(${PROJECT_NAME} PRIVATE ${PostgreSQL_LIBRARY_DIRS})
 
 ## TESTS ##
 
@@ -122,5 +146,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE sc)
 
 project(test_rect)
 add_executable(${PROJECT_NAME} test/rect.cpp)
+target_link_libraries(${PROJECT_NAME} PRIVATE sc)
+
+project(test_postgres)
+add_executable(${PROJECT_NAME} test/postgres.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE sc)
 

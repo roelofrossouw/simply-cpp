@@ -4,7 +4,7 @@
 class ostream;
 
 namespace sc {
-    namespace impl {
+    namespace pdf {
         class timer;
     }
 
@@ -35,7 +35,7 @@ namespace sc {
         long long hours() const;
 
     private:
-        impl::timer *impl;
+        pdf::timer *impl;
 
         template <typename T>
         long long getDuration() const;

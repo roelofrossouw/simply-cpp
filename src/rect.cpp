@@ -78,6 +78,10 @@ namespace sc {
         return x < r.x || (x == r.x && y < r.y);
     }
 
+    bool rect::operator^(const rect &r) const {
+        return y < r.y || (y == r.y && x < r.x);
+    }
+
     double rect::area() const {
         return w * h;
     }

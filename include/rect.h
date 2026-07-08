@@ -43,6 +43,8 @@ namespace sc {
 
         bool operator<(const rect &r) const;
 
+        bool operator^(const rect &r) const;
+
         friend std::ostream &operator<<(std::ostream &lhs, const sc::rect &rhs);
 
         double area() const;

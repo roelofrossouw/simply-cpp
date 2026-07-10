@@ -11,7 +11,7 @@ namespace sc {
 
         std::string get();
 
-        std::string post(const char *jsonData = R"({})");
+        std::string post(const std::string &jsonData = R"({})");
 
         void header(const std::string &key, const std::string &value);
 

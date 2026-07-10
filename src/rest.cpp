@@ -44,8 +44,7 @@ namespace sc {
         return response;
     }
 
-
-    std::string rest::post(const char *jsonData) {
+    std::string rest::post(const std::string &jsonData) {
         CURL *curl = curl_easy_init();
         if (!curl) {
             response = "";
@@ -53,7 +52,7 @@ namespace sc {
         }
 
         curl_easy_setopt(curl, CURLOPT_URL, url_.c_str());
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, jsonData);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, jsonData.c_str());
 
         curl_slist *headers = nullptr;
         headers = curl_slist_append(headers, "Content-Type: application/json");

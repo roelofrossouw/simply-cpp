@@ -3,7 +3,7 @@
 namespace sc {
     std::string file_get_contents(const std::string &filename) {
         std::stringstream stream;
-        std::ifstream input_file(filename.data());
+        std::ifstream input_file(filename.c_str());
         input_file >> stream.rdbuf();
         return stream.str();
     }

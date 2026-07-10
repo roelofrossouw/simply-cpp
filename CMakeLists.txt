@@ -7,7 +7,7 @@ endif ()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set(SC_VERSION 1.0.2)
+set(SC_VERSION 1.0.3)
 
 set(SC_SETUP_VERSION_FILE "${CMAKE_BINARY_DIR}/setup_sc.version")
 if (NOT EXISTS "${SC_SETUP_VERSION_FILE}")
@@ -82,6 +82,12 @@ set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR} "${PROJECT_SOURCE_DIR}/include")
 
 
+project(sc-ollama)
+add_library(${PROJECT_NAME} STATIC src/ollama.cpp include/ollama.h)
+set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
+target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR} "${PROJECT_SOURCE_DIR}/include")
+
+
 project(sc-postgres)
 add_library(${PROJECT_NAME} STATIC src/postgres.cpp include/postgres.h)
 set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
@@ -98,6 +104,7 @@ set(SOURCE_OBJECTS
         $<TARGET_OBJECTS:sc-timer>
         $<TARGET_OBJECTS:sc-color>
         $<TARGET_OBJECTS:sc-rect>
+        $<TARGET_OBJECTS:sc-ollama>
         $<TARGET_OBJECTS:sc-postgres>
 )
 

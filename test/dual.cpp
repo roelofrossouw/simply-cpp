@@ -1,37 +1,37 @@
 #include <sc.h>
-#define MAX_ITER 1'000'000
+#define MAX_ITER 100
 #define TOLERANCE 1e-6
 
 using namespace std;
-using namespace dual_math;
 
-template<dual_type T>
-T f(T x) {
+template<sc::dual_type T>
+T fn(T x) {
     return (x * x * x) + x - T{1};
+    // return sc::dual_math::dsin(x);
+    // return sc::dual_math::dcos(x);
 }
 
 int main() {
-    double r = 3;
-    dual d = dual<double>::seed(r);
-    dual d2 = dual<dual<double>>::seed(d);
+    sc::dual r(3.0);
 
-    cout << f(r) << endl;
-    cout << f(d) << endl;
-    cout << f(d2) << endl;
+    // cout << r << endl;
+    // cout << ~r << endl;
+    // cout << ~~r << endl;
+    // cout << ~~~r << endl;
 
-    auto [a, b] = f(d);
-    auto [_, c] = f(d2).eps;
-    cout << "f (" << r << ") = " << a << endl;
-    cout << "f'(" << r << ") = " << b << endl;
-    cout << "f\"(" << r << ") = " << c << endl;
+    cout << "fn (" << r << ") = " << (float) fn(r) << endl; // << " (" << fn(r) << ")" << endl;
+    cout << "fn'(" << r << ") = " << (float) fn(~r) << endl; //  << " (" << fn(~r) << ")" << endl;
+    cout << "fn\"(" << r << ") = " << (float) fn(~~r) << endl; //  << " (" << fn(~~r) << ")" << endl;
+    cout << "fn\"'(" << r << ") = " << (float) fn(~~~r) << endl; //  << " (" << fn(~~~r) << ")" << endl;
+    cout << "fn\"\"(" << r << ") = " << (float) fn(~~~~r) << endl; //  << " (" << fn(~~~~r) << ")" << endl;
 
-    double x = 0;
+    cout << "\nFinding a root.\n";
+    sc::dual x(0.0f);
     for (int i = 0; i < MAX_ITER; i++) {
-        auto [fx, dfx] = f(dual<double>::seed(x));
-        if (abs(fx) < TOLERANCE) {
-            break;
-        }
+        auto [fx, dfx] = fn(~x);
+        if (abs(fx) < TOLERANCE) break;
         x -= fx / dfx;
+        cout << '.'; // See how many iterations it took.
     }
     cout << "Root @ x = " << x << endl;
 

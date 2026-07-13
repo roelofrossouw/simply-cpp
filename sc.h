@@ -16,6 +16,7 @@
 #include <include/matrix.h>
 #include <include/rect.h>
 #include <include/postgres.h>
+#include <include/dual.h>
 
 // Some common functions simplifying STL
 namespace sc {

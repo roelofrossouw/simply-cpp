@@ -148,3 +148,6 @@ project(test_postgres)
 add_executable(${PROJECT_NAME} test/postgres.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE sc)
 
+project(test_dual)
+add_executable(${PROJECT_NAME} test/dual.cpp)
+target_link_libraries(${PROJECT_NAME} PRIVATE sc)

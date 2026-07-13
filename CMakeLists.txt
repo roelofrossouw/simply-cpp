@@ -11,24 +11,23 @@ set(SC_VERSION 1.0.2)
 
 set(SC_SETUP_VERSION_FILE "${CMAKE_BINARY_DIR}/setup_sc.version")
 if (NOT EXISTS "${SC_SETUP_VERSION_FILE}")
+    execute_process(COMMAND git init -b main WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    execute_process(COMMAND git remote add base64 https://github.com/tobiaslocker/base64.git WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    execute_process(COMMAND git remote add lunasvg https://github.com/sammycage/lunasvg.git WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    execute_process(COMMAND git subtree add --prefix=third_party/base64 base64 master --squash WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    execute_process(COMMAND git subtree add --prefix=third_party/lunasvg lunasvg master --squash WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    execute_process(COMMAND git submodule update --init --recursive WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
     if (APPLE)
-        execute_process(COMMAND brew install nlohmann-json curl WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+        execute_process(COMMAND brew install nlohmann-json curl postgres WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
     else ()
         execute_process(COMMAND apt -y install nlohmann-json3-dev libcurlpp-dev postgresql-server-dev-16 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
     endif ()
     file(WRITE "${SC_SETUP_VERSION_FILE}" "1")
 endif ()
 
-## External Dependencies ##
-# git remote add base64 https://github.com/tobiaslocker/base64.git
-# git subtree add --prefix=third_party/base64 base64 master --squash
-# (Update with:  git fetch base64 master; git stash; git subtree pull --prefix=third_party/base64 base64 master --squash; git stash pop)
 set(BASE64_ENABLE_TESTING OFF)
 add_subdirectory(third_party/base64 base64 EXCLUDE_FROM_ALL)
 
-# git remote add lunasvg https://github.com/sammycage/lunasvg.git
-# git subtree add --prefix=third_party/lunasvg lunasvg master --squash
-# (Update with:   git fetch lunasvg master; git stash; git subtree pull --prefix=third_party/lunasvg lunasvg master --squash; git stash pop)
 set(LUNASVG_BUILD_STATIC ON)
 set(LUNASVG_BUILD_EXAMPLES OFF)
 add_subdirectory(third_party/lunasvg lunasvg EXCLUDE_FROM_ALL)
@@ -42,8 +41,6 @@ if (APPLE)
     include_directories("/opt/homebrew/opt/postgresql/include/postgresql")
 endif ()
 find_package(PostgreSQL REQUIRED)
-#find_package(PkgConfig REQUIRED)
-#pkg_check_modules(PQ REQUIRED libpq IMPORTED_TARGET)
 
 ## LIBRARIES ##
 project(sc-base64)
@@ -69,18 +66,15 @@ add_library(${PROJECT_NAME} STATIC src/timer.cpp include/timer.h)
 set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR} "${PROJECT_SOURCE_DIR}/include")
 
-
 project(sc-color)
 add_library(${PROJECT_NAME} STATIC src/color.cpp include/color.h)
 set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR} "${PROJECT_SOURCE_DIR}/include")
 
-
 project(sc-rect)
 add_library(${PROJECT_NAME} STATIC src/rect.cpp include/rect.h)
 set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR} "${PROJECT_SOURCE_DIR}/include")
-
 
 project(sc-postgres)
 add_library(${PROJECT_NAME} STATIC src/postgres.cpp include/postgres.h)

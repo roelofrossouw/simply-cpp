@@ -1,5 +1,4 @@
 #include <sc.h>
-#include <random>
 #define MAX_ITER 1000
 #define TOLERANCE 1e-8
 

@@ -17,6 +17,7 @@
 #include <include/rect.h>
 #include <include/ollama.h>
 #include <include/postgres.h>
+#include <include/dual.h>
 
 // Some common functions simplifying STL
 namespace sc {
@@ -25,6 +26,8 @@ namespace sc {
     std::string basename(const std::string &filename);
 
     void file_put_contents(const std::string &filename, const std::string &content, std::ios_base::openmode mode = std::ios_base::binary);
+
+    double rand(double minval = 0, double maxval = 1);
 }
 
 

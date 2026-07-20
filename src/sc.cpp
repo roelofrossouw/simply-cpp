@@ -1,4 +1,5 @@
 #include "sc.h"
+#include <random>
 
 namespace sc {
     std::string file_get_contents(const std::string &filename) {
@@ -17,5 +18,10 @@ namespace sc {
         std::ofstream output_file(filename, mode);
         output_file << content;
         output_file.close();
+    }
+
+    double rand(double minval, double maxval) {
+        std::random_device r;
+        return static_cast<double>(r()) / RAND_MAX / 2 * (maxval - minval) + minval;
     }
 }

@@ -36,7 +36,6 @@ namespace sc {
         }
 
         for (const auto image: images) {
-            // TODO: Check if it is a file or an image...
             if (image.length() < 1000) data["images"].push_back(base64::encode(file_get_contents(image)));
             else data["images"].push_back(image);
         }

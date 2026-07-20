@@ -47,7 +47,7 @@ namespace sc {
         std::string keep_alive{"30m"};
         int max_tokens{20480};
         bool stream{false};
-        float temperature{0.1};
+        float temperature{0.5};
         bool think{false};
 
         std::string last_result{};

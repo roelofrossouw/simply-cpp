@@ -9,6 +9,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(SC_VERSION 1.0.2)
 
+# Settings
+option(ADD_POSTGRESQL "Add the postgresql db module" OFF)
+
 set(SC_SETUP_VERSION_FILE "${CMAKE_BINARY_DIR}/setup_sc.version")
 if (NOT EXISTS "${SC_SETUP_VERSION_FILE}")
     execute_process(COMMAND git init -b main WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
@@ -35,12 +38,15 @@ add_subdirectory(third_party/lunasvg lunasvg EXCLUDE_FROM_ALL)
 ## Postgres ##
 #execute_process(COMMAND pg_config --includedir OUTPUT_VARIABLE PG_HEADERS OUTPUT_STRIP_TRAILING_WHITESPACE)
 #execute_process(COMMAND pg_config --libdir OUTPUT_VARIABLE PG_LIBDIR OUTPUT_STRIP_TRAILING_WHITESPACE)
-if (APPLE)
-    set(PostgreSQL_ROOT "/opt/homebrew/opt/postgresql/lib/postgresql")
-    set(PostgreSQL_INCLUDE_DIR "/opt/homebrew/opt/postgresql/include")
-    include_directories("/opt/homebrew/opt/postgresql/include/postgresql")
+
+if (${ADD_POSTGRESQL})
+    if (APPLE)
+        set(PostgreSQL_ROOT "/opt/homebrew/opt/postgresql/lib/postgresql")
+        set(PostgreSQL_INCLUDE_DIR "/opt/homebrew/opt/postgresql/include")
+        include_directories("/opt/homebrew/opt/postgresql/include/postgresql")
+    endif ()
+    find_package(PostgreSQL REQUIRED)
 endif ()
-find_package(PostgreSQL REQUIRED)
 
 ## LIBRARIES ##
 project(sc-base64)
@@ -76,13 +82,21 @@ add_library(${PROJECT_NAME} STATIC src/rect.cpp include/rect.h)
 set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR} "${PROJECT_SOURCE_DIR}/include")
 
-project(sc-postgres)
-add_library(${PROJECT_NAME} STATIC src/postgres.cpp include/postgres.h)
+project(sc-ollama)
+add_library(${PROJECT_NAME} STATIC src/ollama.cpp include/ollama.h)
 set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR} "${PROJECT_SOURCE_DIR}/include")
-target_include_directories(${PROJECT_NAME} PUBLIC ${PostgreSQL_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PUBLIC PostgreSQL::PostgreSQL)
-target_link_directories(${PROJECT_NAME} PRIVATE ${PostgreSQL_LIBRARY_DIRS})
+
+if (${ADD_POSTGRESQL})
+    project(sc-postgres)
+    add_library(${PROJECT_NAME} STATIC src/postgres.cpp include/postgres.h)
+    set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
+    target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR} "${PROJECT_SOURCE_DIR}/include")
+    target_include_directories(${PROJECT_NAME} PUBLIC ${PostgreSQL_INCLUDE_DIRS})
+    target_link_libraries(${PROJECT_NAME} PUBLIC PostgreSQL::PostgreSQL)
+    target_link_directories(${PROJECT_NAME} PRIVATE ${PostgreSQL_LIBRARY_DIRS})
+endif ()
+
 
 set(SOURCE_OBJECTS
         src/sc.cpp sc.h
@@ -92,7 +106,7 @@ set(SOURCE_OBJECTS
         $<TARGET_OBJECTS:sc-timer>
         $<TARGET_OBJECTS:sc-color>
         $<TARGET_OBJECTS:sc-rect>
-        $<TARGET_OBJECTS:sc-postgres>
+        $<TARGET_OBJECTS:sc-ollama>
 )
 
 set(USED_LIBRARIES
@@ -106,7 +120,9 @@ project(sc VERSION ${SC_VERSION} DESCRIPTION "simply-cpp common static library")
 add_library(${PROJECT_NAME} STATIC ${SOURCE_OBJECTS})
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${USED_LIBRARIES})
-target_link_libraries(${PROJECT_NAME} PUBLIC PostgreSQL::PostgreSQL)
+if (${ADD_POSTGRESQL})
+    target_link_libraries(${PROJECT_NAME} PUBLIC PostgreSQL::PostgreSQL)
+endif ()
 target_link_directories(${PROJECT_NAME} PRIVATE ${PostgreSQL_LIBRARY_DIRS})
 
 # Combined shared libary for easy usage
@@ -115,8 +131,30 @@ add_library(${PROJECT_NAME} SHARED ${SOURCE_OBJECTS})
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${USED_LIBRARIES})
-target_link_libraries(${PROJECT_NAME} PUBLIC PostgreSQL::PostgreSQL)
+if (${ADD_POSTGRESQL})
+    target_link_libraries(${PROJECT_NAME} PUBLIC PostgreSQL::PostgreSQL)
+endif ()
 target_link_directories(${PROJECT_NAME} PRIVATE ${PostgreSQL_LIBRARY_DIRS})
+
+## Resources for Tests ##
+#set(SOURCE_DIR "${CMAKE_SOURCE_DIR}/test/resource")
+#set(DESTINATION_DIR "${CMAKE_BINARY_DIR}/resource")
+#file(MAKE_DIRECTORY ${DESTINATION_DIR})
+#file(GLOB_RECURSE RESOURCE_FILES RELATIVE ${SOURCE_DIR} ${SOURCE_DIR}/*)
+#foreach(RESOURCE_FILE IN LISTS RESOURCE_FILES)
+#    set(SOURCE_FILE "${SOURCE_DIR}/${RESOURCE_FILE}")
+#    set(DESTINATION_FILE "${DESTINATION_DIR}/${RESOURCE_FILE}")
+#    get_filename_component(DIRECTORY ${DESTINATION_FILE} DIRECTORY)
+#    file(MAKE_DIRECTORY ${DIRECTORY})
+#    add_custom_command(TARGET copy_resources POST_BUILD
+#            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+#            "${SOURCE_FILE}"
+#            "${DESTINATION_FILE}"
+#    )
+#endforeach()
+#add_custom_target(copy_resources ALL)
+
+
 
 ## TESTS ##
 
@@ -151,3 +189,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE sc)
 project(test_dual)
 add_executable(${PROJECT_NAME} test/dual.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE sc)
+
+project(test_ollama)
+add_executable(${PROJECT_NAME} test/ollama.cpp)
+target_link_libraries(${PROJECT_NAME} PRIVATE sc)
+

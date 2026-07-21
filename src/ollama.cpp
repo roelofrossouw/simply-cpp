@@ -36,8 +36,9 @@ namespace sc {
         }
 
         for (const auto image: images) {
-            if (image.length() < 1000) data["images"].push_back(base64::encode(file_get_contents(image)));
-            else data["images"].push_back(image);
+            auto image_data = image.length() >= 1000 ? image : base64::encode(file_get_contents(image));
+            if (image_data.empty()) return "Could not read the image";
+            data["images"].push_back(image_data);
         }
 
         data["prompt"] = prompt;

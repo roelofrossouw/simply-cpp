@@ -87,6 +87,11 @@ add_library(${PROJECT_NAME} STATIC src/ollama.cpp include/ollama.h)
 set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR} "${PROJECT_SOURCE_DIR}/include")
 
+project(sc-date)
+add_library(${PROJECT_NAME} STATIC src/date.cpp include/date.h)
+set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
+target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR} "${PROJECT_SOURCE_DIR}/include")
+
 if (${ADD_POSTGRESQL})
     project(sc-postgres)
     add_library(${PROJECT_NAME} STATIC src/postgres.cpp include/postgres.h)
@@ -100,6 +105,7 @@ endif ()
 
 set(SOURCE_OBJECTS
         src/sc.cpp sc.h
+        $<TARGET_OBJECTS:sc-date>
         $<TARGET_OBJECTS:sc-base64>
         $<TARGET_OBJECTS:sc-svg2png>
         $<TARGET_OBJECTS:sc-rest>
@@ -143,6 +149,9 @@ add_custom_target(copy_cs_resources ALL COMMAND ${CMAKE_COMMAND} -E copy_directo
 
 
 ## TESTS ##
+project(test_date)
+add_executable(${PROJECT_NAME} test/date.cpp)
+target_link_libraries(${PROJECT_NAME} PRIVATE sc)
 
 project(test_base64)
 add_executable(${PROJECT_NAME} test/base64.cpp)

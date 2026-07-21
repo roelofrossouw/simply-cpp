@@ -2,7 +2,7 @@
 #include <chrono>
 
 namespace sc {
-    namespace pdf {
+    namespace impl {
         class timer {
         public:
             timer() {
@@ -17,7 +17,7 @@ namespace sc {
     }
 
     timer::timer() {
-        impl = new pdf::timer();
+        impl = new impl::timer();
     }
 
     timer::~timer() {

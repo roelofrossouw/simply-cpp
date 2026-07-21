@@ -139,7 +139,7 @@ target_link_directories(${PROJECT_NAME} PRIVATE ${PostgreSQL_LIBRARY_DIRS})
 # Resources for Tests ##
 set(RESOURCE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/test/resource")
 set(RESOURCE_DESTINATION_DIR "${CMAKE_CURRENT_BINARY_DIR}/resource")
-add_custom_target(copy_resources ALL COMMAND ${CMAKE_COMMAND} -E copy_directory ${RESOURCE_SOURCE_DIR} ${RESOURCE_DESTINATION_DIR})
+add_custom_target(copy_cs_resources ALL COMMAND ${CMAKE_COMMAND} -E copy_directory ${RESOURCE_SOURCE_DIR} ${RESOURCE_DESTINATION_DIR})
 
 
 ## TESTS ##
@@ -179,4 +179,4 @@ target_link_libraries(${PROJECT_NAME} PRIVATE sc)
 project(test_ollama)
 add_executable(${PROJECT_NAME} test/ollama.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE sc)
-add_dependencies(test_ollama copy_resources)
+add_dependencies(test_ollama copy_cs_resources)

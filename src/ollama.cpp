@@ -30,6 +30,10 @@ namespace sc {
             {"think", think}
         };
 
+        if (!empty(context)) {
+            data["context"] = context;
+        }
+
         if (!format.empty()) {
             if (format == "json") data["format"] = format;
             else data["format"] = json::parse(format);
@@ -47,9 +51,36 @@ namespace sc {
         try {
             auto result = json::parse(last_result);
             if (!result.contains("response")) return result.dump(4);
+            try {
+                if (result.contains("context")) {
+                    context = result["context"].get<std::vector<int>>();
+                }
+            } catch (exception &e) {
+                // cerr << "Could not get context " << e.what();
+            }
             return result["response"];
         } catch (json::exception &e) {
             return last_result;
         }
+    }
+
+    void ollama::display_stats() {
+        auto j = json::parse(last_result);
+
+        // Suppose you parsed the JSON into a nlohmann::json object called j
+        int promptTokens = j["prompt_eval_count"];
+        int completionTokens = j["eval_count"];
+        int totalTokens = promptTokens + completionTokens;
+
+        // Context length used
+        int contextUsed = j["context"].size();
+
+        // Remaining budget
+        int remaining = 262144 - contextUsed;
+
+        std::cout << "Prompt tokens: " << promptTokens << "\n";
+        std::cout << "Completion tokens: " << completionTokens << "\n";
+        std::cout << "Context used: " << contextUsed << "\n";
+        std::cout << "Remaining budget: " << remaining << "\n";
     }
 }

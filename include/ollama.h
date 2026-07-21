@@ -20,7 +20,12 @@ namespace sc {
 
         std::string generate(const std::string &prompt, std::vector<std::string> images = {});
 
+        void display_stats();
+
+        int context_size() { return context.size(); }
+
         // Getters
+        std::string getLastResult() const { return last_result; }
         std::string getUrl() const { return url; }
         std::string getModel() const { return model; }
         std::string getFormat() const { return format; }
@@ -29,16 +34,19 @@ namespace sc {
         bool isStream() const { return stream; }
         float getTemperature() const { return temperature; }
         bool isThink() const { return think; }
+        std::vector<int> getContext() { return context; }
 
         // Setters
         void setUrl(const std::string &url) { this->url = url; }
         void setModel(const std::string &model) { this->model = model; }
         void setFormat(std::string format) { this->format = format; }
+        void clearFormat() { this->format = ""; }
         void setKeepAlive(std::string keep_alive) { this->keep_alive = keep_alive; }
         void setMaxTokens(int max_tokens) { this->max_tokens = max_tokens; }
         void setStream(bool stream) { this->stream = stream; }
         void setTemperature(float temperature) { this->temperature = temperature; }
         void setThink(bool think) { this->think = think; }
+        void setContext(std::vector<int> context) { this->context = context; }
 
     private:
         std::string url;
@@ -51,6 +59,7 @@ namespace sc {
         bool think{false};
 
         std::string last_result{};
+        std::vector<int> context{};
     };
 }
 

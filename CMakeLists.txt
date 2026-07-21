@@ -136,24 +136,10 @@ if (${ADD_POSTGRESQL})
 endif ()
 target_link_directories(${PROJECT_NAME} PRIVATE ${PostgreSQL_LIBRARY_DIRS})
 
-## Resources for Tests ##
-#set(SOURCE_DIR "${CMAKE_SOURCE_DIR}/test/resource")
-#set(DESTINATION_DIR "${CMAKE_BINARY_DIR}/resource")
-#file(MAKE_DIRECTORY ${DESTINATION_DIR})
-#file(GLOB_RECURSE RESOURCE_FILES RELATIVE ${SOURCE_DIR} ${SOURCE_DIR}/*)
-#foreach(RESOURCE_FILE IN LISTS RESOURCE_FILES)
-#    set(SOURCE_FILE "${SOURCE_DIR}/${RESOURCE_FILE}")
-#    set(DESTINATION_FILE "${DESTINATION_DIR}/${RESOURCE_FILE}")
-#    get_filename_component(DIRECTORY ${DESTINATION_FILE} DIRECTORY)
-#    file(MAKE_DIRECTORY ${DIRECTORY})
-#    add_custom_command(TARGET copy_resources POST_BUILD
-#            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-#            "${SOURCE_FILE}"
-#            "${DESTINATION_FILE}"
-#    )
-#endforeach()
-#add_custom_target(copy_resources ALL)
-
+# Resources for Tests ##
+set(RESOURCE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/test/resource")
+set(RESOURCE_DESTINATION_DIR "${CMAKE_CURRENT_BINARY_DIR}/resource")
+add_custom_target(copy_resources ALL COMMAND ${CMAKE_COMMAND} -E copy_directory ${RESOURCE_SOURCE_DIR} ${RESOURCE_DESTINATION_DIR})
 
 
 ## TESTS ##
@@ -193,4 +179,4 @@ target_link_libraries(${PROJECT_NAME} PRIVATE sc)
 project(test_ollama)
 add_executable(${PROJECT_NAME} test/ollama.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE sc)
-
+add_dependencies(test_ollama copy_resources)

@@ -1,4 +1,4 @@
-#include "../include/ollama.h"
+#include "ollama.h"
 #include "sc.h"
 #include <nlohmann/json.hpp>
 

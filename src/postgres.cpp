@@ -1,4 +1,4 @@
-#include "../include/postgres.h"
+#include "postgres.h"
 
 #include <format>
 #include <libpq-fe.h>

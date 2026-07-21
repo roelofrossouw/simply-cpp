@@ -9,6 +9,7 @@
 #include <filesystem>
 
 // Include common libraries
+#include <include/date.h>
 #include <include/base64.h>
 #include <include/svg2png.h>
 #include <include/rest.h>

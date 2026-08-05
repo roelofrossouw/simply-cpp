@@ -10,15 +10,16 @@ enum {
 
 namespace sc {
     class ollama {
-        static constexpr std::string DEFAULT_IP = "127.0.0.1";
+        static constexpr std::string DEFAULT_IP = "http://127.0.0.1";
         static constexpr int DEFAULT_PORT = 11434;
+        static constexpr int DEFAULT_MAX_TOKENS = 512;
 
     public:
-        ollama(const std::string &model = {}, const std::string &ip_address = DEFAULT_IP, int port = DEFAULT_PORT);
+        ollama(const std::string &model = {}, const std::string &host = DEFAULT_IP, int port = DEFAULT_PORT);
 
         std::vector<std::string> models();
 
-        std::string generate(const std::string &prompt, std::vector<std::string> images = {});
+        std::string generate(const std::string &prompt, const std::vector<std::string>& images = {});
 
         void display_stats();
 
@@ -48,12 +49,14 @@ namespace sc {
         void setThink(bool think) { this->think = think; }
         void setContext(std::vector<int> context) { this->context = context; }
 
+        static std::string process(const std::string &json_request);
+
     private:
         std::string url;
         std::string model;
         std::string format{"json"};
         std::string keep_alive{"30m"};
-        int max_tokens{20480};
+        int max_tokens{DEFAULT_MAX_TOKENS};
         bool stream{false};
         float temperature{0.5};
         bool think{false};

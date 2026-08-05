@@ -53,7 +53,7 @@ namespace sc {
         impl->startTime = stopTime;
     }
 
-    template <typename T>
+    template<typename T>
     long long timer::getDuration() const {
         if (!impl->stopped) {
             auto currentTime = std::chrono::steady_clock::now();
@@ -87,12 +87,13 @@ namespace sc {
         return getDuration<std::chrono::hours>();
     }
 
-    std::ostream &operator<<(std::ostream &lhs, timer &rhs) {
-        rhs.lap();
+    timer::operator std::string() {
+        lap();
 #if defined(__cpp_lib_format)
-        lhs << std::format("{:%H:%M:%S}", rhs.impl->taken);
+        return std::format("{:%H:%M:%S}", impl->taken);
 #else
-        auto ms = rhs.impl->taken;
+        std::stringstream ss;
+        auto ms = impl->taken;
         auto h = std::chrono::duration_cast<std::chrono::hours>(ms);
         ms -= h;
         auto m = std::chrono::duration_cast<std::chrono::minutes>(ms);
@@ -101,12 +102,14 @@ namespace sc {
         ms -= s;
         auto millis = std::chrono::duration_cast<std::chrono::microseconds>(ms);
 
-        lhs << std::setfill('0')
+        ss << std::setfill('0')
                 << std::setw(2) << h.count() << ":"
                 << std::setw(2) << m.count() << ":"
                 << std::setw(2) << s.count() << "."
                 << std::setw(3) << millis.count();
+        return ss.str();
 #endif
-        return lhs;
     }
+
+    std::ostream &operator<<(std::ostream &lhs, timer &rhs) { return lhs << static_cast<std::string>(rhs); }
 } // sc

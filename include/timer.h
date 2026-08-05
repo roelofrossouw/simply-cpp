@@ -34,6 +34,8 @@ namespace sc {
 
         long long hours() const;
 
+        operator std::string();
+
     private:
         impl::timer *impl;
 

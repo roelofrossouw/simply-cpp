@@ -130,6 +130,7 @@ namespace sc {
             if (request.contains("data")) instructions += request["data"].get<std::string>();
             auto result = ai.generate(instructions, images);
             try {
+                if (result.starts_with("```json")) result = result.substr(7, result.size() - 10);
                 output = nlohmann::json::parse(result);
             } catch (nlohmann::detail::exception &e) {
                 output["error"] = e.what();

@@ -27,6 +27,12 @@ namespace sc {
             {"keep_alive", keep_alive},
             {"stream", stream},
             {"temperature", temperature},
+            {"top_p", top_p},
+            {"top_k", top_k},
+            {"repeat_penalty", repeat_penalty},
+            {"num_predict", num_predict},
+            {"num_ctx", num_ctx},
+            {"seed", seed},
             {"think", think}
         };
 
@@ -44,7 +50,6 @@ namespace sc {
             if (image_data.empty()) return "Could not read the image";
             data["images"].push_back(image_data);
         }
-
 
         data["prompt"] = prompt;
 
@@ -112,12 +117,16 @@ namespace sc {
         nlohmann::json output;
         try {
             auto request = nlohmann::json::parse(json_request);
-            ollama ai(request["model"].get<string>()
-                      , request["server"].get<string>()
-                      , request["port"].get<int>());
+            ollama ai(request["model"].get<string>(), request["server"].get<string>(), request["port"].get<int>());
             if (request.contains("temperature")) ai.setTemperature(request["temperature"].get<float>());
             if (request.contains("think")) ai.setThink(request["think"].get<bool>());
             if (request.contains("max_tokens")) ai.setMaxTokens(request["max_tokens"].get<int>());
+            if (request.contains("top_p")) ai.setTopP(request["top_p"].get<float>());
+            if (request.contains("top_k")) ai.setTopK(request["top_k"].get<float>());
+            if (request.contains("repeat_penalty")) ai.setRepeatPenalty(request["repeat_penalty"].get<float>());
+            if (request.contains("num_predict")) ai.setNumPredict(request["num_predict"].get<int>());
+            if (request.contains("num_ctx")) ai.setNumCtx(request["num_ctx"].get<int>());
+            if (request.contains("seed")) ai.setSeed(request["seed"].get<int>());
             ai.setFormat(request["schema"].dump());
             timer stopwatch;
             vector<string> images;

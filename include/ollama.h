@@ -19,7 +19,7 @@ namespace sc {
 
         std::vector<std::string> models();
 
-        std::string generate(const std::string &prompt, const std::vector<std::string>& images = {});
+        std::string generate(const std::string &prompt, const std::vector<std::string> &images = {});
 
         void display_stats();
 
@@ -44,6 +44,12 @@ namespace sc {
         void clearFormat() { this->format = ""; }
         void setKeepAlive(std::string keep_alive) { this->keep_alive = keep_alive; }
         void setMaxTokens(int max_tokens) { this->max_tokens = max_tokens; }
+        void setTopP(double top_p) { this->top_p = top_p; }
+        void setTopK(double top_k) { this->top_k = top_k; }
+        void setRepeatPenalty(double repeat_penalty) { this->repeat_penalty = repeat_penalty; }
+        void setNumPredict(double num_predict) { this->num_predict = num_predict; }
+        void setNumCtx(double num_ctx) { this->num_ctx = num_ctx; }
+        void setSeed(double seed) { this->seed = seed; }
         void setStream(bool stream) { this->stream = stream; }
         void setTemperature(float temperature) { this->temperature = temperature; }
         void setThink(bool think) { this->think = think; }
@@ -57,6 +63,12 @@ namespace sc {
         std::string format{"json"};
         std::string keep_alive{"30m"};
         int max_tokens{DEFAULT_MAX_TOKENS};
+        float top_p{1.0};
+        float top_k{1.0};
+        float repeat_penalty{1.0};
+        int num_predict{4096};
+        int num_ctx{8192};
+        int seed{180001};
         bool stream{false};
         float temperature{0.5};
         bool think{false};

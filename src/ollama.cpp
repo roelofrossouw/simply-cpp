@@ -50,32 +50,8 @@ namespace sc {
             if (image_data.empty()) return "Could not read the image";
             data["images"].push_back(image_data);
         }
-
         data["prompt"] = prompt;
-
-        /* OpenAI/chat format
-        json messages{
-            {
-                {"type", "text"},
-                {"text", prompt}
-            }
-        };
-        for (const auto &image: images) {
-            auto image_data = image.length() >= 1000 ? image : base64::encode(file_get_contents(image));
-            if (image_data.empty()) return "Could not read the image";
-            messages.push_back({
-                    {"type", "image_url"},
-                    {"image_url", {{"url", "data:image/jpg;base64," + image_data}}}
-                }
-            );
-        }
-        data["messages"].push_back({
-            {"role", "user"},
-            {"content", messages}
-        });
-                */
-
-        last_result = rest(url + "generate").post(data.dump());
+        last_result = rest(url + "generate").timeout(timeout).post(data.dump());
         try {
             auto result = json::parse(last_result);
             if (!result.contains("response")) return result.dump(4);
@@ -127,6 +103,7 @@ namespace sc {
             if (request.contains("num_predict")) ai.setNumPredict(request["num_predict"].get<int>());
             if (request.contains("num_ctx")) ai.setNumCtx(request["num_ctx"].get<int>());
             if (request.contains("seed")) ai.setSeed(request["seed"].get<int>());
+            if (request.contains("timeout")) ai.setTimeout(request["timeout"].get<int>());
             ai.setFormat(request["schema"].dump());
             timer stopwatch;
             vector<string> images;

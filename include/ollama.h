@@ -54,6 +54,7 @@ namespace sc {
         void setTemperature(float temperature) { this->temperature = temperature; }
         void setThink(bool think) { this->think = think; }
         void setContext(std::vector<int> context) { this->context = context; }
+        void setTimeout(int timeout) { this->timeout = timeout; }
 
         static std::string process(const std::string &json_request);
 
@@ -69,6 +70,7 @@ namespace sc {
         int num_predict{4096};
         int num_ctx{8192};
         int seed{180001};
+        int timeout{60};
         bool stream{false};
         float temperature{0.5};
         bool think{false};

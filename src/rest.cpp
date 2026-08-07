@@ -22,6 +22,8 @@ namespace sc {
         }
 
         curl_easy_setopt(curl, CURLOPT_URL, url_.c_str());
+        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, connect_timeout_secs_);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout_secs_);
 
         curl_slist *headers = nullptr;
         for (auto &hdr: headers_) {
@@ -53,6 +55,8 @@ namespace sc {
 
         curl_easy_setopt(curl, CURLOPT_URL, url_.c_str());
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, jsonData.c_str());
+        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, connect_timeout_secs_);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout_secs_);
 
         curl_slist *headers = nullptr;
         headers = curl_slist_append(headers, "Content-Type: application/json");
@@ -62,9 +66,12 @@ namespace sc {
 
         CURLcode res = curl_easy_perform(curl);
 
+        // if (res == CURLE_OPERATION_TIMEDOUT) {
+        //     response = R"({"error": "request timed out"})";
+        // } else
         if (res != CURLE_OK) {
             std::cerr << "Request failed: " << curl_easy_strerror(res) << std::endl;
-            response = "";
+            response = std::string(R"({"error": ")") + curl_easy_strerror(res) + R"("})";
         }
 
         curl_slist_free_all(headers);
@@ -73,13 +80,16 @@ namespace sc {
         return response;
     }
 
-    void rest::header(const std::string &key, const std::string &value) {
-        headers_[key] = value;
+    void rest::header(const std::string &key, const std::string &value) { headers_[key] = value; }
+
+    void rest::bearer(const std::string &token) { header("Authorization", "Bearer " + token); }
+
+    rest &rest::timeout(const long timeout) {
+        timeout_secs_ = timeout;
+        return *this;
     }
 
-    void rest::bearer(const std::string &token) {
-        header("Authorization", "Bearer " + token);
-    }
+    void rest::connect_timeout(const long timeout) { connect_timeout_secs_ = timeout; }
 
     std::string rest::fetch(const std::string &url, const std::string &base_url) {
         if (url.size() > 100) return "";

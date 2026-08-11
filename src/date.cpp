@@ -1,4 +1,5 @@
 #include "date.h"
+#include <ctime>
 
 using namespace std;
 

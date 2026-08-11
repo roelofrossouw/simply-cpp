@@ -1,9 +1,10 @@
 #ifndef SC_UTF8_H
 #define SC_UTF8_H
-#include <cstddef>
 #include <string_view>
 #include <string>
 #include <vector>
+#include <cstdint>
+#include <cstddef>
 
 namespace sc {
     class utf8 {
@@ -95,7 +96,6 @@ namespace sc {
         // Windows-1252 mapping for bytes 0x80..0x9F.
         static std::uint32_t cp1252_high(unsigned char c);
     };
-
 } // namespace sc
 
 #endif //SC_UTF8_H

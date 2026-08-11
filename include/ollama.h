@@ -1,7 +1,8 @@
 #ifndef SC_OLLAMA_H
 #define SC_OLLAMA_H
-#include <map>
 #include <string>
+#include <map>
+#include <vector>
 
 enum {
     SC_OLLAMA_FORMAT_JSON,
@@ -10,12 +11,12 @@ enum {
 
 namespace sc {
     class ollama {
-        static constexpr std::string DEFAULT_IP = "http://127.0.0.1";
+        static constexpr std::string_view DEFAULT_IP = "http://127.0.0.1";
         static constexpr int DEFAULT_PORT = 11434;
         static constexpr int DEFAULT_MAX_TOKENS = 512;
 
     public:
-        ollama(const std::string &model = {}, const std::string &host = DEFAULT_IP, int port = DEFAULT_PORT);
+        ollama(const std::string &model = {}, const std::string &host = std::string(DEFAULT_IP), int port = DEFAULT_PORT);
 
         std::vector<std::string> models();
 

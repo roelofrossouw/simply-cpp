@@ -41,14 +41,20 @@ add_subdirectory(third_party/lunasvg lunasvg EXCLUDE_FROM_ALL)
 
 if (${ADD_POSTGRESQL})
     if (APPLE)
-        set(PostgreSQL_ROOT "/opt/homebrew/opt/postgresql/lib/postgresql")
-        set(PostgreSQL_INCLUDE_DIR "/opt/homebrew/opt/postgresql/include")
-        include_directories("/opt/homebrew/opt/postgresql/include/postgresql")
+        #        set(PostgreSQL_ROOT "/opt/homebrew/opt/postgresql/lib/postgresql")
+        #        set(PostgreSQL_INCLUDE_DIR "/opt/homebrew/opt/postgresql/include")
+        #        include_directories("/opt/homebrew/opt/postgresql/include/postgresql")
     endif ()
     find_package(PostgreSQL REQUIRED)
 endif ()
 
 ## LIBRARIES ##
+project(sc-utf8)
+add_library(${PROJECT_NAME} STATIC src/utf8.cpp include/utf8.h)
+set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
+target_include_directories(${PROJECT_NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include")
+target_link_libraries(${PROJECT_NAME} utf8)
+
 project(sc-base64)
 add_library(${PROJECT_NAME} STATIC src/base64.cpp include/base64.h)
 set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
@@ -106,6 +112,7 @@ endif ()
 set(SOURCE_OBJECTS
         src/sc.cpp sc.h
         $<TARGET_OBJECTS:sc-date>
+        $<TARGET_OBJECTS:sc-utf8>
         $<TARGET_OBJECTS:sc-base64>
         $<TARGET_OBJECTS:sc-svg2png>
         $<TARGET_OBJECTS:sc-rest>

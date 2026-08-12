@@ -1,7 +1,54 @@
 #include "rect.h"
-#include <ranges>
+
 #include <algorithm>
-#include <math.h>
+#include <cmath>
+#include <numeric>
+#include <ostream>
+
+namespace {
+    // Minimal union-find with path halving.
+    struct dsu {
+        std::vector<size_t> parent;
+
+        explicit dsu(const size_t n) : parent(n) {
+            std::iota(parent.begin(), parent.end(), size_t{0});
+        }
+
+        size_t find(size_t a) {
+            while (parent[a] != a) a = parent[a] = parent[parent[a]];
+            return a;
+        }
+
+        void unite(const size_t a, const size_t b) {
+            parent[find(a)] = find(b);
+        }
+    };
+
+    // Assemble (union-rect, member-indices) groups from a linkage predicate.
+    template<typename Linked>
+    std::vector<std::pair<sc::rect, std::vector<size_t> > >
+    components(const std::vector<sc::rect> &boxes, Linked &&linked) {
+        const size_t n = boxes.size();
+        dsu ds(n);
+        for (size_t i = 0; i < n; ++i)
+            for (size_t j = i + 1; j < n; ++j)
+                if (linked(boxes[i], boxes[j])) ds.unite(i, j);
+
+        std::vector<std::pair<sc::rect, std::vector<size_t> > > groups;
+        std::vector<long> slot(n, -1); // root index -> position in groups
+        for (size_t i = 0; i < n; ++i) {
+            const size_t root = ds.find(i);
+            if (slot[root] < 0) {
+                slot[root] = static_cast<long>(groups.size());
+                groups.emplace_back(boxes[i], std::vector<size_t>{});
+            }
+            auto &[bbox, members] = groups[static_cast<size_t>(slot[root])];
+            bbox.include(boxes[i]);
+            members.push_back(i);
+        }
+        return groups;
+    }
+} // namespace
 
 namespace sc {
     rect::rect(const double left, const double top, const double width, const double height)
@@ -9,9 +56,6 @@ namespace sc {
     }
 
     rect::rect() : x(0), y(0), w(0), h(0) {
-    }
-
-    rect::rect(const rect &r) : x(r.x), y(r.y), w(r.w), h(r.h) {
     }
 
     double rect::left() const {
@@ -54,7 +98,7 @@ namespace sc {
         return *this;
     }
 
-    rect rect::operator+(int i) const {
+    rect rect::operator+(const int i) const {
         return {x - i, y - i, w + i + i, h + i + i};
     }
 
@@ -62,7 +106,7 @@ namespace sc {
         return {x + r.x, y + r.y, w + r.w, h + r.h};
     }
 
-    rect rect::operator-(int i) const {
+    rect rect::operator-(const int i) const {
         return {x + i, y + i, w - i - i, h - i - i};
     }
 
@@ -92,7 +136,7 @@ namespace sc {
         return {x0, y0, std::min(right(), rhs.right()) - x0, std::min(bottom(), rhs.bottom()) - y0};
     }
 
-    rect rect::from_points(double left, double top, double right, double bottom) {
+    rect rect::from_points(const double left, const double top, const double right, const double bottom) {
         return {left, top, right - left, bottom - top};
     }
 
@@ -122,18 +166,27 @@ namespace sc {
         return std::hypot(dx, dy);
     }
 
+    double rect::gap_x(const rect &rhs) const {
+        return std::max({left() - rhs.right(), rhs.left() - right(), 0.0});
+    }
+
+    double rect::gap_y(const rect &rhs) const {
+        return std::max({top() - rhs.bottom(), rhs.top() - bottom(), 0.0});
+    }
+
+    bool rect::overlaps_x(const rect &rhs) const {
+        return gap_x(rhs) == 0.0;
+    }
+
+    bool rect::overlaps_y(const rect &rhs) const {
+        return gap_y(rhs) == 0.0;
+    }
+
     double rect::distance(const rect &rhs) const {
-        // Shortcut if no size, just one check.
-        // if (rhs.w == 0 && rhs.h == 0) return distance(rhs.x, rhs.h);
-        // Shortcut for either w == 0 or h == 0 could be done, but both probability and savings are low.
-        // Min distance to each corner.
-        return std::min({
-                distance(rhs.x, rhs.y),
-                distance(rhs.x, rhs.bottom()),
-                distance(rhs.right(), rhs.y),
-                distance(rhs.right(), rhs.bottom())
-            }
-        );
+        const double dx = gap_x(rhs);
+        const double dy = gap_y(rhs);
+        if (dx == 0 && dy == 0) return 0;
+        return std::hypot(dx, dy);
     }
 
     std::ostream &operator<<(std::ostream &lhs, const sc::rect &rhs) {
@@ -141,48 +194,21 @@ namespace sc {
         return lhs;
     }
 
-    std::vector<std::pair<rect, std::vector<size_t> > > rect::group(const std::vector<rect> &boxes, double min_iou, double max_dist) {
+    std::vector<std::pair<rect, std::vector<size_t> > > rect::group(
+        const std::vector<rect> &boxes, const double min_iou, const double max_dist) {
         if (boxes.empty()) return {};
-        std::vector<std::pair<rect, std::vector<size_t> > > groups;
+        return components(boxes, [min_iou, max_dist](const rect &a, const rect &b) {
+            if (min_iou < 1 && a.iou(b) > min_iou) return true;          // min_iou == 1 disables
+            if (max_dist >= 0 && a.distance(b) < max_dist) return true;  // max_dist < 0 disables
+            return false;
+        });
+    }
 
-        for (size_t i = 0; i < boxes.size(); ++i) {
-            bool assigned = false;
-
-            for (auto &group: groups) {
-                // IOU == 1 disables iou check
-                if (min_iou < 1) {
-                    // 1. Check IoU with any member in the group
-                    for (size_t idx = 0; idx < group.second.size(); ++idx) {
-                        if (boxes[i].iou(boxes[group.second[idx]]) > min_iou) {
-                            group.second.push_back(i);
-                            group.first.include(boxes[i]);
-                            assigned = true;
-                            break;
-                        }
-                    }
-                }
-                if (assigned) break;
-
-                // max_dist < 0 disables proximity check
-                if (max_dist >= 0) {
-                    // 2. Check proximity to the nearest edge of the group's bounding box
-                    // TODO: Not sure if centroid, or closest distance would be best...
-                    // std::cout << group.first.distance(boxes[i].centroid()) << " vs " << group.first.distance(boxes[i]) << "\n";
-                    if (group.first.distance(boxes[i].centroid()) < max_dist) {
-                        group.second.push_back(i);
-                        group.first.include(boxes[i]);
-                        assigned = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!assigned) {
-                rect current_box{boxes[i]};
-                groups.push_back(std::make_pair<rect, std::vector<size_t> >(std::move(current_box), {i}));
-            }
-        }
-
-        return groups;
+    std::vector<std::pair<rect, std::vector<size_t> > > rect::group_adjacent(
+        const std::vector<rect> &boxes, const double max_dx, const double max_dy) {
+        if (boxes.empty()) return {};
+        return components(boxes, [max_dx, max_dy](const rect &a, const rect &b) {
+            return a.gap_x(b) < max_dx && a.gap_y(b) < max_dy;
+        });
     }
 }

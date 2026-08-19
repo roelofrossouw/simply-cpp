@@ -20,12 +20,30 @@ namespace sc {
         return list;
     }
 
+    void ollama::remove_backtick(std::string &input, const std::string &marker, bool mid_string = false) {
+        if (input.starts_with("```" + marker) && input.ends_with("```")) {
+            input = input.substr(marker.length() + 3, input.size() - (marker.length() + 6));
+        }
+        if (mid_string) {
+            size_t start_pos = input.find("```" + marker);
+            size_t end_pos = input.rfind("```");
+            if (start_pos != std::string::npos && end_pos != std::string::npos) {
+                input = input.substr(start_pos + marker.length() + 3);
+                while (input.back() == '`') input.pop_back();
+            }
+        }
+    }
+
     string ollama::generate(const std::string &prompt, const vector<string> &images) {
         json data{
-            {"max_tokens", max_tokens},
             {"model", model},
-            {"keep_alive", keep_alive},
             {"stream", stream},
+            {"think", think},
+        };
+        data["options"] =
+        {
+            {"max_tokens", max_tokens},
+            {"keep_alive", keep_alive},
             {"temperature", temperature},
             {"top_p", top_p},
             {"top_k", top_k},
@@ -33,12 +51,9 @@ namespace sc {
             {"num_predict", num_predict},
             {"num_ctx", num_ctx},
             {"seed", seed},
-            {"think", think}
         };
 
-        if (!empty(context)) {
-            data["context"] = context;
-        }
+        if (!empty(context)) data["context"] = context;
 
         if (!format.empty()) {
             if (format == "json") data["format"] = format;
@@ -69,31 +84,32 @@ namespace sc {
         }
     }
 
-    void ollama::display_stats() {
+    string ollama::stats() {
         auto j = json::parse(last_result);
+        j.erase("context");
+        j.erase("response");
+        return j.dump();
+    }
 
-        // Suppose you parsed the JSON into a nlohmann::ordered_json object called j
-        int promptTokens = j["prompt_eval_count"];
-        int completionTokens = j["eval_count"];
-        int totalTokens = promptTokens + completionTokens;
-
-        // Context length used
-        int contextUsed = j["context"].size();
-
-        // Remaining budget
-        int remaining = 262144 - contextUsed;
-
-        std::cout << "Prompt tokens: " << promptTokens << "\n";
-        std::cout << "Completion tokens: " << completionTokens << "\n";
-        std::cout << "Context used: " << contextUsed << "\n";
-        std::cout << "Remaining budget: " << remaining << "\n";
+    void ollama::setFormat(std::string format_string) {
+        while (format_string.starts_with('\"')) format_string.erase(format_string.begin());
+        while (format_string.ends_with('\"')) format_string.pop_back();
+        this->format = format_string;
     }
 
     std::string ollama::process(const std::string &json_request) {
         json output;
         try {
             auto request = json::parse(json_request);
+#ifdef NDEBUG
             ollama ai(request["model"].get<string>(), request["server"].get<string>(), request["port"].get<int>());
+#else
+            if (!request.contains("debug_model")) request["debug_model"] = request["model"].get<std::string>();
+            if (!request.contains("debug_server")) request["debug_server"] = request["server"].get<std::string>();
+            if (!request.contains("debug_port")) request["debug_port"] = request["port"].get<int>();
+            ollama ai(request["debug_model"].get<string>(), request["debug_server"].get<string>(), request["debug_port"].get<int>());
+#endif
+
             if (request.contains("temperature")) ai.setTemperature(request["temperature"].get<float>());
             if (request.contains("think")) ai.setThink(request["think"].get<bool>());
             if (request.contains("max_tokens")) ai.setMaxTokens(request["max_tokens"].get<int>());
@@ -115,14 +131,15 @@ namespace sc {
             }
             if (request.contains("data")) instructions += request["data"].get<std::string>();
             auto result = ai.generate(instructions, images);
+            remove_backtick(result, "json");
             try {
-                if (result.starts_with("```json")) result = result.substr(7, result.size() - 10);
-                output = nlohmann::ordered_json::parse(result);
+                output = json::parse(result);
             } catch (nlohmann::detail::exception &e) {
-                output["error"] = e.what();
-                output["raw"] = result;
+                if (!empty(ai.getFormat())) output["json_error"] = e.what();
+                output["response"] = result;
             }
-            output["processing_time"] = (string) stopwatch;
+            output["ai_metadata"] = json::parse(ai.stats());
+            output["ai_metadata"]["processing_time"] = (string) stopwatch;
         } catch (exception &e) {
             output["error"] = e.what();
         }

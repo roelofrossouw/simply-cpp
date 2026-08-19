@@ -7,7 +7,7 @@ endif ()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set(SC_VERSION 1.0.2)
+set(SC_VERSION 1.0.3)
 
 # Settings
 option(ADD_POSTGRESQL "Add the postgresql db module" OFF)

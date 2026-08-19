@@ -22,9 +22,9 @@ namespace sc {
 
         std::string generate(const std::string &prompt, const std::vector<std::string> &images = {});
 
-        void display_stats();
+        std::string stats();
 
-        int context_size() { return context.size(); }
+        int context_size() const { return context.size(); }
 
         // Getters
         std::string getLastResult() const { return last_result; }
@@ -41,7 +41,6 @@ namespace sc {
         // Setters
         void setUrl(const std::string &url) { this->url = url; }
         void setModel(const std::string &model) { this->model = model; }
-        void setFormat(std::string format) { this->format = format; }
         void clearFormat() { this->format = ""; }
         void setKeepAlive(std::string keep_alive) { this->keep_alive = keep_alive; }
         void setMaxTokens(int max_tokens) { this->max_tokens = max_tokens; }
@@ -56,6 +55,8 @@ namespace sc {
         void setThink(bool think) { this->think = think; }
         void setContext(std::vector<int> context) { this->context = context; }
         void setTimeout(int timeout) { this->timeout = timeout; }
+
+        void setFormat(std::string format_string);
 
         static std::string process(const std::string &json_request);
 
@@ -78,6 +79,8 @@ namespace sc {
 
         std::string last_result{};
         std::vector<int> context{};
+
+        static void remove_backtick(std::string &input, const std::string &marker, bool mid_string);
     };
 }
 

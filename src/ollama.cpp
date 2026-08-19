@@ -3,7 +3,7 @@
 #include <nlohmann/json.hpp>
 
 using namespace std;
-using json = nlohmann::json;
+using json = nlohmann::ordered_json;
 
 namespace sc {
     ollama::ollama(const string &model_name, const string &host, const int port)
@@ -72,7 +72,7 @@ namespace sc {
     void ollama::display_stats() {
         auto j = json::parse(last_result);
 
-        // Suppose you parsed the JSON into a nlohmann::json object called j
+        // Suppose you parsed the JSON into a nlohmann::ordered_json object called j
         int promptTokens = j["prompt_eval_count"];
         int completionTokens = j["eval_count"];
         int totalTokens = promptTokens + completionTokens;
@@ -90,9 +90,9 @@ namespace sc {
     }
 
     std::string ollama::process(const std::string &json_request) {
-        nlohmann::json output;
+        json output;
         try {
-            auto request = nlohmann::json::parse(json_request);
+            auto request = json::parse(json_request);
             ollama ai(request["model"].get<string>(), request["server"].get<string>(), request["port"].get<int>());
             if (request.contains("temperature")) ai.setTemperature(request["temperature"].get<float>());
             if (request.contains("think")) ai.setThink(request["think"].get<bool>());
@@ -117,7 +117,7 @@ namespace sc {
             auto result = ai.generate(instructions, images);
             try {
                 if (result.starts_with("```json")) result = result.substr(7, result.size() - 10);
-                output = nlohmann::json::parse(result);
+                output = nlohmann::ordered_json::parse(result);
             } catch (nlohmann::detail::exception &e) {
                 output["error"] = e.what();
                 output["raw"] = result;

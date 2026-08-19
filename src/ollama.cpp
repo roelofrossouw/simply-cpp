@@ -98,7 +98,7 @@ namespace sc {
             if (request.contains("think")) ai.setThink(request["think"].get<bool>());
             if (request.contains("max_tokens")) ai.setMaxTokens(request["max_tokens"].get<int>());
             if (request.contains("top_p")) ai.setTopP(request["top_p"].get<float>());
-            if (request.contains("top_k")) ai.setTopK(request["top_k"].get<float>());
+            if (request.contains("top_k")) ai.setTopK(request["top_k"].get<int>());
             if (request.contains("repeat_penalty")) ai.setRepeatPenalty(request["repeat_penalty"].get<float>());
             if (request.contains("num_predict")) ai.setNumPredict(request["num_predict"].get<int>());
             if (request.contains("num_ctx")) ai.setNumCtx(request["num_ctx"].get<int>());

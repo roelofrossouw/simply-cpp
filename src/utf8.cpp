@@ -135,6 +135,62 @@ namespace sc {
         return s.substr(byte_start, byte_end - byte_start);
     }
 
+    TextAnalysis utf8::analyze(std::string_view s) {
+        TextAnalysis result;
+
+        result.bytes = s.size();
+        result.valid_utf8 = is_valid(s);
+
+        std::size_t i = 0;
+
+        while (i < s.size()) {
+            DecodeResult r = decode_at(s, i);
+
+            std::uint32_t cp;
+
+            if (r.valid) {
+                cp = r.code_point;
+                i += r.length;
+            } else {
+                cp = kReplacementChar;
+                ++i;
+            }
+
+            ++result.codepoints;
+
+            if (cp < 128)
+                ++result.ascii;
+
+            if (cp == kReplacementChar)
+                ++result.replacement;
+
+            if (cp == ' ' ||
+                cp == '\t' ||
+                cp == '\r' ||
+                cp == '\n') {
+                ++result.whitespace;
+            }
+
+            if (cp >= 32 && cp != 127)
+                ++result.printable;
+
+            if (cp < 32 &&
+                cp != '\t' &&
+                cp != '\r' &&
+                cp != '\n') {
+                ++result.controls;
+            }
+
+            if ((cp >= 0xE000 && cp <= 0xF8FF) ||
+                (cp >= 0xF0000 && cp <= 0xFFFFD) ||
+                (cp >= 0x100000 && cp <= 0x10FFFD)) {
+                ++result.private_use;
+            }
+        }
+
+        return result;
+    }
+
     utf8::DecodeResult utf8::decode_at(std::string_view s, std::size_t i) {
         const auto *p = reinterpret_cast<const unsigned char *>(s.data());
         const std::size_t n = s.size();
@@ -196,5 +252,26 @@ namespace sc {
             0x02DC, 0x2122, 0x0161, 0x203A, 0x0153, 0xFFFD, 0x017E, 0xFFFD
         };
         return table[c - 0x80];
+    }
+
+    std::size_t utf8::replacement_count(std::string_view s) {
+        std::size_t count = 0;
+
+        std::size_t i = 0;
+        while (i < s.size()) {
+            DecodeResult r = decode_at(s, i);
+
+            if (r.valid) {
+                if (r.code_point == kReplacementChar)
+                    ++count;
+
+                i += r.length;
+            } else {
+                ++count;
+                ++i;
+            }
+        }
+
+        return count;
     }
 }

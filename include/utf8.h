@@ -7,9 +7,34 @@
 #include <cstddef>
 
 namespace sc {
+    struct TextAnalysis {
+        std::size_t bytes = 0;
+        std::size_t codepoints = 0;
+
+        std::size_t ascii = 0;
+        std::size_t whitespace = 0;
+        std::size_t printable = 0;
+
+        std::size_t controls = 0;
+        std::size_t replacement = 0;
+        std::size_t private_use = 0;
+
+        bool valid_utf8 = true;
+
+        [[nodiscard]]
+        bool likely_text() const {
+            return valid_utf8 &&
+                   replacement == 0 &&
+                   private_use == 0 &&
+                   (codepoints == 0 ||
+                    (controls * 100 / codepoints) < 5);
+        }
+    };
+
     class utf8 {
     public:
         utf8() = delete; // static-only utility class
+
 
         static constexpr std::size_t npos = static_cast<std::size_t>(-1);
         static constexpr std::uint32_t kReplacementChar = 0xFFFD;
@@ -78,6 +103,9 @@ namespace sc {
                                        std::size_t cp_start,
                                        std::size_t cp_count = npos);
 
+
+        static TextAnalysis analyze(std::string_view s);
+
     private:
         struct DecodeResult {
             bool valid = false;
@@ -95,6 +123,15 @@ namespace sc {
 
         // Windows-1252 mapping for bytes 0x80..0x9F.
         static std::uint32_t cp1252_high(unsigned char c);
+
+
+        static std::size_t replacement_count(std::string_view s);
+
+        static std::size_t control_count(std::string_view s);
+
+        static std::size_t private_use_count(std::string_view s);
+
+        static bool has_private_use(std::string_view s);
     };
 } // namespace sc
 

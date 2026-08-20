@@ -109,7 +109,6 @@ namespace sc {
             if (!request.contains("debug_port")) request["debug_port"] = request["port"].get<int>();
             ollama ai(request["debug_model"].get<string>(), request["debug_server"].get<string>(), request["debug_port"].get<int>());
 #endif
-
             if (request.contains("temperature")) ai.setTemperature(request["temperature"].get<float>());
             if (request.contains("think")) ai.setThink(request["think"].get<bool>());
             if (request.contains("max_tokens")) ai.setMaxTokens(request["max_tokens"].get<int>());
@@ -138,8 +137,8 @@ namespace sc {
                 if (!empty(ai.getFormat())) output["json_error"] = e.what();
                 output["response"] = result;
             }
-            output["ai_metadata"] = json::parse(ai.stats());
-            output["ai_metadata"]["processing_time"] = (string) stopwatch;
+            output["ai_data"] = json::parse(ai.stats());
+            output["ai_data"]["processing_time"] = (string) stopwatch;
         } catch (exception &e) {
             output["error"] = e.what();
         }

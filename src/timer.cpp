@@ -111,5 +111,23 @@ namespace sc {
 #endif
     }
 
+    timer timer::from_nanos(long long ns) {
+        return timer(std::chrono::nanoseconds(ns));
+    }
+
+    timer timer::from_micros(long long us) {
+        return timer(std::chrono::microseconds(us));
+    }
+
+    timer timer::from_millis(long long ms) {
+        return timer(std::chrono::milliseconds(ms));
+    }
+
+    timer::timer(std::chrono::nanoseconds duration) {
+        impl = new impl::timer();
+        impl->taken = duration;
+        impl->stopped = true;
+    }
+
     std::ostream &operator<<(std::ostream &lhs, timer &rhs) { return lhs << static_cast<std::string>(rhs); }
 } // sc

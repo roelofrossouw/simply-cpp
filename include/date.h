@@ -1,6 +1,7 @@
 #ifndef SC_DATE_H
 #define SC_DATE_H
 #include <string>
+#include <ostream>
 
 namespace sc {
     namespace impl {

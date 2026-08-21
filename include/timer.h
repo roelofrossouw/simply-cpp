@@ -36,8 +36,16 @@ namespace sc {
 
         operator std::string();
 
+        static timer from_nanos(long long ns);
+
+        static timer from_micros(long long us);
+
+        static timer from_millis(long long ms);
+
     private:
         impl::timer *impl;
+
+        explicit timer(std::chrono::nanoseconds duration);
 
         template<typename T>
         long long getDuration() const;

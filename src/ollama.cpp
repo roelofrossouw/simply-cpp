@@ -98,9 +98,19 @@ namespace sc {
     }
 
     std::string ollama::process(const std::string &json_request) {
-        json output;
+        json output, request;
+        timer stopwatch;
+
         try {
-            auto request = json::parse(json_request);
+            request = json::parse(json_request);
+        } catch (exception &e) {
+            output["error"] = "Invalid request";
+            output["message"] = e.what();
+            output["ai_data"]["requested_model"] = "Unknown";
+            output["ai_data"]["model"] = "Unknown";
+            return output;
+        }
+        try {
 #ifdef NDEBUG
             ollama ai(request["model"].get<string>(), request["server"].get<string>(), request["port"].get<int>());
 #else
@@ -120,7 +130,6 @@ namespace sc {
             if (request.contains("seed")) ai.setSeed(request["seed"].get<int>());
             if (request.contains("timeout")) ai.setTimeout(request["timeout"].get<int>());
             ai.setFormat(request["schema"].dump());
-            timer stopwatch;
             vector<string> images;
             if (request.contains("images")) images = request["images"].get<vector<std::string> >();
             auto instructions = request["instruction"].get<string>();
@@ -138,10 +147,48 @@ namespace sc {
                 output["response"] = result;
             }
             output["ai_data"] = json::parse(ai.stats());
-            output["ai_data"]["processing_time"] = (string) stopwatch;
+            try {
+                if (output["ai_data"].contains("total_duration"))
+                    output["ai_data"]["total_duration"] = (string) timer::from_nanos(output["ai_data"]["total_duration"].get<long long>());
+                if (output["ai_data"].contains("load_duration"))
+                    output["ai_data"]["load_duration"] = (string) timer::from_nanos(output["ai_data"]["load_duration"].get<long long>());
+                if (output["ai_data"].contains("prompt_eval_duration"))
+                    output["ai_data"]["prompt_eval_duration"] = (string) timer::from_nanos(output["ai_data"]["prompt_eval_duration"].get<long long>());
+                if (output["ai_data"].contains("eval_duration"))
+                    output["ai_data"]["eval_duration"] = (string) timer::from_nanos(output["ai_data"]["eval_duration"].get<long long>());
+            } catch (exception &e) {
+                output["ai_data"]["stats_error"] = e.what();
+            }
+#ifdef NDEBUG
+            output["ai_data"]["server"] = request["server"].get<string>();
+            output["ai_data"]["requested_model"] = request["model"].get<string>();
+            output["ai_data"]["debug"] = false;
+#else
+            if (!request.contains("debug_server")) request["debug_server"] = request["server"].get<std::string>();
+            output["ai_data"]["server"] = request["debug_server"].get<string>();
+            output["ai_data"]["requested_model"] = request["debug_model"].get<string>();
+            output["ai_data"]["debug"] = true;
+#endif
         } catch (exception &e) {
+            try {
+#ifdef NDEBUG
+                output["ai_data"]["requested_model"] = request["model"].get<string>();
+                output["ai_data"]["model"] = "Unknown";
+                output["ai_data"]["server"] = request["server"].get<string>();
+#else
+                if (!request.contains("debug_model")) request["debug_model"] = request["model"].get<std::string>();
+                if (!request.contains("debug_server")) request["debug_server"] = request["server"].get<std::string>();
+                output["ai_data"]["requested_model"] = request["debug_model"].get<string>();
+                output["ai_data"]["model"] = "Unknown";
+                output["ai_data"]["server"] = request["debug_server"].get<string>();
+                output["ai_data"]["debug"] = true;
+#endif
+            } catch (exception &e) {
+                output["ai_data"]["model"] = "Unknown";
+            }
             output["error"] = e.what();
         }
+        output["ai_data"]["processing_time"] = (string) stopwatch;
         return output.dump(2);
     }
 }

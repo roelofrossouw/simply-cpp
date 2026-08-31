@@ -1,6 +1,4 @@
 #include <iostream>
-#include <nlohmann/json_fwd.hpp>
-
 #include "sc.h"
 
 using namespace std;

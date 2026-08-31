@@ -10,73 +10,91 @@ namespace sc {
 
     std::map<std::string, std::string> rest::fetch_cache;
 
+
     rest::rest(const std::string &url) : url_(url) {
         headers_["Content-Type"] = "application/json";
     }
 
+    namespace impl {
+        class curl {
+        public:
+            curl() : curl_(curl_easy_init()) {
+            }
+
+            bool run() {
+                if (!curl_) {
+                    last_error_ = "No connection available";
+                    return false;
+                }
+                last_result = curl_easy_perform(curl_);
+                last_error_ = curl_easy_strerror(last_result);
+                return last_result == CURLE_OK;
+            }
+
+            std::string last_error() {
+                return last_error_;
+            }
+
+            void option(const CURLoption option, const std::string &value) const {
+                if (!curl_) return;
+                curl_easy_setopt(curl_, option, value.c_str());
+            }
+
+            template<typename T>
+            void option(const CURLoption option, const T &value) const {
+                if (!curl_) return;
+                curl_easy_setopt(curl_, option, value);
+            }
+
+            ~curl() {
+                if (headers_) curl_slist_free_all(headers_);
+                if (curl_) curl_easy_cleanup(curl_);
+            }
+
+            void headers(const std::map<std::string, std::string> &header_map) {
+                for (const auto &[fst, snd]: header_map) {
+                    headers_ = curl_slist_append(headers_, (fst + ": " + snd).c_str());
+                }
+                if (headers_) option(CURLOPT_HTTPHEADER, headers_);
+            }
+
+        private:
+            CURL *curl_{nullptr};
+            curl_slist *headers_{nullptr};
+            CURLcode last_result{CURLE_FAILED_INIT};
+            std::string last_error_{};
+        };
+    }
+
+
+    bool rest::setup_curl(impl::curl &conn) {
+        conn.option(CURLOPT_URL, url_.c_str());
+        conn.option(CURLOPT_CONNECTTIMEOUT, connect_timeout_secs_);
+        conn.option(CURLOPT_TIMEOUT, timeout_secs_);
+        conn.headers(headers_);
+        conn.option(CURLOPT_WRITEFUNCTION, write_data);
+        conn.option(CURLOPT_WRITEDATA, &response);
+        return true;
+    }
+
     std::string rest::get() {
-        CURL *curl = curl_easy_init();
-        if (!curl) {
-            response = "";
-            return response;
-        }
-
-        curl_easy_setopt(curl, CURLOPT_URL, url_.c_str());
-        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, connect_timeout_secs_);
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout_secs_);
-
-        curl_slist *headers = nullptr;
-        for (auto &hdr: headers_) {
-            headers = curl_slist_append(headers, (hdr.first + ": " + hdr.second).c_str());
-        }
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-
-        CURLcode res = curl_easy_perform(curl);
-
-        if (res != CURLE_OK) {
-            std::cerr << "Request failed: " << curl_easy_strerror(res) << std::endl;
+        impl::curl conn;
+        setup_curl(conn);
+        if (!conn.run()) {
+            std::cerr << "Request failed: " << conn.last_error() << std::endl;
             response = "";
         }
-
-        curl_slist_free_all(headers);
-        curl_easy_cleanup(curl);
-
         return response;
     }
 
     std::string rest::post(const std::string &jsonData) {
-        CURL *curl = curl_easy_init();
-        if (!curl) {
-            response = "";
-            return response;
+        impl::curl conn;
+        setup_curl(conn);
+        conn.option(CURLOPT_POSTFIELDS, jsonData.c_str());
+        if (!conn.run()) {
+            std::cerr << "Request failed: " << conn.last_error() << std::endl;
+            response = std::string(R"({"error": ")") + conn.last_error() + R"("})";
         }
-
-        curl_easy_setopt(curl, CURLOPT_URL, url_.c_str());
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, jsonData.c_str());
-        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, connect_timeout_secs_);
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout_secs_);
-
-        curl_slist *headers = nullptr;
-        headers = curl_slist_append(headers, "Content-Type: application/json");
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-
-        CURLcode res = curl_easy_perform(curl);
-
-        // if (res == CURLE_OPERATION_TIMEDOUT) {
-        //     response = R"({"error": "request timed out"})";
-        // } else
-        if (res != CURLE_OK) {
-            std::cerr << "Request failed: " << curl_easy_strerror(res) << std::endl;
-            response = std::string(R"({"error": ")") + curl_easy_strerror(res) + R"("})";
-        }
-
-        curl_slist_free_all(headers);
-        curl_easy_cleanup(curl);
-
         return response;
     }
 
@@ -121,9 +139,5 @@ namespace sc {
 
         fetch_cache[url] = content;
         return fetch_cache[url];
-
-        // rest rest(url);
-        // fetch_cache[url] = rest.get();
-        // return fetch_cache[url];
     }
 }

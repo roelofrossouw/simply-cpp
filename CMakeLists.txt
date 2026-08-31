@@ -7,7 +7,19 @@ endif ()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set(SC_VERSION 1.0.6)
+
+execute_process(
+        COMMAND git describe --tags --abbrev=0
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE PROJECT_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+string(REGEX REPLACE "^v" "" PROJECT_VERSION "${PROJECT_VERSION}")
+set(SC_VERSION 1.0.7)
+
+message(STATUS "Project Version: ${PROJECT_VERSION}")
+message(STATUS "SC Version: ${SC_VERSION}")
+
 
 # Settings
 option(ADD_POSTGRESQL "Add the postgresql db module" OFF)

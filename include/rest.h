@@ -3,8 +3,15 @@
 
 #include <string>
 #include <map>
+#include <memory>
+
+struct curl_slist;
 
 namespace sc {
+    namespace impl {
+        class curl;
+    }
+
     /**
      * @class rest
      * @brief A class to handle HTTP REST operations such as GET and POST requests.
@@ -16,6 +23,8 @@ namespace sc {
     class rest {
     public:
         explicit rest(const std::string &url);
+
+        bool setup_curl(impl::curl &conn) const;
 
         /**
          * @brief Sends an HTTP GET request to the specified URL and retrieves the server response.
@@ -62,9 +71,10 @@ namespace sc {
         long timeout_secs_ = 30;
         std::map<std::string, std::string> parameters;
         std::map<std::string, std::string> headers_;
-        std::string response;
-
+        mutable std::string response{};
         static std::map<std::string, std::string> fetch_cache;
+
+        bool setup_curl(impl::curl &conn);
     };
 }
 

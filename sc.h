@@ -19,6 +19,7 @@
 #include <include/rect.h>
 #include <include/ollama.h>
 #include <include/dual.h>
+#include <include/ip_address.h>
 
 // Some common functions simplifying STL
 namespace sc {

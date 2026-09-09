@@ -5,44 +5,52 @@
 #include <numeric>
 #include <ostream>
 
-namespace {
+namespace
+{
     // Minimal union-find with path halving.
-    struct dsu {
+    struct dsu
+    {
         std::vector<size_t> parent;
 
-        explicit dsu(const size_t n) : parent(n) {
+        explicit dsu(const size_t n) : parent(n)
+        {
             std::iota(parent.begin(), parent.end(), size_t{0});
         }
 
-        size_t find(size_t a) {
+        size_t find(size_t a)
+        {
             while (parent[a] != a) a = parent[a] = parent[parent[a]];
             return a;
         }
 
-        void unite(const size_t a, const size_t b) {
+        void unite(const size_t a, const size_t b)
+        {
             parent[find(a)] = find(b);
         }
     };
 
     // Assemble (union-rect, member-indices) groups from a linkage predicate.
-    template<typename Linked>
-    std::vector<std::pair<sc::rect, std::vector<size_t> > >
-    components(const std::vector<sc::rect> &boxes, Linked &&linked) {
+    template <typename Linked, typename T>
+    std::vector<std::pair<sc::rect_<T>, std::vector<size_t>>>
+    components(const std::vector<sc::rect_<T>>& boxes, Linked&& linked)
+    {
         const size_t n = boxes.size();
         dsu ds(n);
         for (size_t i = 0; i < n; ++i)
             for (size_t j = i + 1; j < n; ++j)
                 if (linked(boxes[i], boxes[j])) ds.unite(i, j);
 
-        std::vector<std::pair<sc::rect, std::vector<size_t> > > groups;
+        std::vector<std::pair<sc::rect_<T>, std::vector<size_t>>> groups;
         std::vector<long> slot(n, -1); // root index -> position in groups
-        for (size_t i = 0; i < n; ++i) {
+        for (size_t i = 0; i < n; ++i)
+        {
             const size_t root = ds.find(i);
-            if (slot[root] < 0) {
+            if (slot[root] < 0)
+            {
                 slot[root] = static_cast<long>(groups.size());
                 groups.emplace_back(boxes[i], std::vector<size_t>{});
             }
-            auto &[bbox, members] = groups[static_cast<size_t>(slot[root])];
+            auto& [bbox, members] = groups[static_cast<size_t>(slot[root])];
             bbox.include(boxes[i]);
             members.push_back(i);
         }
@@ -50,39 +58,58 @@ namespace {
     }
 } // namespace
 
-namespace sc {
-    rect::rect(const double left, const double top, const double width, const double height)
-        : x(left), y(top), w(std::max(0.0, width)), h(std::max(0.0, height)) {
+namespace sc
+{
+    template <typename T>
+    rect_<T>::rect_(const T left, const T top, const T width, const T height)
+        : x(left), y(top), w(std::max(static_cast<T>(0), width)), h(std::max(static_cast<T>(0), height))
+    {
     }
 
-    rect::rect() : x(0), y(0), w(0), h(0) {
+    template <typename T>
+    rect_<T>::rect_() : x(0), y(0), w(0), h(0)
+    {
     }
 
-    double rect::left() const {
+    template <typename T>
+    T rect_<T>::left() const
+    {
         return x;
     }
 
-    double rect::top() const {
+    template <typename T>
+    T rect_<T>::top() const
+    {
         return y;
     }
 
-    double rect::width() const {
+    template <typename T>
+    T rect_<T>::width() const
+    {
         return w;
     }
 
-    double rect::height() const {
+    template <typename T>
+    T rect_<T>::height() const
+    {
         return h;
     }
 
-    double rect::right() const {
+    template <typename T>
+    T rect_<T>::right() const
+    {
         return x + w;
     }
 
-    double rect::bottom() const {
+    template <typename T>
+    T rect_<T>::bottom() const
+    {
         return y + h;
     }
 
-    rect &rect::operator+=(const rect &rhs) {
+    template <typename T>
+    rect_<T>& rect_<T>::operator+=(const rect_& rhs)
+    {
         x += rhs.x;
         y += rhs.y;
         w += rhs.w;
@@ -90,125 +117,170 @@ namespace sc {
         return *this;
     }
 
-    rect &rect::operator-=(const rect &rhs) {
+    template <typename T>
+    rect_<T>& rect_<T>::operator-=(const rect_& rhs)
+    {
         x -= rhs.x;
         y -= rhs.y;
-        w = std::max(0.0, w - rhs.w);
-        h = std::max(0.0, h - rhs.h);
+        w = std::max(static_cast<T>(0), w - rhs.w);
+        h = std::max(static_cast<T>(0), h - rhs.h);
         return *this;
     }
 
-    rect rect::operator+(const int i) const {
+    template <typename T>
+    rect_<T> rect_<T>::operator+(const T i) const
+    {
         return {x - i, y - i, w + i + i, h + i + i};
     }
 
-    rect rect::operator+(const rect &r) const {
+    template <typename T>
+    rect_<T> rect_<T>::operator+(const rect_& r) const
+    {
         return {x + r.x, y + r.y, w + r.w, h + r.h};
     }
 
-    rect rect::operator-(const int i) const {
+    template <typename T>
+    rect_<T> rect_<T>::operator-(const T i) const
+    {
         return {x + i, y + i, w - i - i, h - i - i};
     }
 
-    double rect::middle() const {
+    template <typename T>
+    T rect_<T>::middle() const
+    {
         return y + h / 2;
     }
 
-    double rect::center() const {
+    template <typename T>
+    T rect_<T>::center() const
+    {
         return x + w / 2;
     }
 
-    bool rect::operator<(const rect &r) const {
+    template <typename T>
+    bool rect_<T>::operator<(const rect_& r) const
+    {
         return x < r.x || (x == r.x && y < r.y);
     }
 
-    bool rect::operator^(const rect &r) const {
+    template <typename T>
+    bool rect_<T>::operator^(const rect_& r) const
+    {
         return y < r.y || (y == r.y && x < r.x);
     }
 
-    double rect::area() const {
+    template <typename T>
+    T rect_<T>::area() const
+    {
         return w * h;
     }
 
-    rect rect::intersect(const rect &rhs) const {
-        const double x0 = std::max(x, rhs.left());
-        const double y0 = std::max(y, rhs.top());
+    template <typename T>
+    rect_<T> rect_<T>::intersect(const rect_& rhs) const
+    {
+        const T x0 = std::max(x, rhs.left());
+        const T y0 = std::max(y, rhs.top());
         return {x0, y0, std::min(right(), rhs.right()) - x0, std::min(bottom(), rhs.bottom()) - y0};
     }
 
-    rect rect::from_points(const double left, const double top, const double right, const double bottom) {
+    template <typename T>
+    rect_<T> rect_<T>::from_points(const T left, const T top, const T right, const T bottom)
+    {
         return {left, top, right - left, bottom - top};
     }
 
-    rect rect::centroid() const {
-        return {center(), middle(), 0, 0};
+    template <typename T>
+    rect_<T> rect_<T>::centroid() const
+    {
+        return {center(), middle()};
     }
 
-    double rect::iou(const rect &rhs) const {
-        const double interArea = intersect(rhs).area();
-        if (interArea == 0.0) return 0.0;
-        const double unionArea = area() + rhs.area() - interArea;
-        if (unionArea == 0.0) return 0.0;
+    template <typename T>
+    double rect_<T>::iou(const rect_& rhs) const
+    {
+        const T interArea = intersect(rhs).area();
+        if (interArea == T{}) return {};
+        const T unionArea = area() + rhs.area() - interArea;
+        if (unionArea == T{}) return {};
         return interArea / unionArea;
     }
 
-    void rect::include(const rect &rhs) {
+    template <typename T>
+    void rect_<T>::include(const rect_& rhs)
+    {
         w = std::max(right(), rhs.right()) - std::min(x, rhs.x);
         h = std::max(bottom(), rhs.bottom()) - std::min(y, rhs.y);
         x = std::min(x, rhs.x);
         y = std::min(y, rhs.y);
     }
 
-    double rect::distance(const double cx, const double cy) const {
-        const double dx = std::max({left() - cx, 0.0, cx - right()});
-        const double dy = std::max({top() - cy, 0.0, cy - bottom()});
+    template <typename T>
+    T rect_<T>::distance(const T cx, const T cy) const
+    {
+        const T dx = std::max({left() - cx, static_cast<T>(0), cx - right()});
+        const T dy = std::max({top() - cy, static_cast<T>(0), cy - bottom()});
         if (dx == 0 && dy == 0) return 0;
         return std::hypot(dx, dy);
     }
 
-    double rect::gap_x(const rect &rhs) const {
-        return std::max({left() - rhs.right(), rhs.left() - right(), 0.0});
+    template <typename T>
+    T rect_<T>::gap_x(const rect_& rhs) const
+    {
+        return std::max({left() - rhs.right(), rhs.left() - right(), static_cast<T>(0)});
     }
 
-    double rect::gap_y(const rect &rhs) const {
-        return std::max({top() - rhs.bottom(), rhs.top() - bottom(), 0.0});
+    template <typename T>
+    T rect_<T>::gap_y(const rect_& rhs) const
+    {
+        return std::max({top() - rhs.bottom(), rhs.top() - bottom(), static_cast<T>(0)});
     }
 
-    bool rect::overlaps_x(const rect &rhs) const {
-        return gap_x(rhs) == 0.0;
+    template <typename T>
+    bool rect_<T>::overlaps_x(const rect_& rhs) const
+    {
+        return gap_x(rhs) == T{};
     }
 
-    bool rect::overlaps_y(const rect &rhs) const {
-        return gap_y(rhs) == 0.0;
+    template <typename T>
+    bool rect_<T>::overlaps_y(const rect_& rhs) const
+    {
+        return gap_y(rhs) == T{};
     }
 
-    double rect::distance(const rect &rhs) const {
-        const double dx = gap_x(rhs);
-        const double dy = gap_y(rhs);
+    template <typename T>
+    T rect_<T>::distance(const rect_& rhs) const
+    {
+        const T dx = gap_x(rhs);
+        const T dy = gap_y(rhs);
         if (dx == 0 && dy == 0) return 0;
         return std::hypot(dx, dy);
     }
 
-    std::ostream &operator<<(std::ostream &lhs, const sc::rect &rhs) {
-        lhs << "(" << rhs.x << "," << rhs.y << ")x[" << rhs.w << "," << rhs.h << "]";
-        return lhs;
-    }
-
-    std::vector<std::pair<rect, std::vector<size_t> > > rect::group(
-        const std::vector<rect> &boxes, const double min_iou, const double max_dist) {
+    template <typename T>
+    std::vector<std::pair<rect_<T>, std::vector<size_t>>> rect_<T>::group(
+        const std::vector<rect_>& boxes, const T min_iou, const T max_dist)
+    {
         if (boxes.empty()) return {};
-        return components(boxes, [min_iou, max_dist](const rect &a, const rect &b) {
-            if (min_iou < 1 && a.iou(b) > min_iou) return true;          // min_iou == 1 disables
-            if (max_dist >= 0 && a.distance(b) < max_dist) return true;  // max_dist < 0 disables
+        return components(boxes, [min_iou, max_dist](const rect_& a, const rect_& b)
+        {
+            if (min_iou < 1 && a.iou(b) > min_iou) return true; // min_iou == 1 disables
+            if (max_dist >= 0 && a.distance(b) < max_dist) return true; // max_dist < 0 disables
             return false;
         });
     }
 
-    std::vector<std::pair<rect, std::vector<size_t> > > rect::group_adjacent(
-        const std::vector<rect> &boxes, const double max_dx, const double max_dy) {
+    template <typename T>
+    std::vector<std::pair<rect_<T>, std::vector<size_t>>> rect_<T>::group_adjacent(
+        const std::vector<rect_>& boxes, const T max_dx, const T max_dy)
+    {
         if (boxes.empty()) return {};
-        return components(boxes, [max_dx, max_dy](const rect &a, const rect &b) {
+        return components(boxes, [max_dx, max_dy](const rect_& a, const rect_& b)
+        {
             return a.gap_x(b) < max_dx && a.gap_y(b) < max_dy;
         });
     }
 }
+
+template class sc::rect_<int>;
+template class sc::rect_<float>;
+template class sc::rect_<double>;

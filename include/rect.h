@@ -1,93 +1,119 @@
 #ifndef SC_RECT_H
 #define SC_RECT_H
 
-#include <iosfwd>
+#include <ostream>
 #include <vector>
 
-namespace sc {
-    class rect {
+namespace sc
+{
+    template <typename T>
+    class rect_
+    {
     public:
-        rect(double left, double top, double width = 0, double height = 0);
+        rect_(T left, T top, T width = 0, T height = 0);
 
-        rect();
+        template <typename U1, typename U2, typename U3, typename U4>
+            requires (std::convertible_to<U1, T> && std::convertible_to<U2, T>
+                && std::convertible_to<U3, T> && std::convertible_to<U4, T>)
+        rect_(U1 left, U2 top, U3 width = 0, U4 height = 0)
+            : rect_(static_cast<T>(left), static_cast<T>(top), static_cast<T>(width), static_cast<T>(height))
+        {
+        }
 
-        [[nodiscard]] double left() const;
+        rect_();
 
-        [[nodiscard]] double bottom() const;
+        [[nodiscard]] T left() const;
 
-        [[nodiscard]] double width() const;
+        [[nodiscard]] T bottom() const;
 
-        [[nodiscard]] double height() const;
+        [[nodiscard]] T width() const;
 
-        [[nodiscard]] double right() const;
+        [[nodiscard]] T height() const;
 
-        [[nodiscard]] double top() const;
+        [[nodiscard]] T right() const;
 
-        rect &operator+=(const rect &rhs);
+        [[nodiscard]] T top() const;
 
-        rect &operator-=(const rect &rhs);
+        rect_& operator+=(const rect_& rhs);
 
-        rect operator+(int i) const;
+        rect_& operator-=(const rect_& rhs);
 
-        rect operator+(const rect &r) const;
+        rect_ operator+(T i) const;
 
-        rect operator-(int i) const;
+        template <typename U>
+            requires std::convertible_to<U, T>
+        rect_ operator+(U i) const { return *this + static_cast<T>(i); }
 
-        [[nodiscard]] double middle() const;
+        rect_ operator+(const rect_& r) const;
 
-        [[nodiscard]] double center() const;
+        rect_ operator-(T i) const;
 
-        bool operator<(const rect &r) const;
+        template <typename U>
+            requires std::convertible_to<U, T>
+        rect_ operator-(U i) const { return *this - static_cast<T>(i); }
 
-        bool operator^(const rect &r) const;
+        [[nodiscard]] T middle() const;
 
-        friend std::ostream &operator<<(std::ostream &lhs, const sc::rect &rhs);
+        [[nodiscard]] T center() const;
 
-        [[nodiscard]] double area() const;
+        bool operator<(const rect_& r) const;
 
-        [[nodiscard]] double iou(const rect &rhs) const;
+        bool operator^(const rect_& r) const;
 
-        void include(const rect &rhs);
+        friend std::ostream& operator<<(std::ostream& lhs, const rect_& rhs)
+        {
+            return lhs << "(" << rhs.x << "," << rhs.y << ")x[" << rhs.w << "," << rhs.h << "]";
+        }
 
-        [[nodiscard]] double distance(double cx, double cy) const;
+        [[nodiscard]] T area() const;
+
+        [[nodiscard]] double iou(const rect_& rhs) const;
+
+        void include(const rect_& rhs);
+
+        [[nodiscard]] T distance(T cx, T cy) const;
 
         // Exact minimum distance between the two boxes (0 if they touch/overlap).
         // Symmetric: a.distance(b) == b.distance(a).
-        [[nodiscard]] double distance(const rect &rhs) const;
+        [[nodiscard]] T distance(const rect_& rhs) const;
 
         // Horizontal gap between x-ranges (0 if they overlap on x).
-        [[nodiscard]] double gap_x(const rect &rhs) const;
+        [[nodiscard]] T gap_x(const rect_& rhs) const;
 
         // Vertical gap between y-ranges (0 if they overlap on y).
-        [[nodiscard]] double gap_y(const rect &rhs) const;
+        [[nodiscard]] T gap_y(const rect_& rhs) const;
 
-        [[nodiscard]] bool overlaps_x(const rect &rhs) const;
+        [[nodiscard]] bool overlaps_x(const rect_& rhs) const;
 
-        [[nodiscard]] bool overlaps_y(const rect &rhs) const;
+        [[nodiscard]] bool overlaps_y(const rect_& rhs) const;
 
-        [[nodiscard]] rect intersect(const rect &rhs) const;
+        [[nodiscard]] rect_ intersect(const rect_& rhs) const;
 
-        static rect from_points(double left, double top, double right, double bottom);
+        static rect_ from_points(T left, T top, T right, T bottom);
 
-        [[nodiscard]] rect centroid() const;
+        [[nodiscard]] rect_ centroid() const;
 
         // Connected-component grouping (union-find, order-independent).
         // Boxes i and j are linked when iou > min_iou (min_iou == 1 disables)
         // OR box-to-box distance < max_dist (max_dist < 0 disables).
         // Group rect is the union of its members.
-        static std::vector<std::pair<rect, std::vector<size_t> > > group(
-            const std::vector<rect> &boxes, double min_iou = 0, double max_dist = 0);
+        static std::vector<std::pair<rect_, std::vector<size_t>>> group(
+            const std::vector<rect_>& boxes, T min_iou = 0, T max_dist = 0);
 
         // Document-layout grouping with per-axis thresholds: boxes are linked when
         // gap_x < max_dx AND gap_y < max_dy. Use a strict max_dx (~1 char width) and
         // a generous max_dy (~1.5 line heights) so paragraphs merge vertically
         // without welding adjacent columns.
-        static std::vector<std::pair<rect, std::vector<size_t> > > group_adjacent(
-            const std::vector<rect> &boxes, double max_dx, double max_dy);
+        static std::vector<std::pair<rect_, std::vector<size_t>>> group_adjacent(
+            const std::vector<rect_>& boxes, T max_dx, T max_dy);
 
     protected:
-        double x, y, w, h;
+        T x, y, w, h;
     };
+
+    using rect = rect_<double>;
+    using rect_i = rect_<int>;
+    using rect_f = rect_<float>;
 } // sc
 
 #endif //SC_RECT_H

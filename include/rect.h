@@ -1,26 +1,206 @@
-#ifndef SC_RECT_H
-#define SC_RECT_H
-
-#include <ostream>
+#pragma once
+#include <algorithm>
+#include <concepts>
 #include <vector>
+#include <ostream>
 
 namespace sc
 {
     template <typename T>
+    concept Numeric = std::same_as<T, int> || std::same_as<T, double>;
+    // concept Numeric = std::is_integral_v<T> || std::is_floating_point_v<T>;
+
+    template <typename Derived, Numeric T>
+    class pair_
+    {
+    public:
+        pair_(const T& x = 0, const T& y = 0);
+
+        template <typename U1, typename U2> requires (std::convertible_to<U1, T> && std::convertible_to<U2, T>)
+        pair_(U1 x, U2 y) : pair_(static_cast<T>(x), static_cast<T>(y))
+        {
+        }
+
+        template <typename U, typename V>
+        operator pair_<U, V>() const { return {x_, y_}; }
+
+        operator Derived() { return {x_, y_}; }
+
+        bool operator==(const pair_&) const = default;
+
+        // + operators...
+        Derived operator +=(const pair_& r)
+        {
+            x_ += r.x_;
+            y_ += r.y_;
+            return *this;
+        }
+
+        Derived operator+(const pair_& r) const
+        {
+            auto tmp = *this;
+            return tmp += r;
+        }
+
+        template <Numeric U>
+        Derived operator+=(const U& r)
+        {
+            return *this += {r, r};
+        }
+
+        template <Numeric U>
+        Derived operator+(const U& r) const
+        {
+            auto tmp = *this;
+            return tmp += r;
+        }
+
+        // - operators...
+        Derived operator -=(const pair_& r)
+        {
+            x_ -= r.x_;
+            y_ -= r.y_;
+            return *this;
+        }
+
+        Derived operator-(const pair_& r) const
+        {
+            auto tmp = *this;
+            return tmp -= r;
+        }
+
+        template <Numeric U>
+        Derived operator-=(const U& r)
+        {
+            return *this -= {r, r};
+        }
+
+        template <Numeric U>
+        Derived operator-(const U& r) const
+        {
+            auto tmp = *this;
+            return tmp -= r;
+        }
+
+        // * operators...
+        Derived operator *=(const pair_& r)
+        {
+            x_ *= r.x_;
+            y_ *= r.y_;
+            return *this;
+        }
+
+        Derived operator*(const pair_& r) const
+        {
+            auto tmp = *this;
+            return tmp *= r;
+        }
+
+        template <Numeric U>
+        Derived operator*=(const U& r)
+        {
+            return *this *= {r, r};
+        }
+
+        template <Numeric U>
+        Derived operator*(const U& r) const
+        {
+            auto tmp = *this;
+            return tmp += r;
+        }
+
+        // / operators...
+        Derived operator /=(const pair_& r)
+        {
+            x_ /= r.x_;
+            y_ /= r.y_;
+            return *this;
+        }
+
+        Derived operator/(const pair_& r) const
+        {
+            auto tmp = *this;
+            return tmp /= r;
+        }
+
+        template <Numeric U>
+        Derived operator/=(const U& r)
+        {
+            return *this /= {r, r};
+        }
+
+        template <Numeric U>
+        Derived operator/(const U& r) const
+        {
+            auto tmp = *this;
+            return tmp /= r;
+        }
+
+    protected:
+        T x_, y_;
+
+        void validate()
+        {
+            if constexpr (requires(Derived& d) { d.on_validate(); })
+                static_cast<Derived*>(this)->on_validate();
+        }
+
+    private:
+        template <typename A, typename B> requires (!std::same_as<A, Derived> || !std::same_as<B, T>)
+        friend bool operator==(const pair_& a, const pair_<A, B>& b)
+        {
+            return a == static_cast<pair_>(b);
+        }
+    };
+
+    template <typename T>
+    class point_ : public pair_<point_<T>, T>
+    {
+    public:
+        using pair_<point_<T>, T>::pair_;
+        T x() const { return this->x_; }
+        T y() const { return this->y_; }
+
+    private:
+        friend std::ostream& operator<<(std::ostream& lhs, const point_& rhs)
+        {
+            return lhs << "(" << rhs.x_ << "," << rhs.y_ << ")";
+        }
+    };
+
+    template <typename T>
+    class size_ : public pair_<size_<T>, T>
+    {
+    public:
+        using pair_<size_<T>, T>::pair_;
+        T width() const;
+        T height() const { return this->y_; }
+        T area() const { return width() * height(); }
+        friend class pair_<size_, T>;
+
+    private:
+        void on_validate();
+
+        friend std::ostream& operator<<(std::ostream& lhs, const size_& rhs)
+        {
+            return lhs << "[" << rhs.x_ << "," << rhs.y_ << "]";
+        }
+    };
+
+    template <typename T>
     class rect_
     {
     public:
-        rect_(T left, T top, T width = 0, T height = 0);
+        rect_(T left = 0, T top = 0, T width = 0, T height = 0);
+        rect_(point_<T> origin, size_<T> size);
 
         template <typename U1, typename U2, typename U3, typename U4>
             requires (std::convertible_to<U1, T> && std::convertible_to<U2, T>
                 && std::convertible_to<U3, T> && std::convertible_to<U4, T>)
-        rect_(U1 left, U2 top, U3 width = 0, U4 height = 0)
+        rect_(U1 left = 0, U2 top = 0, U3 width = 0, U4 height = 0)
             : rect_(static_cast<T>(left), static_cast<T>(top), static_cast<T>(width), static_cast<T>(height))
         {
         }
-
-        rect_();
 
         [[nodiscard]] T left() const;
 
@@ -35,26 +215,32 @@ namespace sc
         [[nodiscard]] T top() const;
 
         rect_& operator+=(const rect_& rhs);
-
         rect_& operator-=(const rect_& rhs);
+        rect_& operator+=(const T& i);
+        rect_& operator-=(const T& i);
 
-        rect_ operator+(T i) const;
+        template <typename U> requires std::convertible_to<U, T>
+        rect_& operator+=(const U& i) { return *this += static_cast<T>(i); }
 
-        template <typename U>
-            requires std::convertible_to<U, T>
-        rect_ operator+(U i) const { return *this + static_cast<T>(i); }
+        template <typename U> requires std::convertible_to<U, T>
+        rect_& operator-=(const U& i) { return *this -= static_cast<T>(i); }
+
+        rect_& operator*=(const size_<double>& rhs);
 
         rect_ operator+(const rect_& r) const;
+        rect_ operator+(const T& i) const;
 
-        rect_ operator-(T i) const;
+        template <typename U> requires std::convertible_to<U, T>
+        rect_ operator+(U i) const { return *this + static_cast<T>(i); }
 
-        template <typename U>
-            requires std::convertible_to<U, T>
+        rect_ operator-(const rect_& r) const;
+        rect_ operator-(const T& i) const;
+
+        template <typename U> requires std::convertible_to<U, T>
         rect_ operator-(U i) const { return *this - static_cast<T>(i); }
 
-        [[nodiscard]] T middle() const;
-
-        [[nodiscard]] T center() const;
+        [[nodiscard]] point_<T> center() const;
+        [[nodiscard]] size_<T> size() const;
 
         bool operator<(const rect_& r) const;
 
@@ -62,7 +248,7 @@ namespace sc
 
         friend std::ostream& operator<<(std::ostream& lhs, const rect_& rhs)
         {
-            return lhs << "(" << rhs.x << "," << rhs.y << ")x[" << rhs.w << "," << rhs.h << "]";
+            return lhs << rhs.origin_ << "x" << rhs.size_;
         }
 
         [[nodiscard]] T area() const;
@@ -91,8 +277,6 @@ namespace sc
 
         static rect_ from_points(T left, T top, T right, T bottom);
 
-        [[nodiscard]] rect_ centroid() const;
-
         // Connected-component grouping (union-find, order-independent).
         // Boxes i and j are linked when iou > min_iou (min_iou == 1 disables)
         // OR box-to-box distance < max_dist (max_dist < 0 disables).
@@ -108,12 +292,15 @@ namespace sc
             const std::vector<rect_>& boxes, T max_dx, T max_dy);
 
     protected:
-        T x, y, w, h;
+        point_<T> origin_;
+        size_<T> size_;
     };
 
+    // Aliases...
+    using point = point_<double>;
+    using point_i = point_<int>;
+    using size = size_<double>;
+    using size_i = size_<int>;
     using rect = rect_<double>;
     using rect_i = rect_<int>;
-    using rect_f = rect_<float>;
 } // sc
-
-#endif //SC_RECT_H

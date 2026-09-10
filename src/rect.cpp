@@ -60,139 +60,147 @@ namespace
 
 namespace sc
 {
+    template <typename Derived, Numeric T>
+    pair_<Derived, T>::pair_(const T& x, const T& y) : x_(x), y_(y)
+    {
+        validate();
+    }
+
     template <typename T>
-    rect_<T>::rect_(const T left, const T top, const T width, const T height)
-        : x(left), y(top), w(std::max(static_cast<T>(0), width)), h(std::max(static_cast<T>(0), height))
+    T size_<T>::width() const
+    {
+        return this->x_;
+    }
+
+    template <typename T>
+    void size_<T>::on_validate()
+    {
+        this->x_ = std::max(T{0}, this->x_);
+        this->y_ = std::max(T{0}, this->y_);
+    }
+
+    template <typename T>
+    rect_<T>::rect_(const T left, const T top, const T width, const T height) : origin_(left, top), size_(width, height)
     {
     }
 
     template <typename T>
-    rect_<T>::rect_() : x(0), y(0), w(0), h(0)
+    rect_<T>::rect_(point_<T> origin, ::sc::size_<T> size) : origin_(origin), size_(size)
     {
     }
 
     template <typename T>
-    T rect_<T>::left() const
-    {
-        return x;
-    }
+    T rect_<T>::left() const { return origin_.x(); }
 
     template <typename T>
-    T rect_<T>::top() const
-    {
-        return y;
-    }
+    T rect_<T>::bottom() const { return top() + height(); }
 
     template <typename T>
-    T rect_<T>::width() const
-    {
-        return w;
-    }
+    T rect_<T>::width() const { return size_.width(); }
 
     template <typename T>
-    T rect_<T>::height() const
-    {
-        return h;
-    }
+    T rect_<T>::height() const { return size_.height(); }
 
     template <typename T>
-    T rect_<T>::right() const
-    {
-        return x + w;
-    }
+    T rect_<T>::right() const { return left() + width(); }
 
     template <typename T>
-    T rect_<T>::bottom() const
-    {
-        return y + h;
-    }
+    T rect_<T>::top() const { return origin_.y(); }
 
     template <typename T>
     rect_<T>& rect_<T>::operator+=(const rect_& rhs)
     {
-        x += rhs.x;
-        y += rhs.y;
-        w += rhs.w;
-        h += rhs.h;
+        origin_ += rhs.origin_;
+        size_ += rhs.size_;
         return *this;
     }
 
     template <typename T>
     rect_<T>& rect_<T>::operator-=(const rect_& rhs)
     {
-        x -= rhs.x;
-        y -= rhs.y;
-        w = std::max(static_cast<T>(0), w - rhs.w);
-        h = std::max(static_cast<T>(0), h - rhs.h);
+        origin_ -= rhs.origin_;
+        size_ -= rhs.size_;
         return *this;
     }
 
     template <typename T>
-    rect_<T> rect_<T>::operator+(const T i) const
+    rect_<T>& rect_<T>::operator+=(const T& i)
     {
-        return {x - i, y - i, w + i + i, h + i + i};
+        origin_ -= i;
+        size_ += (2 * i);
+        return *this;
+    }
+
+    template <typename T>
+    rect_<T>& rect_<T>::operator-=(const T& i)
+    {
+        return *this += (-i);
+    }
+
+    template <typename T>
+    rect_<T>& rect_<T>::operator*=(const ::sc::size_<double>& rhs)
+    {
+        origin_ *= ::sc::point_<T>{(T)rhs.width(), (T)rhs.height()};
+        size_ *= ::sc::size_<T>{(T)rhs.width(), (T)rhs.height()};
+        return *this;
     }
 
     template <typename T>
     rect_<T> rect_<T>::operator+(const rect_& r) const
     {
-        return {x + r.x, y + r.y, w + r.w, h + r.h};
+        auto tmp = *this;
+        return tmp += r;
     }
 
     template <typename T>
-    rect_<T> rect_<T>::operator-(const T i) const
+    rect_<T> rect_<T>::operator+(const T& i) const
     {
-        return {x + i, y + i, w - i - i, h - i - i};
+        auto tmp = *this;
+        return tmp += i;
     }
 
     template <typename T>
-    T rect_<T>::middle() const
+    rect_<T> rect_<T>::operator-(const rect_& r) const
     {
-        return y + h / 2;
+        auto tmp = *this;
+        return tmp -= r;
     }
 
     template <typename T>
-    T rect_<T>::center() const
+    rect_<T> rect_<T>::operator-(const T& i) const
     {
-        return x + w / 2;
+        return *this + (-i);
+    }
+
+
+    template <typename T>
+    point_<T> rect_<T>::center() const
+    {
+        return origin_ + size_ / 2;
+    }
+
+    template <typename T>
+    size_<T> rect_<T>::size() const
+    {
+        return size_;
     }
 
     template <typename T>
     bool rect_<T>::operator<(const rect_& r) const
     {
-        return x < r.x || (x == r.x && y < r.y);
+        return left() < r.left() || (left() == r.left() && top() < r.top());
     }
 
     template <typename T>
     bool rect_<T>::operator^(const rect_& r) const
     {
-        return y < r.y || (y == r.y && x < r.x);
+        return top() < r.top() || (top() == r.top() && left() < r.left());
     }
 
     template <typename T>
     T rect_<T>::area() const
     {
-        return w * h;
-    }
-
-    template <typename T>
-    rect_<T> rect_<T>::intersect(const rect_& rhs) const
-    {
-        const T x0 = std::max(x, rhs.left());
-        const T y0 = std::max(y, rhs.top());
-        return {x0, y0, std::min(right(), rhs.right()) - x0, std::min(bottom(), rhs.bottom()) - y0};
-    }
-
-    template <typename T>
-    rect_<T> rect_<T>::from_points(const T left, const T top, const T right, const T bottom)
-    {
-        return {left, top, right - left, bottom - top};
-    }
-
-    template <typename T>
-    rect_<T> rect_<T>::centroid() const
-    {
-        return {center(), middle()};
+        return size_.area();
     }
 
     template <typename T>
@@ -208,10 +216,12 @@ namespace sc
     template <typename T>
     void rect_<T>::include(const rect_& rhs)
     {
-        w = std::max(right(), rhs.right()) - std::min(x, rhs.x);
-        h = std::max(bottom(), rhs.bottom()) - std::min(y, rhs.y);
-        x = std::min(x, rhs.x);
-        y = std::min(y, rhs.y);
+        auto w = std::max(right(), rhs.right()) - std::min(left(), rhs.left());
+        auto h = std::max(bottom(), rhs.bottom()) - std::min(top(), rhs.top());
+        size_ = {}; // {w, h};
+        auto x = std::min(left(), rhs.left());
+        auto y = std::min(top(), rhs.top());
+        origin_ = {}; // {x, y};
     }
 
     template <typename T>
@@ -219,6 +229,15 @@ namespace sc
     {
         const T dx = std::max({left() - cx, static_cast<T>(0), cx - right()});
         const T dy = std::max({top() - cy, static_cast<T>(0), cy - bottom()});
+        if (dx == 0 && dy == 0) return 0;
+        return std::hypot(dx, dy);
+    }
+
+    template <typename T>
+    T rect_<T>::distance(const rect_& rhs) const
+    {
+        const T dx = gap_x(rhs);
+        const T dy = gap_y(rhs);
         if (dx == 0 && dy == 0) return 0;
         return std::hypot(dx, dy);
     }
@@ -248,12 +267,17 @@ namespace sc
     }
 
     template <typename T>
-    T rect_<T>::distance(const rect_& rhs) const
+    rect_<T> rect_<T>::intersect(const rect_& rhs) const
     {
-        const T dx = gap_x(rhs);
-        const T dy = gap_y(rhs);
-        if (dx == 0 && dy == 0) return 0;
-        return std::hypot(dx, dy);
+        const T x0 = std::max(left(), rhs.left());
+        const T y0 = std::max(top(), rhs.top());
+        return {x0, y0, std::min(right(), rhs.right()) - x0, std::min(bottom(), rhs.bottom()) - y0};
+    }
+
+    template <typename T>
+    rect_<T> rect_<T>::from_points(const T left, const T top, const T right, const T bottom)
+    {
+        return {left, top, right - left, bottom - top};
     }
 
     template <typename T>
@@ -281,6 +305,10 @@ namespace sc
     }
 }
 
+template class sc::pair_<sc::point_<int>, int>;
+template class sc::pair_<sc::size_<int>, int>;
 template class sc::rect_<int>;
-template class sc::rect_<float>;
+
+template class sc::pair_<sc::point_<double>, double>;
+template class sc::pair_<sc::size_<double>, double>;
 template class sc::rect_<double>;

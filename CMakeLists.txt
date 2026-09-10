@@ -196,6 +196,10 @@ project(test_rect)
 add_executable(${PROJECT_NAME} test/rect.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE sc)
 
+project(test_point)
+add_executable(${PROJECT_NAME} test/point.cpp)
+target_link_libraries(${PROJECT_NAME} PRIVATE sc)
+
 project(test_postgres)
 add_executable(${PROJECT_NAME} test/postgres.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE sc sc-postgres)

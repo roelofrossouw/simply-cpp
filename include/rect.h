@@ -158,8 +158,14 @@ namespace sc
     {
     public:
         using pair_<point_<T>, T>::pair_;
+
+        template <typename U>
+        operator point_<U>() { return {this->x_, this->y_}; }
+
         T x() const { return this->x_; }
+        T x(const T& r) { return this->x_ = r; }
         T y() const { return this->y_; }
+        T y(const T& r) { return this->y_ = r; }
 
     private:
         friend std::ostream& operator<<(std::ostream& lhs, const point_& rhs)
@@ -174,7 +180,9 @@ namespace sc
     public:
         using pair_<size_<T>, T>::pair_;
         T width() const;
+        T width(const T& r) { return this->x_ = r; }
         T height() const { return this->y_; }
+        T height(const T& r) { return this->y_ = r; }
         T area() const { return width() * height(); }
         friend class pair_<size_, T>;
 
@@ -193,6 +201,11 @@ namespace sc
     public:
         rect_(T left = 0, T top = 0, T width = 0, T height = 0);
         rect_(point_<T> origin, size_<T> size);
+
+        static rect_ ltrb(T left, T top, T right, T bottom)
+        {
+            return {left, top, right - left, bottom - top};
+        }
 
         template <typename U1, typename U2, typename U3, typename U4>
             requires (std::convertible_to<U1, T> && std::convertible_to<U2, T>
@@ -236,6 +249,44 @@ namespace sc
         rect_ operator-(const rect_& r) const;
         rect_ operator-(const T& i) const;
 
+        template <Numeric U>
+        rect_& operator-=(point_<U> i)
+        {
+            origin_ -= i;
+            return *this;
+        }
+
+        template <Numeric U>
+        rect_ operator-(point_<U> i) const
+        {
+            auto tmp = *this;
+            return tmp -= i;
+        }
+
+        template <Numeric U>
+        rect_& operator/=(size_<U> i)
+        {
+            origin_ /= i;
+            size_ /= i;
+            return *this;
+        }
+
+        template <Numeric U>
+        rect_ operator/(size_<U> i) const
+        {
+            auto tmp = *this;
+            return tmp /= i;
+        }
+
+        template <Numeric U>
+        rect_ operator*(size_<U> i) const
+        {
+            auto tmp = *this;
+            tmp.origin_ *= i;
+            tmp.size_ *= i;
+            return tmp;
+        }
+
         template <typename U> requires std::convertible_to<U, T>
         rect_ operator-(U i) const { return *this - static_cast<T>(i); }
 
@@ -274,6 +325,10 @@ namespace sc
         [[nodiscard]] bool overlaps_y(const rect_& rhs) const;
 
         [[nodiscard]] rect_ intersect(const rect_& rhs) const;
+
+        point_<T> left_top() const { return {left(), top()}; }
+        point_<T> right_bottom() const { return {right(), bottom()}; }
+
 
         static rect_ from_points(T left, T top, T right, T bottom);
 

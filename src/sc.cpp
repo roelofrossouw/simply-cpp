@@ -24,4 +24,5 @@ namespace sc {
         std::random_device r;
         return static_cast<double>(r()) / RAND_MAX / 2 * (maxval - minval) + minval;
     }
+
 }

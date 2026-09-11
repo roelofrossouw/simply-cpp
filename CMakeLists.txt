@@ -110,6 +110,11 @@ add_library(${PROJECT_NAME} STATIC src/date.cpp include/date.h)
 set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR} "${PROJECT_SOURCE_DIR}/include")
 
+project(sc-percent)
+add_library(${PROJECT_NAME} STATIC src/percent.cpp include/percent.h)
+set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
+target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR} "${PROJECT_SOURCE_DIR}/include")
+
 if (${ADD_POSTGRESQL})
     project(sc-postgres)
     add_library(${PROJECT_NAME} STATIC src/postgres.cpp include/postgres.h)
@@ -124,6 +129,7 @@ endif ()
 set(SOURCE_OBJECTS
         src/sc.cpp sc.h
         $<TARGET_OBJECTS:sc-date>
+        $<TARGET_OBJECTS:sc-percent>
         $<TARGET_OBJECTS:sc-utf8>
         $<TARGET_OBJECTS:sc-base64>
         $<TARGET_OBJECTS:sc-svg2png>
@@ -206,6 +212,10 @@ target_link_libraries(${PROJECT_NAME} PRIVATE sc sc-postgres)
 
 project(test_dual)
 add_executable(${PROJECT_NAME} test/dual.cpp)
+target_link_libraries(${PROJECT_NAME} PRIVATE sc)
+
+project(test_percent)
+add_executable(${PROJECT_NAME} test/percent.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE sc)
 
 project(test_ollama)

@@ -20,6 +20,7 @@
 #include <include/ollama.h>
 #include <include/dual.h>
 #include <include/ip_address.h>
+#include <include/percent.h>
 
 // Some common functions simplifying STL
 namespace sc {
@@ -30,6 +31,7 @@ namespace sc {
     void file_put_contents(const std::string &filename, const std::string &content, std::ios_base::openmode mode = std::ios_base::binary);
 
     double rand(double minval = 0, double maxval = 1);
+
 }
 
 

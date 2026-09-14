@@ -15,7 +15,7 @@ namespace sc {
         headers_["Content-Type"] = "application/json";
     }
 
-    namespace impl {
+    namespace base64_impl {
         class curl {
         public:
             curl() : curl_(curl_easy_init()) {
@@ -67,7 +67,7 @@ namespace sc {
     }
 
 
-    bool rest::setup_curl(impl::curl &conn) {
+    bool rest::setup_curl(base64_impl::curl &conn) {
         conn.option(CURLOPT_URL, url_.c_str());
         conn.option(CURLOPT_CONNECTTIMEOUT, connect_timeout_secs_);
         conn.option(CURLOPT_TIMEOUT, timeout_secs_);
@@ -78,7 +78,7 @@ namespace sc {
     }
 
     std::string rest::get() {
-        impl::curl conn;
+        base64_impl::curl conn;
         setup_curl(conn);
         if (!conn.run()) {
             std::cerr << "Request failed: " << conn.last_error() << std::endl;
@@ -88,7 +88,7 @@ namespace sc {
     }
 
     std::string rest::post(const std::string &jsonData) {
-        impl::curl conn;
+        base64_impl::curl conn;
         setup_curl(conn);
         conn.option(CURLOPT_POSTFIELDS, jsonData.c_str());
         if (!conn.run()) {

@@ -1,14 +1,12 @@
-#ifndef SC_BASE64_H
-#define SC_BASE64_H
+#pragma once
+#include <string_view>
 #include <string>
 
 namespace sc {
     class base64 {
     public:
-        static std::string decode(const std::string &encoded);
+        static std::string encode(std::string_view text);
 
-        static std::string encode(const std::string &text);
+        static std::string decode(std::string_view encoded);
     };
 }
-
-#endif //SC_BASE64_H

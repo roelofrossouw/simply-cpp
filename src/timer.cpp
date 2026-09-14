@@ -2,7 +2,7 @@
 #include <chrono>
 
 namespace sc {
-    namespace impl {
+    namespace base64_impl {
         class timer {
         public:
             timer() {
@@ -17,7 +17,7 @@ namespace sc {
     }
 
     timer::timer() {
-        impl = new impl::timer();
+        impl = new base64_impl::timer();
     }
 
     timer::~timer() {
@@ -124,7 +124,7 @@ namespace sc {
     }
 
     timer::timer(std::chrono::nanoseconds duration) {
-        impl = new impl::timer();
+        impl = new base64_impl::timer();
         impl->taken = duration;
         impl->stopped = true;
     }

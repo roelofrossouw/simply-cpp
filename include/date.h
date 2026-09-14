@@ -4,7 +4,7 @@
 #include <ostream>
 
 namespace sc {
-    namespace impl {
+    namespace base64_impl {
         class date;
     }
 
@@ -49,7 +49,7 @@ namespace sc {
 
         date(const date &copy);
 
-        impl::date *impl;
+        base64_impl::date *impl;
 
         void normalize();
 

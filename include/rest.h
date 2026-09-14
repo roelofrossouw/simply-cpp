@@ -8,7 +8,7 @@
 struct curl_slist;
 
 namespace sc {
-    namespace impl {
+    namespace base64_impl {
         class curl;
     }
 
@@ -24,7 +24,7 @@ namespace sc {
     public:
         explicit rest(const std::string &url);
 
-        bool setup_curl(impl::curl &conn) const;
+        bool setup_curl(base64_impl::curl &conn) const;
 
         /**
          * @brief Sends an HTTP GET request to the specified URL and retrieves the server response.
@@ -74,7 +74,7 @@ namespace sc {
         mutable std::string response{};
         static std::map<std::string, std::string> fetch_cache;
 
-        bool setup_curl(impl::curl &conn);
+        bool setup_curl(base64_impl::curl &conn);
     };
 }
 

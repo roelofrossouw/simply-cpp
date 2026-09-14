@@ -4,7 +4,7 @@
 using namespace std;
 
 namespace sc {
-    namespace impl {
+    namespace base64_impl {
         class date {
         public:
             date(const string &dateInput) { initialize(dateInput); }
@@ -41,13 +41,13 @@ namespace sc {
         };
     }
 
-    date::date(const string &dateInput) : impl(new impl::date(dateInput)) {
+    date::date(const string &dateInput) : impl(new base64_impl::date(dateInput)) {
     }
 
-    date::date(const long julian_day) : impl(new impl::date(julian_day)) {
+    date::date(const long julian_day) : impl(new base64_impl::date(julian_day)) {
     }
 
-    date::date(const date &copy) : impl(new impl::date((long) copy)) {
+    date::date(const date &copy) : impl(new base64_impl::date((long) copy)) {
     }
 
     date::operator string() const { return format("%Y-%m-%d"); }
@@ -72,7 +72,7 @@ namespace sc {
 
     date &date::operator=(const string &str) {
         delete impl;
-        impl = new impl::date(str);
+        impl = new base64_impl::date(str);
         return *this;
     }
 

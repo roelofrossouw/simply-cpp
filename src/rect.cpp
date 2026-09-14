@@ -80,12 +80,12 @@ namespace sc
     }
 
     template <typename T>
-    rect_<T>::rect_(const T left, const T top, const T width, const T height) : origin_(left, top), size_(width, height)
+    rect_<T>::rect_(const T left, const T top, const T width, const T height) : origin_(left, top), rect_size_(width, height)
     {
     }
 
     template <typename T>
-    rect_<T>::rect_(point_<T> origin, ::sc::size_<T> size) : origin_(origin), size_(size)
+    rect_<T>::rect_(point_<T> origin, ::sc::size_<T> size) : origin_(origin), rect_size_(size)
     {
     }
 
@@ -96,10 +96,10 @@ namespace sc
     T rect_<T>::bottom() const { return top() + height(); }
 
     template <typename T>
-    T rect_<T>::width() const { return size_.width(); }
+    T rect_<T>::width() const { return rect_size_.width(); }
 
     template <typename T>
-    T rect_<T>::height() const { return size_.height(); }
+    T rect_<T>::height() const { return rect_size_.height(); }
 
     template <typename T>
     T rect_<T>::right() const { return left() + width(); }
@@ -111,7 +111,7 @@ namespace sc
     rect_<T>& rect_<T>::operator+=(const rect_& rhs)
     {
         origin_ += rhs.origin_;
-        size_ += rhs.size_;
+        rect_size_ += rhs.rect_size_;
         return *this;
     }
 
@@ -119,7 +119,7 @@ namespace sc
     rect_<T>& rect_<T>::operator-=(const rect_& rhs)
     {
         origin_ -= rhs.origin_;
-        size_ -= rhs.size_;
+        rect_size_ -= rhs.rect_size_;
         return *this;
     }
 
@@ -127,7 +127,7 @@ namespace sc
     rect_<T>& rect_<T>::operator+=(const T& i)
     {
         origin_ -= i;
-        size_ += (2 * i);
+        rect_size_ += (2 * i);
         return *this;
     }
 
@@ -141,7 +141,7 @@ namespace sc
     rect_<T>& rect_<T>::operator*=(const ::sc::size_<double>& rhs)
     {
         origin_ *= ::sc::point_<T>{(T)rhs.width(), (T)rhs.height()};
-        size_ *= ::sc::size_<T>{(T)rhs.width(), (T)rhs.height()};
+        rect_size_ *= ::sc::size_<T>{(T)rhs.width(), (T)rhs.height()};
         return *this;
     }
 
@@ -176,13 +176,13 @@ namespace sc
     template <typename T>
     point_<T> rect_<T>::center() const
     {
-        return origin_ + size_ / 2;
+        return origin_ + rect_size_ / 2;
     }
 
     template <typename T>
     size_<T> rect_<T>::size() const
     {
-        return size_;
+        return rect_size_;
     }
 
     template <typename T>
@@ -200,7 +200,7 @@ namespace sc
     template <typename T>
     T rect_<T>::area() const
     {
-        return size_.area();
+        return rect_size_.area();
     }
 
     template <typename T>
@@ -218,7 +218,7 @@ namespace sc
     {
         auto w = std::max(right(), rhs.right()) - std::min(left(), rhs.left());
         auto h = std::max(bottom(), rhs.bottom()) - std::min(top(), rhs.top());
-        size_ = {}; // {w, h};
+        rect_size_ = {}; // {w, h};
         auto x = std::min(left(), rhs.left());
         auto y = std::min(top(), rhs.top());
         origin_ = {}; // {x, y};

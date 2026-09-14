@@ -4,7 +4,7 @@
 class ostream;
 
 namespace sc {
-    namespace impl {
+    namespace base64_impl {
         class timer;
     }
 
@@ -43,7 +43,7 @@ namespace sc {
         static timer from_millis(long long ms);
 
     private:
-        impl::timer *impl;
+        base64_impl::timer *impl;
 
         explicit timer(std::chrono::nanoseconds duration);
 

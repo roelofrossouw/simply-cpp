@@ -1,5 +1,5 @@
 #include <rest.h>
-#include <sc.h>
+#include <../include/sc.h>
 #include <curl/curl.h>
 
 namespace sc {

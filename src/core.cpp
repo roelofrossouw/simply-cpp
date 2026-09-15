@@ -1,4 +1,7 @@
-#include "sc.h"
+#include "core.h"
+#include <filesystem>
+#include <fstream>
+#include <sstream>
 #include <random>
 
 namespace sc {
@@ -10,7 +13,7 @@ namespace sc {
     }
 
     std::string basename(const std::string &filename) {
-        std::filesystem::path app_name(filename);
+        const std::filesystem::path app_name(filename);
         return app_name.filename();
     }
 
@@ -24,5 +27,4 @@ namespace sc {
         std::random_device r;
         return static_cast<double>(r()) / RAND_MAX / 2 * (maxval - minval) + minval;
     }
-
 }

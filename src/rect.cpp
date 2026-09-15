@@ -67,12 +67,6 @@ namespace sc
     }
 
     template <typename T>
-    T size_<T>::width() const
-    {
-        return this->x_;
-    }
-
-    template <typename T>
     void size_<T>::on_validate()
     {
         this->x_ = std::max(T{0}, this->x_);

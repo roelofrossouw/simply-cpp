@@ -1,4 +1,5 @@
 #include <sc.h>
+#undef NDEBUG // Allow tests in release
 #include <cassert>
 #include <iostream>
 #include <stdexcept>

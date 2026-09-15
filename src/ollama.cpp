@@ -1,5 +1,5 @@
 #include "ollama.h"
-#include "sc.h"
+#include "../include/sc.h"
 #include <nlohmann/json.hpp>
 
 using namespace std;

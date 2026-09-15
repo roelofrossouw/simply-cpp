@@ -1,7 +1,3 @@
 @PACKAGE_INIT@
 
-include(CMakeFindDependencyMacro)
-find_dependency(CURL)
-find_dependency(lunasvg CONFIG)
-
-include("${CMAKE_CURRENT_LIST_DIR}/simply-cppTargets.cmake")
+include ("${CMAKE_CURRENT_LIST_DIR}/scTargets.cmake")

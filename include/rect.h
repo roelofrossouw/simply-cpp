@@ -16,7 +16,8 @@ namespace sc {
 
         template<typename U1, typename U2>
             requires(std::convertible_to<U1, T> && std::convertible_to<U2, T>)
-        pair_(U1 x, U2 y) : pair_(static_cast<T>(x), static_cast<T>(y)) {}
+        pair_(U1 x, U2 y) : pair_(static_cast<T>(x), static_cast<T>(y)) {
+        }
 
         template<typename U, typename V>
         operator pair_<U, V>() const {
@@ -159,8 +160,7 @@ namespace sc {
     public:
         using pair_<size_<T>, T>::pair_;
 
-        T width() const;
-
+        T width() const { return this->x_; }
         T width(const T &r) { return this->x_ = r; }
         T height() const { return this->y_; }
         T height(const T &r) { return this->y_ = r; }
@@ -184,8 +184,9 @@ namespace sc {
 
         template<typename U1, typename U2, typename U3, typename U4>
             requires(std::convertible_to<U1, T> && std::convertible_to<U2, T> && std::convertible_to<U3, T> && std::convertible_to<U4, T>)
-        rect_(U1 left = 0, U2 top = 0, U3 width = 0, U4 height = 0) :
-            rect_(static_cast<T>(left), static_cast<T>(top), static_cast<T>(width), static_cast<T>(height)) {}
+        rect_(U1 left = 0, U2 top = 0, U3 width = 0, U4 height = 0) : rect_(static_cast<T>(left), static_cast<T>(top), static_cast<T>(width),
+                                                                            static_cast<T>(height)) {
+        }
 
         [[nodiscard]] T left() const;
 
@@ -318,13 +319,13 @@ namespace sc {
         // Boxes i and j are linked when iou > min_iou (min_iou == 1 disables)
         // OR box-to-box distance < max_dist (max_dist < 0 disables).
         // Group rect is the union of its members.
-        static std::vector<std::pair<rect_, std::vector<size_t>>> group(const std::vector<rect_> &boxes, T min_iou = 0, T max_dist = 0);
+        static std::vector<std::pair<rect_, std::vector<size_t> > > group(const std::vector<rect_> &boxes, T min_iou = 0, T max_dist = 0);
 
         // Document-layout grouping with per-axis thresholds: boxes are linked when
         // gap_x < max_dx AND gap_y < max_dy. Use a strict max_dx (~1 char width) and
         // a generous max_dy (~1.5 line heights) so paragraphs merge vertically
         // without welding adjacent columns.
-        static std::vector<std::pair<rect_, std::vector<size_t>>> group_adjacent(const std::vector<rect_> &boxes, T max_dx, T max_dy);
+        static std::vector<std::pair<rect_, std::vector<size_t> > > group_adjacent(const std::vector<rect_> &boxes, T max_dx, T max_dy);
 
     protected:
         point_<T> origin_;

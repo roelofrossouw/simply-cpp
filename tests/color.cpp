@@ -1,5 +1,3 @@
-#include "include/color.h"
-
 #include <sc.h>
 
 using namespace std;

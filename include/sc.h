@@ -13,7 +13,6 @@
 #include <utf8.h>
 #include <date.h>
 #include <base64.h>
-#include <svg2png.h>
 #include <rest.h>
 #include <color.h>
 #include <timer.h>

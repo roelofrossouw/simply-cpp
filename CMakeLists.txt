@@ -118,7 +118,7 @@ set(OBJECT_NAME sc-rest)
 add_library(${OBJECT_NAME} STATIC src/rest.cpp include/rest.h)
 set_target_properties(${OBJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
 target_include_directories(${OBJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-target_link_libraries(${OBJECT_NAME} PUBLIC curl)
+target_link_libraries(${OBJECT_NAME} PRIVATE curl)
 list(APPEND SOURCE_LIBRARIES ${OBJECT_NAME})
 
 # Combined static libary for easy usage

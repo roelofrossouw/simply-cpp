@@ -1,4 +1,4 @@
-#include "sc.h"
+#include "../include/sc.h"
 #include <chrono>
 
 namespace sc {

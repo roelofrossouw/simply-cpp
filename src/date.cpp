@@ -57,8 +57,9 @@ namespace sc {
     }
 
     string date::format(const string &format) const {
-        char buffer[format.length() * 4 + 30];
-        strftime(buffer, sizeof(buffer), format.c_str(), &impl->storage);
+        constexpr int max_length = 96;
+        char buffer[max_length];
+        strftime(buffer, max_length, format.c_str(), &impl->storage);
         return {buffer};
     }
 

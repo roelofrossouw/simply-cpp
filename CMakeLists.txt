@@ -8,20 +8,27 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # Options:
 option(SC_BUILD_TESTS "Build simply-cpp tests" ${PROJECT_IS_TOP_LEVEL})
 
-#execute_process(
-#        COMMAND git describe --tags --abbrev=0
-#        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-#        OUTPUT_VARIABLE PROJECT_VERSION
-#        OUTPUT_VARIABLE PROJECT_VERSION
-#        OUTPUT_STRIP_TRAILING_WHITESPACE
-#)
-#string(REGEX REPLACE "^v" "" PROJECT_VERSION "${PROJECT_VERSION}")
-set(SC_VERSION 1.0.8)
-set(PROJECT_VERSION ${SC_VERSION})
-#
-message(STATUS "Project Version: ${PROJECT_VERSION}")
-message(STATUS "SC Version: ${SC_VERSION}")
+find_package(Git QUIET)
+if (Git_FOUND)
+    execute_process(
+            COMMAND ${GIT_EXECUTABLE} describe --tags --abbrev=0
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            OUTPUT_VARIABLE SC_VERSION
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_QUIET
+            RESULT_VARIABLE GIT_RESULT
+    )
 
+    if (GIT_RESULT EQUAL 0)
+        string(REGEX REPLACE "^v" "" SC_VERSION "${SC_VERSION}")
+    else ()
+        set(SC_VERSION "1.1.0")
+    endif ()
+else ()
+    set(SC_VERSION "1.1.0")
+endif ()
+
+message(STATUS "SC Version: ${SC_VERSION}")
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 include(FetchContent)
@@ -46,26 +53,8 @@ FetchContent_Declare(json GIT_REPOSITORY https://github.com/nlohmann/json.git GI
 FetchContent_MakeAvailable(json)
 
 
-## Postgres ##
-#    if (APPLE)
-#        execute_process(COMMAND brew install postgres WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-#    else ()
-#        execute_process(COMMAND apt -y install postgresql-server-dev-16 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-#    endif ()
-
-#execute_process(COMMAND pg_config --includedir OUTPUT_VARIABLE PG_HEADERS OUTPUT_STRIP_TRAILING_WHITESPACE)
-#execute_process(COMMAND pg_config --libdir OUTPUT_VARIABLE PG_LIBDIR OUTPUT_STRIP_TRAILING_WHITESPACE)
-#if (${ADD_POSTGRESQL})
-#    if (APPLE)
-#        set(PostgreSQL_ROOT "/opt/homebrew/opt/postgresql/lib/postgresql")
-#        set(PostgreSQL_INCLUDE_DIR "/opt/homebrew/opt/postgresql/include")
-#        include_directories("/opt/homebrew/opt/postgresql/include/postgresql")
-#    endif ()
-#    find_package(PostgreSQL REQUIRED)
-#endif ()
-
 ## LIBRARIES ##
-set(SOURCE_OBJECTS)
+set(SOURCE_OBJECTS include/sc.h)
 
 set(OBJECT_NAME sc-utf8)
 add_library(${OBJECT_NAME} OBJECT src/utf8.cpp include/utf8.h)
@@ -132,21 +121,9 @@ target_include_directories(${OBJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRE
 target_link_libraries(${OBJECT_NAME} PUBLIC curl)
 list(APPEND SOURCE_LIBRARIES ${OBJECT_NAME})
 
-
-#if (${ADD_POSTGRESQL})
-#    set(OBJECT_NAME sc-postgres)
-#    add_library(${OBJECT_NAME} OBJECT src/postgres.cpp include/postgres.h)
-#    set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
-#    target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR} "${PROJECT_SOURCE_DIR}/include")
-#    target_include_directories(${PROJECT_NAME} PUBLIC ${PostgreSQL_INCLUDE_DIRS})
-#    target_link_libraries(${PROJECT_NAME} PUBLIC PostgreSQL::PostgreSQL)
-#    target_link_directories(${PROJECT_NAME} PRIVATE ${PostgreSQL_LIBRARY_DIRS})
-#endif ()
-
-
 # Combined static libary for easy usage
 project(sc VERSION ${SC_VERSION} DESCRIPTION "simply-cpp consolidated static library")
-add_library(${PROJECT_NAME} STATIC include/sc.h ${SOURCE_OBJECTS})
+add_library(${PROJECT_NAME} STATIC ${SOURCE_OBJECTS})
 add_library(sc::sc ALIAS ${PROJECT_NAME})
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
@@ -154,7 +131,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC ${SOURCE_LIBRARIES})
 
 # Combined shared libary for easy usage
 project(sc-shared VERSION ${SC_VERSION} DESCRIPTION "simply-cpp common shared library")
-add_library(${PROJECT_NAME} SHARED include/sc.h ${SOURCE_OBJECTS})
+add_library(${PROJECT_NAME} SHARED ${SOURCE_OBJECTS})
 add_library(sc::sc-shared ALIAS ${PROJECT_NAME})
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)

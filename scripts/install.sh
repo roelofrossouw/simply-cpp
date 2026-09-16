@@ -7,12 +7,10 @@
 # Runs on the server, in the directory deploy.sh synced to.
 
 module="sc-core"
-server="${1:-build}"
-user="${2:-root}"
 scriptfile=$(realpath "$0")
 scriptpath="${scriptfile%/*}"
 dirpath=$(realpath "$scriptpath"/..)
-echo "Installing $module locally"
+echo "Installing $module locally from source in $dirpath"
 pushd "$dirpath" || exit
 cmake -DCMAKE_BUILD_TYPE=Release -B cmake-build-release -S . || exit
 cmake --build cmake-build-release -j 12 || exit

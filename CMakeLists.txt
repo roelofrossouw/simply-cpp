@@ -66,7 +66,15 @@ list(APPEND SOURCE_LIBRARIES sc-shared)
 install(TARGETS ${SOURCE_LIBRARIES} EXPORT scTargets)
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(EXPORT scTargets FILE scTargets.cmake NAMESPACE sc:: DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sc)
-configure_package_config_file(cmake/scConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/scConfig.cmake INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sc)
+
+# Shared with the other simply-cpp modules, which pick them up through find_package(sc)
+# rather than keeping their own copies: the build helpers and the test harness.
+install(FILES cmake/SimplyCppFunctions.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sc)
+install(FILES tests/sc_test.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+configure_package_config_file(cmake/scConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/scConfig.cmake
+        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sc
+        PATH_VARS CMAKE_INSTALL_INCLUDEDIR)
 write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/scConfigVersion.cmake VERSION ${PROJECT_VERSION} COMPATIBILITY SameMajorVersion)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/scConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/scConfigVersion.cmake DESTINATION lib/cmake/sc)
 

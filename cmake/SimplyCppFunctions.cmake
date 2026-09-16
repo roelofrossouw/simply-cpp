@@ -83,25 +83,35 @@ function(read_sc_version_file version_file output)
     set(${output} "${version}" PARENT_SCOPE)
 endfunction()
 
+# find_or_install_package(<package> <apt name> <brew name>)
+#
+# Finds a dependency, installing it through the system package manager first if it is
+# missing. Anything the caller needs to set up beforehand - PostgreSQL_ROOT and the
+# like - should be set before the call.
 function(find_or_install_package package apt_name brew_name)
     message(STATUS "Detecting ${package}")
     find_package(${package} QUIET)
-    if (NOT ${package}_FOUND)
-        if (UNIX AND EXISTS "/usr/bin/apt")
-            message(STATUS "${package} not found, attempting apt installation...")
-            execute_process(COMMAND sudo apt -y install ${apt_name} RESULT_VARIABLE INSTALL_RESULT)
-        endif ()
-        if (APPLE)
-            message(STATUS "${package} not found, attempting brew installation...")
-            execute_process(COMMAND brew install ${brew_name} RESULT_VARIABLE INSTALL_RESULT)
-        endif ()
-        find_package(CURL QUIET)
-        if (NOT CURL_FOUND)
-            message(FATAL_ERROR "Failed to install or locate ${package} (install result=${INSTALL_RESULT})")
-        endif ()
-    else ()
+    if (${package}_FOUND)
         message(STATUS "${package} found - ${${package}_VERSION}")
+        return()
     endif ()
+
+    if (UNIX AND EXISTS "/usr/bin/apt")
+        message(STATUS "${package} not found, attempting apt installation...")
+        execute_process(COMMAND sudo apt -y install ${apt_name} RESULT_VARIABLE INSTALL_RESULT)
+    endif ()
+    if (APPLE)
+        message(STATUS "${package} not found, attempting brew installation...")
+        execute_process(COMMAND brew install ${brew_name} RESULT_VARIABLE INSTALL_RESULT)
+    endif ()
+
+    # Re-check the package that was asked for. This used to look for CURL whatever the
+    # argument was, which happened to suit the one caller and would have masked any other.
+    find_package(${package} QUIET)
+    if (NOT ${package}_FOUND)
+        message(FATAL_ERROR "Failed to install or locate ${package} (install result=${INSTALL_RESULT})")
+    endif ()
+    message(STATUS "${package} found - ${${package}_VERSION}")
 endfunction()
 
 function(add_sc_object object)
@@ -132,28 +142,42 @@ function(add_sc_object object)
     endif ()
 endfunction()
 
-# add_sc_test(<name> [TIMEOUT <seconds>] [LABELS <label>...])
+# add_sc_test(<name> [TIMEOUT <seconds>] [LABELS <label>...] [LINK_LIBRARIES <lib>...])
 #
-# Builds tests/<name>.cpp into test-<name> and registers it with ctest.
-# Tests report every failed check on stderr and exit non-zero (see tests/sc_test.h).
+# Builds <name>.cpp in the current directory into test-<name> and registers it with
+# ctest. Tests report every failed check on stderr and exit non-zero (see sc_test.h).
+#
+# LINK_LIBRARIES defaults to ${SC_TEST_LINK_LIBRARIES}, so a module sets that once in
+# its tests/CMakeLists.txt rather than repeating the library on every call.
 function(add_sc_test name)
+    # Prefix ARG, not SC_TEST: cmake_parse_arguments clears the variables it owns, and
+    # SC_TEST_LINK_LIBRARIES is the directory-level default we want to fall back to.
     set(options)
     set(one_value_args TIMEOUT)
-    set(multi_value_args LABELS)
-    cmake_parse_arguments(SC_TEST "${options}" "${one_value_args}" "${multi_value_args}" ${ARGN})
+    set(multi_value_args LABELS LINK_LIBRARIES)
+    cmake_parse_arguments(ARG "${options}" "${one_value_args}" "${multi_value_args}" ${ARGN})
 
-    if (NOT SC_TEST_TIMEOUT)
-        set(SC_TEST_TIMEOUT 120)
+    if (NOT ARG_TIMEOUT)
+        set(ARG_TIMEOUT 120)
+    endif ()
+
+    if (NOT ARG_LINK_LIBRARIES)
+        set(ARG_LINK_LIBRARIES ${SC_TEST_LINK_LIBRARIES})
+    endif ()
+    if (NOT ARG_LINK_LIBRARIES)
+        message(FATAL_ERROR "add_sc_test(${name}): nothing to link against."
+                " Pass LINK_LIBRARIES, or set SC_TEST_LINK_LIBRARIES for the directory.")
     endif ()
 
     set(target "test-${name}")
-    add_executable(${target} "${name}.cpp" sc_test.h)
-    target_link_libraries(${target} PRIVATE sc)
-    target_include_directories(${target} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    add_executable(${target} "${name}.cpp")
+    target_link_libraries(${target} PRIVATE ${ARG_LINK_LIBRARIES})
+    # The test's own directory first, then sc_test.h wherever the sc package put it.
+    target_include_directories(${target} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${SC_TEST_INCLUDE_DIR})
 
     add_test(NAME ${target} COMMAND ${target})
     set_tests_properties(${target} PROPERTIES
             WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-            TIMEOUT ${SC_TEST_TIMEOUT}
-            LABELS "${SC_TEST_LABELS}")
+            TIMEOUT ${ARG_TIMEOUT}
+            LABELS "${ARG_LABELS}")
 endfunction()

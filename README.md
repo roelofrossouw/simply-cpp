@@ -89,9 +89,17 @@ auto encoded = sc::base64::encode("Hello");
 
 ## Requirements
 ### Base requirements for compiling
-1. CMake – install with your package manager or download from https://cmake.org/download/
-1. A C++ compiler that supports C++17 or higher.
+1. CMake 3.22 or higher – install with your package manager or download from https://cmake.org/download/
+1. A C++ compiler that supports C++20 or higher. (The library uses concepts, so C++17 is not enough.)
 ### Third party library dependencies
 Ideally dependencies are included and build as source, but in some cases it is too complicated when e.g. requirements don't use cmake etc.
 These dependencies are however mostly only required for building, most systems should have these libraries already installed for end users.
 1. Curl – install with your package manager (e.g. `apt -y install libcurl4-openssl-dev`) or download from https://curl.haxx.se/download.html
+
+## Building and testing
+
+```bash
+cmake -B build -S .
+cmake --build build -j
+ctest --test-dir build/sc-test --output-on-failure
+```

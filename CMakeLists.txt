@@ -51,44 +51,19 @@ add_sc_object(rest LINK_LIBRARIES curl PUBLIC_LINK_LIBRARIES curl)
 ######################
 # Exported Libraries #
 ######################
-
-# Static
-project(sc VERSION ${SC_VERSION} DESCRIPTION "simply-cpp-core consolidated static library")
-add_library(${PROJECT_NAME} STATIC ${SOURCE_OBJECTS})
-add_library(sc::sc ALIAS ${PROJECT_NAME})
-set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
-target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-target_link_libraries(${PROJECT_NAME} PUBLIC ${SOURCE_LIBRARIES} ${SOURCE_LINK_LIBRARIES})
-list(APPEND SOURCE_LIBRARIES sc)
-
-# Shared
-project(sc-shared VERSION ${SC_VERSION} DESCRIPTION "simply-cpp-core common shared library")
-add_library(${PROJECT_NAME} SHARED ${SOURCE_OBJECTS})
-add_library(sc::sc-shared ALIAS ${PROJECT_NAME})
-set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
-target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-target_link_libraries(${PROJECT_NAME} PUBLIC ${SOURCE_LIBRARIES} ${SOURCE_LINK_LIBRARIES})
-list(APPEND SOURCE_LIBRARIES sc-shared)
+add_sc_libraries(sc DESCRIPTION "simply-cpp-core")
 
 ################
 # Installation #
 ################
-install(TARGETS ${SOURCE_LIBRARIES} EXPORT scTargets)
-install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-install(EXPORT scTargets FILE scTargets.cmake NAMESPACE sc:: DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sc)
+install_sc_module(sc PATH_VARS CMAKE_INSTALL_INCLUDEDIR)
 
-# Shared with the other simply-cpp modules, which pick them up through find_package(sc)
-# rather than keeping their own copies: the build helpers and the test harness.
+# Core only: what every other module picks up through find_package(sc) or the bootstrap
+# instead of keeping its own copy.
 install(FILES cmake/SimplyCppFunctions.cmake cmake/sc_bootstrap.cmake
         ${SC_SCRIPT_TEMPLATES}
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sc)
 install(FILES tests/sc_test.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-
-configure_package_config_file(cmake/scConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/scConfig.cmake
-        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sc
-        PATH_VARS CMAKE_INSTALL_INCLUDEDIR)
-write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/scConfigVersion.cmake VERSION ${PROJECT_VERSION} COMPATIBILITY SameMajorVersion)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/scConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/scConfigVersion.cmake DESTINATION lib/cmake/sc)
 
 #########
 # Tests #

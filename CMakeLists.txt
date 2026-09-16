@@ -69,7 +69,7 @@ install(EXPORT scTargets FILE scTargets.cmake NAMESPACE sc:: DESTINATION ${CMAKE
 
 # Shared with the other simply-cpp modules, which pick them up through find_package(sc)
 # rather than keeping their own copies: the build helpers and the test harness.
-install(FILES cmake/SimplyCppFunctions.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sc)
+install(FILES cmake/SimplyCppFunctions.cmake cmake/sc_bootstrap.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sc)
 install(FILES tests/sc_test.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 configure_package_config_file(cmake/scConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/scConfig.cmake

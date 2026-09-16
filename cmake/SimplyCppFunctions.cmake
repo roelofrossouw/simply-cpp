@@ -7,8 +7,7 @@ include(CMakeParseArguments)
 # sc_bootstrap.cmake compares it against a module's own copy so an older installed
 # sc-core cannot quietly replace a newer one: a module built against helpers missing
 # what its CMakeLists.txt calls fails in ways that look nothing like the cause.
-set(SC_HELPERS_VERSION 4)
-
+set(SC_HELPERS_VERSION 5)
 set(SC_VERSION_FILE "VERSION.txt")
 set(SC_VERSION_DEFAULT "1.0.0")
 
@@ -133,7 +132,8 @@ macro(find_or_install_package package apt_name brew_name)
     endif ()
 
     message(STATUS "Detecting ${package}")
-    sc_find_package_any_case(${package} ${SC_PACKAGE_ARGS})
+    #sc_find_package_any_case(${package} ${SC_PACKAGE_ARGS})
+    find_package(${package} QUIET ${ARGN})
 
     if (NOT ${package}_FOUND)
         if (UNIX AND EXISTS "/usr/bin/apt")

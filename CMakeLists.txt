@@ -25,6 +25,8 @@ endforeach ()
 
 find_or_install_package(CURL libcurl4-openssl-dev curl)
 find_or_fetch_package(nlohmann_json GIT_REPOSITORY https://github.com/nlohmann/json.git GIT_TAG v3.12.0)
+## Install??? This one is header only, so quite easy,
+## => cmake -S cmake-build-release/_deps/nlohmann_json-src/ -B cmake-build-json -DCMAKE_BUILD_TYPE=Release; cmake --install cmake-build-json
 
 ###########
 # Objects #

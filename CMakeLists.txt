@@ -24,11 +24,7 @@ foreach (template ${SC_SCRIPT_TEMPLATES})
 endforeach ()
 
 find_or_install_package(CURL libcurl4-openssl-dev curl)
-
-message(STATUS "Fetching nlohmann/json")
-FetchContent_Declare(json GIT_REPOSITORY https://github.com/nlohmann/json.git GIT_TAG v3.12.0 GIT_SHALLOW TRUE EXCLUDE_FROM_ALL)
-FetchContent_MakeAvailable(json)
-
+find_or_fetch_package(nlohmann_json GIT_REPOSITORY https://github.com/nlohmann/json.git GIT_TAG v3.12.0)
 
 ###########
 # Objects #

@@ -31,6 +31,7 @@ namespace sc {
         Derived operator+=(const pair_ &r) {
             x_ += r.x_;
             y_ += r.y_;
+            validate();
             return *this;
         }
 
@@ -41,7 +42,11 @@ namespace sc {
 
         template<Numeric U>
         Derived operator+=(const U &r) {
-            return *this += {r, r};
+            const auto value = static_cast<T>(r);
+            x_ += value;
+            y_ += value;
+            validate();
+            return *this;
         }
 
         template<Numeric U>
@@ -54,6 +59,7 @@ namespace sc {
         Derived operator-=(const pair_ &r) {
             x_ -= r.x_;
             y_ -= r.y_;
+            validate();
             return *this;
         }
 
@@ -64,7 +70,11 @@ namespace sc {
 
         template<Numeric U>
         Derived operator-=(const U &r) {
-            return *this -= {r, r};
+            const auto value = static_cast<T>(r);
+            x_ -= value;
+            y_ -= value;
+            validate();
+            return *this;
         }
 
         template<Numeric U>
@@ -77,6 +87,7 @@ namespace sc {
         Derived operator*=(const pair_ &r) {
             x_ *= r.x_;
             y_ *= r.y_;
+            validate();
             return *this;
         }
 
@@ -87,7 +98,11 @@ namespace sc {
 
         template<Numeric U>
         Derived operator*=(const U &r) {
-            return *this *= {r, r};
+            const auto value = static_cast<T>(r);
+            x_ *= value;
+            y_ *= value;
+            validate();
+            return *this;
         }
 
         template<Numeric U>
@@ -100,6 +115,7 @@ namespace sc {
         Derived operator/=(const pair_ &r) {
             x_ /= r.x_;
             y_ /= r.y_;
+            validate();
             return *this;
         }
 
@@ -110,7 +126,11 @@ namespace sc {
 
         template<Numeric U>
         Derived operator/=(const U &r) {
-            return *this /= {r, r};
+            const auto value = static_cast<T>(r);
+            x_ /= value;
+            y_ /= value;
+            validate();
+            return *this;
         }
 
         template<Numeric U>
@@ -264,7 +284,7 @@ namespace sc {
         rect_ operator*(size_<U> i) const {
             auto tmp = *this;
             tmp.origin_ *= i;
-            tmp.size_ *= i;
+            tmp.rect_size_ *= i;
             return tmp;
         }
 

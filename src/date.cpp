@@ -5,16 +5,54 @@ using namespace std;
 
 namespace sc {
     namespace base64_impl {
+        // A date here is a calendar day, not an instant, so the Julian day conversion
+        // works on the civil fields directly. Going via a time_t made the result depend
+        // on the local UTC offset, which put whole timezones a day out.
         class date {
         public:
             date(const string &dateInput) { initialize(dateInput); }
 
             date(const long julian_day) {
-                const time_t temp = (julian_day - unix_epoch + 1) * seconds_per_day;
-                storage = *localtime(&temp);
+                int year;
+                unsigned month, day;
+                civil_from_days(julian_day - julian_epoch, year, month, day);
+                storage = tm{};
+                storage.tm_year = year - 1900;
+                storage.tm_mon = static_cast<int>(month) - 1;
+                storage.tm_mday = static_cast<int>(day);
+                normalize();
             }
 
-            operator long() { return mktime(&storage) / seconds_per_day + unix_epoch; }
+            operator long() {
+                return days_from_civil(storage.tm_year + 1900, storage.tm_mon + 1, storage.tm_mday) + julian_epoch;
+            }
+
+            // Carries any out of range field (day 32, month 13, day 0) into the next one
+            // and re-derives tm_wday/tm_yday. mktime() used to do this, but it resolved
+            // the fields against the local timezone: a date built from today carried
+            // today's tm_isdst, so truncating into a non-DST month moved the day back an
+            // hour and, at midnight, off the day entirely. Civil arithmetic has no such
+            // trap, and no time_t range limit either.
+            void normalize() {
+                // Months first, so the year is settled before the day count is taken.
+                const long months = static_cast<long>(storage.tm_year) * 12 + storage.tm_mon;
+                const long year = (months >= 0 ? months : months - 11) / 12;
+                const auto month = static_cast<unsigned>(months - year * 12); // [0, 11]
+
+                const long days = days_from_civil(year + 1900, month + 1, 1) + storage.tm_mday - 1;
+
+                int normalized_year;
+                unsigned normalized_month, normalized_day;
+                civil_from_days(days, normalized_year, normalized_month, normalized_day);
+
+                storage.tm_year = normalized_year - 1900;
+                storage.tm_mon = static_cast<int>(normalized_month) - 1;
+                storage.tm_mday = static_cast<int>(normalized_day);
+                storage.tm_wday = static_cast<int>((days % 7 + 11) % 7); // 1970-01-01 was a Thursday
+                storage.tm_yday = static_cast<int>(days - days_from_civil(normalized_year, 1, 1));
+                storage.tm_hour = storage.tm_min = storage.tm_sec = 0;
+                storage.tm_isdst = -1; // a calendar day has no daylight saving state
+            }
 
             tm storage{};
 
@@ -33,11 +71,34 @@ namespace sc {
                     time_t now = time(nullptr);
                     storage = *localtime(&now);
                 }
-                storage.tm_hour = storage.tm_min = storage.tm_sec = 0;
+                normalize();
             }
 
-            static constexpr long seconds_per_day = 24 * 60 * 60;
-            const long unix_epoch = 2440589;
+            // Days between 1970-01-01 and y-m-d, proleptic Gregorian, month in [1, 12].
+            // Howard Hinnant's chrono-compatible civil calendar algorithms.
+            static long days_from_civil(long y, const unsigned m, const unsigned d) {
+                y -= m <= 2;
+                const long era = (y >= 0 ? y : y - 399) / 400;
+                const auto yoe = static_cast<unsigned>(y - era * 400);               // [0, 399]
+                const unsigned doy = (153 * (m + (m > 2 ? -3 : 9)) + 2) / 5 + d - 1; // [0, 365]
+                const unsigned doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;          // [0, 146096]
+                return era * 146097 + static_cast<long>(doe) - 719468;
+            }
+
+            static void civil_from_days(long z, int &y, unsigned &m, unsigned &d) {
+                z += 719468;
+                const long era = (z >= 0 ? z : z - 146096) / 146097;
+                const auto doe = static_cast<unsigned>(z - era * 146097);                  // [0, 146096]
+                const unsigned yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365; // [0, 399]
+                const unsigned doy = doe - (365 * yoe + yoe / 4 - yoe / 100);               // [0, 365]
+                const unsigned mp = (5 * doy + 2) / 153;                                    // [0, 11]
+                d = doy - (153 * mp + 2) / 5 + 1;                                           // [1, 31]
+                m = mp + (mp < 10 ? 3 : -9);                                                // [1, 12]
+                y = static_cast<int>(static_cast<long>(yoe) + era * 400 + (m <= 2));
+            }
+
+            // Julian day number of 1970-01-01.
+            static constexpr long julian_epoch = 2440588;
         };
     }
 
@@ -136,10 +197,7 @@ namespace sc {
 
     date date::sub(int number, const string &type) { return add(-number, type); }
 
-    void date::normalize() {
-        auto temp = mktime(&impl->storage);
-        impl->storage = *localtime(&temp);
-    }
+    void date::normalize() { impl->normalize(); }
 
     std::ostream &operator<<(std::ostream &lhs, const date &rhs) { return lhs << (string) rhs; }
 }

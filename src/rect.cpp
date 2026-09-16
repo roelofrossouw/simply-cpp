@@ -128,7 +128,9 @@ namespace sc
     template <typename T>
     rect_<T>& rect_<T>::operator-=(const T& i)
     {
-        return *this += (-i);
+        origin_ += i;
+        rect_size_ -= (2 * i);
+        return *this;
     }
 
     template <typename T>
@@ -163,7 +165,8 @@ namespace sc
     template <typename T>
     rect_<T> rect_<T>::operator-(const T& i) const
     {
-        return *this + (-i);
+        auto tmp = *this;
+        return tmp -= i;
     }
 
 
@@ -212,10 +215,10 @@ namespace sc
     {
         auto w = std::max(right(), rhs.right()) - std::min(left(), rhs.left());
         auto h = std::max(bottom(), rhs.bottom()) - std::min(top(), rhs.top());
-        rect_size_ = {}; // {w, h};
+        rect_size_ = {w, h};
         auto x = std::min(left(), rhs.left());
         auto y = std::min(top(), rhs.top());
-        origin_ = {}; // {x, y};
+        origin_ = {x, y};
     }
 
     template <typename T>
@@ -299,10 +302,18 @@ namespace sc
     }
 }
 
+// size_<T>::on_validate() is defined here, but the arithmetic operators in the
+// header call it, so it needs an out of line copy in the library. Instantiating
+// pair_ alone is not enough: an optimised build inlines it away and the symbol
+// never reaches callers.
 template class sc::pair_<sc::point_<int>, int>;
 template class sc::pair_<sc::size_<int>, int>;
+template class sc::point_<int>;
+template class sc::size_<int>;
 template class sc::rect_<int>;
 
 template class sc::pair_<sc::point_<double>, double>;
 template class sc::pair_<sc::size_<double>, double>;
+template class sc::point_<double>;
+template class sc::size_<double>;
 template class sc::rect_<double>;

@@ -13,6 +13,13 @@ include(cmake/SimplyCppFunctions.cmake)
 get_sc_version()
 message(STATUS "SimplyCPP ${SC_MODULE} Version: ${SC_VERSION}")
 
+# Core owns scripts/*.in, so it configures its own copies directly. Every other module
+# gets the same two scripts through sc_bootstrap.cmake.
+set(SC_DEPLOY_NAME "${SC_MODULE}" CACHE STRING "Directory this module is deployed to on the server")
+set(SC_SCRIPT_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+configure_file(scripts/deploy.sh.in ${CMAKE_CURRENT_SOURCE_DIR}/scripts/deploy.sh @ONLY FILE_PERMISSIONS ${SC_SCRIPT_PERMISSIONS})
+configure_file(scripts/run.sh.in ${CMAKE_CURRENT_SOURCE_DIR}/scripts/run.sh @ONLY FILE_PERMISSIONS ${SC_SCRIPT_PERMISSIONS})
+
 find_or_install_package(CURL libcurl4-openssl-dev curl)
 
 message(STATUS "Fetching nlohmann/json")
@@ -69,7 +76,9 @@ install(EXPORT scTargets FILE scTargets.cmake NAMESPACE sc:: DESTINATION ${CMAKE
 
 # Shared with the other simply-cpp modules, which pick them up through find_package(sc)
 # rather than keeping their own copies: the build helpers and the test harness.
-install(FILES cmake/SimplyCppFunctions.cmake cmake/sc_bootstrap.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sc)
+install(FILES cmake/SimplyCppFunctions.cmake cmake/sc_bootstrap.cmake
+        scripts/deploy.sh.in scripts/run.sh.in
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sc)
 install(FILES tests/sc_test.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 configure_package_config_file(cmake/scConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/scConfig.cmake

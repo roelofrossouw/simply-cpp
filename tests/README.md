@@ -130,7 +130,12 @@ wrong behaviour in place.
 
 ## Other modules
 
-`sc_test.h` is installed with the library, and `add_sc_test` comes from
-`SimplyCppFunctions.cmake` through `find_package(sc)`, so the other simply-cpp
-modules use both without keeping copies. Anything added here is available to them
-once core is reinstalled.
+`sc_test.h` and `SimplyCppFunctions.cmake` are installed with the library, and the
+other simply-cpp modules pick them up through `cmake/sc_bootstrap.cmake`, which takes
+them from an installed sc package, from the copy committed in the module, or from this
+repository over FetchContent - whichever it finds first - and caches the result. So a
+module does not need core installed to build, and anything added here reaches the
+others when they next resolve the helpers.
+
+Changing either file therefore changes every module. A module picks the change up on
+its next configure if it has sc installed, otherwise with `-DSC_UPDATE_HELPERS=ON`.

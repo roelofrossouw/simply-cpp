@@ -6,7 +6,7 @@
 #
 # Usage: scripts/deploy.sh [server] [user]
 
-module="core"
+module="sc-core"
 server="${1:-build}"
 user="${2:-root}"
 scriptfile=$(realpath "$0")

@@ -75,8 +75,28 @@ function(add_sc_object object)
     endif ()
 endfunction()
 
+# add_sc_test(<name> [TIMEOUT <seconds>] [LABELS <label>...])
+#
+# Builds tests/<name>.cpp into test-<name> and registers it with ctest.
+# Tests report every failed check on stderr and exit non-zero (see tests/sc_test.h).
 function(add_sc_test name)
-    add_executable("test-${name}" "${name}.cpp")
-    target_link_libraries("test-${name}" PRIVATE sc)
-    add_test(NAME "test-${name}" COMMAND "test-${name}")
+    set(options)
+    set(one_value_args TIMEOUT)
+    set(multi_value_args LABELS)
+    cmake_parse_arguments(SC_TEST "${options}" "${one_value_args}" "${multi_value_args}" ${ARGN})
+
+    if (NOT SC_TEST_TIMEOUT)
+        set(SC_TEST_TIMEOUT 120)
+    endif ()
+
+    set(target "test-${name}")
+    add_executable(${target} "${name}.cpp" sc_test.h)
+    target_link_libraries(${target} PRIVATE sc)
+    target_include_directories(${target} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+    add_test(NAME ${target} COMMAND ${target})
+    set_tests_properties(${target} PROPERTIES
+            WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+            TIMEOUT ${SC_TEST_TIMEOUT}
+            LABELS "${SC_TEST_LABELS}")
 endfunction()

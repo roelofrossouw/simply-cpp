@@ -3,27 +3,84 @@ include(CMakePackageConfigHelpers)
 include(FetchContent)
 include(CMakeParseArguments)
 
+set(SC_VERSION_FILE "VERSION.txt")
+set(SC_VERSION_DEFAULT "1.0.0")
+
+function(parse_sc_version text output)
+    string(REGEX REPLACE "^[vV]" "" candidate "${text}")
+    # CMake regexes have no {m,n} repetition, so the optional parts are spelled out.
+    if (candidate MATCHES "^[0-9]+(\\.[0-9]+)?(\\.[0-9]+)?(\\.[0-9]+)?$")
+        set(${output} "${candidate}" PARENT_SCOPE)
+    else ()
+        set(${output} "" PARENT_SCOPE)
+    endif ()
+endfunction()
+
 function(get_sc_version)
+    set(version_file "${CMAKE_CURRENT_SOURCE_DIR}/${SC_VERSION_FILE}")
+    set(version "")
+
     find_package(Git QUIET)
     if (Git_FOUND)
         execute_process(
                 COMMAND ${GIT_EXECUTABLE} describe --tags --abbrev=0
-                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-                OUTPUT_VARIABLE SC_VERSION
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                OUTPUT_VARIABLE git_tag
                 OUTPUT_STRIP_TRAILING_WHITESPACE
                 ERROR_QUIET
-                RESULT_VARIABLE GIT_RESULT
+                RESULT_VARIABLE git_result
         )
 
-        if (GIT_RESULT EQUAL 0)
-            string(REGEX REPLACE "^v" "" SC_VERSION "${SC_VERSION}")
-        else ()
-            set(SC_VERSION "1.0.0")
+        if (git_result EQUAL 0)
+            parse_sc_version("${git_tag}" version)
+            if ("${version}" STREQUAL "")
+                message(WARNING "Ignoring git tag '${git_tag}': not a version number")
+            endif ()
         endif ()
-    else ()
-        set(SC_VERSION "1.0.0")
     endif ()
-    set(SC_VERSION "${SC_VERSION}" PARENT_SCOPE)
+
+    if (NOT "${version}" STREQUAL "")
+        message(STATUS "Version ${version} from git tag '${git_tag}'")
+        write_sc_version_file("${version}" "${version_file}")
+    else ()
+        read_sc_version_file("${version_file}" version)
+    endif ()
+
+    if ("${version}" STREQUAL "")
+        set(version "${SC_VERSION_DEFAULT}")
+        message(WARNING "No usable git tag and no ${SC_VERSION_FILE}, defaulting to version ${version}."
+                " Configure once in a tagged checkout to create the file.")
+    endif ()
+
+    set(SC_VERSION "${version}" PARENT_SCOPE)
+endfunction()
+
+function(write_sc_version_file version version_file)
+    set(staged "${CMAKE_CURRENT_BINARY_DIR}/${SC_VERSION_FILE}")
+    file(WRITE "${staged}" "${version}\n")
+    file(COPY_FILE "${staged}" "${version_file}" ONLY_IF_DIFFERENT RESULT copy_error)
+    if (copy_error)
+        message(WARNING "Could not update ${version_file}: ${copy_error}."
+                " A build without git will fall back to whatever it already holds.")
+    endif ()
+endfunction()
+
+function(read_sc_version_file version_file output)
+    set(${output} "" PARENT_SCOPE)
+    if (NOT EXISTS "${version_file}")
+        return()
+    endif ()
+
+    file(READ "${version_file}" contents)
+    string(STRIP "${contents}" contents)
+    parse_sc_version("${contents}" version)
+    if ("${version}" STREQUAL "")
+        message(WARNING "Ignoring ${version_file}: '${contents}' is not a version number")
+        return()
+    endif ()
+
+    message(STATUS "Version ${version} from ${SC_VERSION_FILE} (no usable git tag)")
+    set(${output} "${version}" PARENT_SCOPE)
 endfunction()
 
 function(find_or_install_package package apt_name brew_name)
@@ -42,7 +99,7 @@ function(find_or_install_package package apt_name brew_name)
         if (NOT CURL_FOUND)
             message(FATAL_ERROR "Failed to install or locate ${package} (install result=${INSTALL_RESULT})")
         endif ()
-    else()
+    else ()
         message(STATUS "${package} found - ${${package}_VERSION}")
     endif ()
 endfunction()

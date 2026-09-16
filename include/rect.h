@@ -6,8 +6,7 @@
 
 namespace sc {
     template<typename T>
-    concept Numeric = std::same_as<T, int> || std::same_as<T, double>;
-    // concept Numeric = std::is_integral_v<T> || std::is_floating_point_v<T>;
+    concept Numeric = std::integral<T> || std::floating_point<T>;
 
     template<typename Derived, Numeric T>
     class pair_ {

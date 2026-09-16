@@ -58,7 +58,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(sc)
 
 add_executable(trysc main.cpp)
-target_link_libraries(trysc sc)
+target_link_libraries(trysc sc-core)
 ```
 
 2. Or you can simply clone the repository and then include the library in your CMake project:

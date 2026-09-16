@@ -51,18 +51,19 @@ add_sc_object(rest LINK_LIBRARIES curl PUBLIC_LINK_LIBRARIES curl)
 ######################
 # Exported Libraries #
 ######################
-add_sc_libraries(sc DESCRIPTION "simply-cpp-core")
+add_sc_libraries(DESCRIPTION "simply-cpp-core")
 
 ################
 # Installation #
 ################
-install_sc_module(sc PATH_VARS CMAKE_INSTALL_INCLUDEDIR)
+install_sc_module(PATH_VARS CMAKE_INSTALL_INCLUDEDIR)
 
-# Core only: what every other module picks up through find_package(sc) or the bootstrap
-# instead of keeping its own copy.
+# Core only: what every other module picks up through find_package(sc-core) or the
+# bootstrap instead of keeping its own copy. Goes next to sc-coreConfig.cmake, which is
+# where sc_bootstrap.cmake looks for it.
 install(FILES cmake/SimplyCppFunctions.cmake cmake/sc_bootstrap.cmake
         ${SC_SCRIPT_TEMPLATES}
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sc)
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sc-core)
 install(FILES tests/sc_test.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 #########

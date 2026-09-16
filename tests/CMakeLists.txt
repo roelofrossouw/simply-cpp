@@ -5,7 +5,7 @@ add_custom_target(copy_cs_resources ALL COMMAND ${CMAKE_COMMAND} -E copy_directo
 
 ## TESTS ##
 # What every test in this directory links against.
-set(SC_TEST_LINK_LIBRARIES sc)
+set(SC_TEST_LINK_LIBRARIES sc-core)
 
 # Tests labelled "network" reach outside the build; run only the rest with ctest -LE network
 add_sc_test(date LABELS unit)

@@ -76,7 +76,6 @@ endif ()
 
 add_executable(sc-demo apps/sc-demo.cpp)
 target_link_libraries(sc-demo PRIVATE sc::sc-core-shared)
-
 install(TARGETS sc-demo RUNTIME DESTINATION bin COMPONENT runtime)
 
 #############

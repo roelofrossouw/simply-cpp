@@ -44,10 +44,15 @@ Every library can be used on its own, or you can include the common library to i
 
 ### CMake
 
-1. The easiest on Ubuntu linux is to install using apt and use findpackage. 
-   1. Register the repo with ```sudo curl -fsSL https://apt.roelof.co.za/setup.sh | bash```
-   2. Install with ```sudo apt -y install simply-cpp-dev```
-   3. Include in your CMake project:
+1. The easiest way to use simply-cpp is by installing from a repository and use findpackage.
+   1. For Ubuntu linux is to install using apt. 
+      1. Register the repo with ```sudo curl -fsSL https://apt.roelof.co.za/setup.sh | bash```
+      1. Install with ```sudo apt -y install simply-cpp-dev```
+   1. And on Mac you can use brew.
+      1. first tap ```brew tap roelofrossouw/sc```
+      2. trust the new tap ```brew trust roelofrossouw/sc```
+      3. then install with  
+   1. Include in your CMake project:
 ```cmake
 find_package(sc-core REQUIRED)
 add_executable(trysc main.cpp)

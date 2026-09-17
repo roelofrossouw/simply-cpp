@@ -44,12 +44,21 @@ Every library can be used on its own, or you can include the common library to i
 
 ### CMake
 
-1. You can use "FetchContent" to include the library in your CMake project:
+1. The easiest on Ubuntu linux is to install using apt and use findpackage. 
+   1. Register the repo with ```sudo curl -fsSL https://apt.roelof.co.za/setup.sh | bash```
+   2. Install with ```sudo apt -y install simply-cpp-dev```
+   3. Include in your CMake project:
+```cmake
+find_package(sc-core REQUIRED)
+add_executable(trysc main.cpp)
+target_link_libraries(trysc sc::sc-core)
+```
+2. You can use "FetchContent" to include the library in your CMake project:
 
 ```cmake
 include(FetchContent)
 FetchContent_Declare(
-        sc
+        sc-core
         GIT_REPOSITORY https://github.com/roelofrossouw/simply-cpp.git
         GIT_TAG origin/main # Or a specific tag to stay stable #
         GIT_SHALLOW TRUE
@@ -61,7 +70,7 @@ add_executable(trysc main.cpp)
 target_link_libraries(trysc sc-core)
 ```
 
-2. Or you can simply clone the repository and then include the library in your CMake project:
+3. Or you can simply clone the repository and then include the library in your CMake project:
 
 ```bash
 # If your project is a git repo, then

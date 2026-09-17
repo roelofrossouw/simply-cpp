@@ -59,10 +59,8 @@ install_sc_module(PATH_VARS CMAKE_INSTALL_INCLUDEDIR)
 # Core only: what every other module picks up through find_package(sc-core) or the
 # bootstrap instead of keeping its own copy. Goes next to sc-coreConfig.cmake, which is
 # where sc_bootstrap.cmake looks for it.
-install(FILES cmake/SimplyCppFunctions.cmake cmake/sc_bootstrap.cmake
-        ${SC_SCRIPT_TEMPLATES}
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sc-core)
-install(FILES tests/sc_test.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES cmake/SimplyCppFunctions.cmake cmake/sc_bootstrap.cmake ${SC_SCRIPT_TEMPLATES} DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sc-core COMPONENT development)
+install(FILES tests/sc_test.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} COMPONENT development)
 
 #########
 # Tests #
@@ -71,3 +69,17 @@ if (SC_CORE_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests sc-test)
 endif ()
+
+############
+# Binaries #
+############
+
+add_executable(sc-demo apps/sc-demo.cpp)
+target_link_libraries(sc-demo PRIVATE sc::sc-core-shared)
+
+install(TARGETS sc-demo RUNTIME DESTINATION bin COMPONENT runtime)
+
+#############
+# Packaging #
+#############
+package_sc_module()

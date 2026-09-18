@@ -1,0 +1,1 @@
+Library that wraps common C++ libraries behind one simple, consistent API

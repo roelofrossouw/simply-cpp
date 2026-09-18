@@ -17,7 +17,7 @@ cmake -DCMAKE_BUILD_TYPE=Release -B cmake-build-local -S . || exit
 pushd cmake-build-local || exit
 cmake --build . -j 12 || exit
 ctest --test-dir . --output-on-failure -LE network || exit
-cpack --config ./CPackConfig.cmake -G TGZ
+cpack --config ./CPackConfig.cmake
 sudo cmake --install .
 popd || exit
 

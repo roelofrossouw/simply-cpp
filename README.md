@@ -1,6 +1,6 @@
 # simply-cpp
 
-Library to simplify a variety of C++ libraries into a standard usage methodology.
+Library that wraps common C++ libraries behind one simple, consistent API.
 
 The idea of this library is to make it easier to use C++, especially for those who are new to C++.
 The concept is to create wrappers around existing libraries, not to implement them from scratch.
@@ -8,9 +8,9 @@ This should keep maintenance to the minimum.
 
 In my opinion, ease of use means that there should not be a need to maintain state or have a lot of work to do for setting up.
 All functionality is run from a global or static function if no state is required. Otherwise by creating an object with a simple constructor and methods.
-Most objects should be able to be streamed as a string. (eg cout << obj).
+Most objects should be able to be streamed as a string (e.g. `cout << obj`).
 
-Example for a static function of the "base64" class:
+Example for a static function of the `base64` class:
 
 ```cpp
 sc::base64::encode("Hello World!");
@@ -31,89 +31,89 @@ cout << "More work took " << t2 << endl;
 cout << "Some work and more work together took " << t << endl;
 ```
 
-## Factors considered to keep things simple:
+## Factors considered to keep things simple
 
-1. Headers should not include third party headers so that users don't have issues with needing 3rd party headers or include paths. (only use forward declarations)
+1. Headers should not include third party headers so that users don't have issues with needing 3rd party headers or include paths (only use forward declarations).
 1. Headers should not affect the global namespace.
 1. Headers should not add namespace usages.
 1. Headers should include comments to document the public methods.
 
-## Usage
+## Install
 
-Every library can be used on its own, or you can include the common library to include everything to get going.
+### Homebrew (macOS)
 
-### CMake
-
-1. The easiest way to use simply-cpp is by installing from a repository and use findpackage.
-   1. For Ubuntu linux is to install using apt. 
-      1. Register the repo with ```sudo curl -fsSL https://apt.roelof.co.za/setup.sh | bash```
-      1. Install with ```sudo apt -y install simply-cpp-dev```
-   1. And on Mac you can use brew.
-      1. first tap ```brew tap roelofrossouw/sc```
-      2. trust the new tap ```brew trust roelofrossouw/sc```
-      3. then install with  
-   1. Include in your CMake project:
-```cmake
-find_package(sc-core REQUIRED)
-add_executable(trysc main.cpp)
-target_link_libraries(trysc sc::sc-core)
+```bash
+brew tap roelofrossouw/sc
+brew install simply-cpp
 ```
-2. You can use "FetchContent" to include the library in your CMake project:
+
+### apt (Ubuntu)
+
+```bash
+sudo curl -fsSL https://apt.roelof.co.za/setup.sh | bash
+sudo apt -y install simply-cpp-dev
+```
+
+### CMake FetchContent
 
 ```cmake
 include(FetchContent)
 FetchContent_Declare(
         sc-core
         GIT_REPOSITORY https://github.com/roelofrossouw/simply-cpp.git
-        GIT_TAG origin/main # Or a specific tag to stay stable #
+        GIT_TAG main # or a specific tag, e.g. v1.1.9, to stay stable
         GIT_SHALLOW TRUE
-        EXCLUDE_FROM_ALL
 )
-FetchContent_MakeAvailable(sc)
+FetchContent_MakeAvailable(sc-core)
 
-add_executable(trysc main.cpp)
-target_link_libraries(trysc sc-core)
+add_executable(myapp main.cpp)
+target_link_libraries(myapp PRIVATE sc::sc-core)
 ```
 
-3. Or you can simply clone the repository and then include the library in your CMake project:
+### Git submodule
 
 ```bash
-# If your project is a git repo, then
-git remote add sc https://github.com/roelofrossouw/simply-cpp.git
-git subtree add --prefix=third_party/sc sc main --squash
-# otherwise you can clone it
-git clone https://github.com/roelofrossouw/simply-cpp.git third_party/sc
+git submodule add https://github.com/roelofrossouw/simply-cpp.git third_party/sc-core
 ```
 
 ```cmake
-add_subdirectory(third_party/sc sc EXCLUDE_FROM_ALL)
+add_subdirectory(third_party/sc-core)
+target_link_libraries(myapp PRIVATE sc::sc-core)
 ```
 
-Once you have simply-cpp included in your project include the header file:
+## Dependencies
 
-```cpp
-#include "sc.h"
+sc-core is the base of the suite - it doesn't depend on any other `sc-*` module. It does use:
+
+- **libcurl** - a system dependency (`libcurl4-openssl-dev` on apt, `curl` on brew); installed automatically if missing when building from source.
+- **nlohmann_json** - fetched and built from source automatically; nothing to install for it.
+
+## Usage
+
+```cmake
+find_package(sc-core CONFIG REQUIRED)
+
+add_executable(myapp main.cpp)
+target_link_libraries(myapp PRIVATE sc::sc-core)
 ```
 
-And access any part of the library:
+Include the aggregate header, or any of the individual ones (`base64.h`, `timer.h`, `date.h`, `color.h`, `rect.h`, `percent.h`, `rest.h`, `ollama.h`, ...):
 
 ```cpp
+#include <sc.h>
+
 auto encoded = sc::base64::encode("Hello");
 ```
 
 ## Requirements
-### Base requirements for compiling
-1. CMake 3.22 or higher – install with your package manager or download from https://cmake.org/download/
-1. A C++ compiler that supports C++20 or higher. (The library uses concepts, so C++17 is not enough.)
-### Third party library dependencies
-Ideally dependencies are included and build as source, but in some cases it is too complicated when e.g. requirements don't use cmake etc.
-These dependencies are however mostly only required for building, most systems should have these libraries already installed for end users.
-1. Curl – install with your package manager (e.g. `apt -y install libcurl4-openssl-dev`) or download from https://curl.haxx.se/download.html
+
+- CMake 3.22 or newer
+- A C++20 compiler (the library uses concepts, so C++17 is not enough)
 
 ## Building and testing
 
 ```bash
 cmake -B build -S .
 cmake --build build -j
-ctest --test-dir build/sc-test --output-on-failure
+ctest --test-dir build --output-on-failure
 ```

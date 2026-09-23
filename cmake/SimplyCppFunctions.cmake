@@ -386,7 +386,19 @@ function(install_sc_module)
 
     set(package_destination "${CMAKE_INSTALL_LIBDIR}/cmake/${name}")
 
-    install(TARGETS ${SOURCE_LIBRARIES} EXPORT ${name}Targets COMPONENT development)
+    # A blanket "COMPONENT development" here would re-install the shared library's
+    # real .so file a second time (add_sc_libraries() already put it in COMPONENT
+    # runtime, with only its unversioned namelink in development) - the same file
+    # would then be packaged into both the runtime and -dev .debs, which dpkg
+    # refuses to unpack together ("trying to overwrite ... which is also in
+    # package ..."). Match add_sc_libraries()'s split instead: only the archive
+    # (static lib) belongs to development here: shared libraries were already
+    # installed by add_sc_libraries(), and this call only needs to add them to the
+    # export set, not re-place their files.
+    install(TARGETS ${SOURCE_LIBRARIES} EXPORT ${name}Targets
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT development
+            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_COMPONENT development
+            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime)
     # Finder litters include/ and install(DIRECTORY) copies whatever it finds.
     install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ COMPONENT development DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} PATTERN ".DS_Store" EXCLUDE)
     install(EXPORT ${name}Targets FILE ${name}Targets.cmake NAMESPACE sc:: DESTINATION ${package_destination} COMPONENT development)

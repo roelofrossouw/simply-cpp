@@ -21,7 +21,7 @@ endif ()
 # sc_bootstrap.cmake compares it against a module's own copy so an older installed
 # sc-core cannot quietly replace a newer one: a module built against helpers missing
 # what its CMakeLists.txt calls fails in ways that look nothing like the cause.
-set(SC_HELPERS_VERSION 12)
+set(SC_HELPERS_VERSION 13)
 set(SC_VERSION_FILE "VERSION.txt")
 set(SC_VERSION_DEFAULT "1.0.0")
 
@@ -391,13 +391,17 @@ function(install_sc_module)
     # runtime, with only its unversioned namelink in development) - the same file
     # would then be packaged into both the runtime and -dev .debs, which dpkg
     # refuses to unpack together ("trying to overwrite ... which is also in
-    # package ..."). Match add_sc_libraries()'s split instead: only the archive
-    # (static lib) belongs to development here: shared libraries were already
-    # installed by add_sc_libraries(), and this call only needs to add them to the
-    # export set, not re-place their files.
+    # package ..."). Pairing plain COMPONENT/NAMELINK_COMPONENT with EXPORT in one
+    # call was tried first and silently misrouted the real .so into COMPONENT
+    # development anyway (a CMake quirk, not the documented behavior) - verified by
+    # inspecting the generated cmake_install.cmake component blocks directly.
+    # NAMELINK_ONLY sidesteps it: the real files stay exactly where
+    # add_sc_libraries() already placed them (never touched by this call), and only
+    # the plain-name symlink is re-declared here, redundantly but harmlessly, so it
+    # can carry the EXPORT registration.
     install(TARGETS ${SOURCE_LIBRARIES} EXPORT ${name}Targets
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT development
-            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_COMPONENT development
+            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT development NAMELINK_ONLY
             RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime)
     # Finder litters include/ and install(DIRECTORY) copies whatever it finds.
     install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ COMPONENT development DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} PATTERN ".DS_Store" EXCLUDE)

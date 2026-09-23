@@ -21,7 +21,7 @@ endif ()
 # sc_bootstrap.cmake compares it against a module's own copy so an older installed
 # sc-core cannot quietly replace a newer one: a module built against helpers missing
 # what its CMakeLists.txt calls fails in ways that look nothing like the cause.
-set(SC_HELPERS_VERSION 13)
+set(SC_HELPERS_VERSION 14)
 set(SC_VERSION_FILE "VERSION.txt")
 set(SC_VERSION_DEFAULT "1.0.0")
 
@@ -352,7 +352,14 @@ function(add_sc_libraries)
         target_link_libraries(${target} PUBLIC ${dependencies})
         list(APPEND SOURCE_LIBRARIES ${target})
         if (${kind} STREQUAL SHARED)
-            install(TARGETS ${target} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_COMPONENT development)
+            # EXPORT lives on this call, not install_sc_module()'s: that one only
+            # installs the static archive now (see its comment for why re-touching
+            # the shared library's real file there breaks things two different
+            # ways). A target's EXPORT info is generated from whichever call
+            # actually places its real file, so the shared target has to be
+            # exported from here - the one call that actually does that.
+            install(TARGETS ${target} EXPORT ${name}Targets
+                    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_COMPONENT development)
         endif ()
     endforeach ()
 
@@ -386,23 +393,23 @@ function(install_sc_module)
 
     set(package_destination "${CMAKE_INSTALL_LIBDIR}/cmake/${name}")
 
-    # A blanket "COMPONENT development" here would re-install the shared library's
-    # real .so file a second time (add_sc_libraries() already put it in COMPONENT
-    # runtime, with only its unversioned namelink in development) - the same file
-    # would then be packaged into both the runtime and -dev .debs, which dpkg
-    # refuses to unpack together ("trying to overwrite ... which is also in
-    # package ..."). Pairing plain COMPONENT/NAMELINK_COMPONENT with EXPORT in one
-    # call was tried first and silently misrouted the real .so into COMPONENT
-    # development anyway (a CMake quirk, not the documented behavior) - verified by
-    # inspecting the generated cmake_install.cmake component blocks directly.
-    # NAMELINK_ONLY sidesteps it: the real files stay exactly where
-    # add_sc_libraries() already placed them (never touched by this call), and only
-    # the plain-name symlink is re-declared here, redundantly but harmlessly, so it
-    # can carry the EXPORT registration.
-    install(TARGETS ${SOURCE_LIBRARIES} EXPORT ${name}Targets
-            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT development
-            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT development NAMELINK_ONLY
-            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime)
+    # Only the static archive is installed here. The shared library is already
+    # fully installed - real file in COMPONENT runtime, namelink in development -
+    # by add_sc_libraries()'s own call, which also carries its EXPORT (a target's
+    # export info is generated from whichever install(TARGETS) call actually
+    # places its real file, so it has to be exported from there, not here). Two
+    # things were tried and both broke: a blanket "COMPONENT development" here
+    # re-installed the shared library's real .so a second time, into the -dev
+    # package too, which made dpkg refuse to unpack both packages together; a
+    # NAMELINK_ONLY re-declaration of it here (to carry EXPORT without
+    # re-placing the real file) instead dropped the shared target from the
+    # generated Targets.cmake entirely, since this call no longer referenced its
+    # real file for CMake to generate an IMPORTED_LOCATION from. Excluding it
+    # from this call altogether avoids both.
+    set(sc_static_libraries "${SOURCE_LIBRARIES}")
+    list(FILTER sc_static_libraries EXCLUDE REGEX "-shared$")
+    install(TARGETS ${sc_static_libraries} EXPORT ${name}Targets
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT development)
     # Finder litters include/ and install(DIRECTORY) copies whatever it finds.
     install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ COMPONENT development DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} PATTERN ".DS_Store" EXCLUDE)
     install(EXPORT ${name}Targets FILE ${name}Targets.cmake NAMESPACE sc:: DESTINATION ${package_destination} COMPONENT development)

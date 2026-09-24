@@ -76,4 +76,4 @@ install(TARGETS sc-demo RUNTIME DESTINATION bin COMPONENT runtime)
 #############
 # Packaging #
 #############
-package_sc_module()
+package_sc_module(ARG_DEVELOPMENT_DEPENDS sc-shared nlohmann_json CURL)

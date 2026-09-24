@@ -78,5 +78,5 @@ install(TARGETS sc-demo RUNTIME DESTINATION bin COMPONENT runtime)
 # Packaging #
 #############
 package_sc_module(
-    DEV_DEPENDS nlohmann-json3-dev libcurl4-openssl-dev
+    DEV_DEPENDS simply-cpp nlohmann-json3-dev libcurl4-openssl-dev
 )

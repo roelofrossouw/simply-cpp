@@ -65,6 +65,7 @@ if (SC_CORE_BUILD_TESTS)
     add_subdirectory(tests sc-test)
 endif ()
 
+
 ############
 # Binaries #
 ############

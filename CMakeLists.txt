@@ -20,13 +20,8 @@ foreach (template ${SC_SCRIPT_TEMPLATES})
 endforeach ()
 
 # Runtime and development dependencies:
-# - libcurl4-openssl-dev: required for sc::rest module (HTTP requests, etc.)
-# - libsc-core-dev: self-referential (headers/libraries in dev package needed by other modules using core)
 find_or_install_package(CURL libcurl4-openssl-dev curl)
-find_or_fetch_package(nlohmann_json GIT_REPOSITORY https://github.com/nlohmann/json.git GIT_TAG v3.12.0)
-find_or_install_package(simply-cpp-dev simply-cpp-dev "")
-## Install??? This one is header only, so quite easy,
-## => cmake -S cmake-build-release/_deps/nlohmann_json-src/ -B cmake-build-json -DCMAKE_BUILD_TYPE=Release; cmake --install cmake-build-json
+find_or_install_package(nlohmann_json nlohmann-json3-dev nlohmann-json)
 
 ###########
 # Objects #

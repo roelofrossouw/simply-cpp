@@ -7,7 +7,7 @@
 # Runs on the server, in the directory deploy.sh synced to.
 
 module="sc-core"
-version="1.1.17"
+version="1.1.18"
 ubuntu_codename=$(lsb_release -sc)
 build_directory="cmake-build-$ubuntu_codename"
 apt -y install cmake clang-tidy ccache g++

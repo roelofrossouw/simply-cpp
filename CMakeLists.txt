@@ -1,15 +1,11 @@
 cmake_minimum_required(VERSION 3.22)
 set(SC_MODULE core)
-project(simply-cpp-${CS_MODULE} LANGUAGES CXX)
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+project(simply-cpp LANGUAGES CXX)
+include(cmake/SimplyCppFunctions.cmake)
 
 # Options:
 option(SC_CORE_BUILD_TESTS "Build simply-cpp-core tests" ${PROJECT_IS_TOP_LEVEL})
 
-include(cmake/SimplyCppFunctions.cmake)
 get_sc_version()
 message(STATUS "SimplyCPP ${SC_MODULE} Version: ${SC_VERSION}")
 

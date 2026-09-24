@@ -5,7 +5,6 @@ include(cmake/SimplyCppFunctions.cmake)
 
 # Options:
 option(SC_CORE_BUILD_TESTS "Build simply-cpp-core tests" ${PROJECT_IS_TOP_LEVEL})
-option(BUILD_SC_REST "Build with sc::rest support (requires curl)" OFF)
 
 get_sc_version()
 message(STATUS "SimplyCPP ${SC_MODULE} Version: ${SC_VERSION}")
@@ -20,11 +19,9 @@ foreach (template ${SC_SCRIPT_TEMPLATES})
     configure_file(${template} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/${script} @ONLY FILE_PERMISSIONS ${SC_SCRIPT_PERMISSIONS})
 endforeach ()
 
-# Dependencies: nlohmann-json is required (header-only). curl is optional and only needed for sc::rest.
+# Runtime dependencies (required for simply-cpp-dev):
+find_or_install_package(CURL libcurl4-openssl-dev curl)
 find_or_install_package(nlohmann_json nlohmann-json3-dev nlohmann-json)
-if (${BUILD_SC_REST})
-    find_or_install_package(CURL libcurl4-openssl-dev curl)
-endif ()
 
 ###########
 # Objects #
@@ -42,9 +39,7 @@ add_sc_object(rect)
 add_sc_object(date)
 add_sc_object(percent)
 add_sc_object(ollama LINK_LIBRARIES nlohmann_json::nlohmann_json)
-if (${BUILD_SC_REST})
-    add_sc_object(rest LINK_LIBRARIES curl PUBLIC_LINK_LIBRARIES curl)
-endif ()
+add_sc_object(rest LINK_LIBRARIES curl PUBLIC_LINK_LIBRARIES curl)
 
 ######################
 # Exported Libraries #
@@ -82,4 +77,6 @@ install(TARGETS sc-demo RUNTIME DESTINATION bin COMPONENT runtime)
 #############
 # Packaging #
 #############
-package_sc_module()
+package_sc_module(
+    DEPENDS nlohmann-json3-dev libcurl4-openssl-dev
+)

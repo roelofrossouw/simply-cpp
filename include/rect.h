@@ -221,34 +221,56 @@ namespace sc {
 
         rect_ &operator+=(const rect_ &rhs);
 
-        rect_ &operator-=(const rect_ &rhs);
-
         rect_ &operator+=(const T &i);
 
-        rect_ &operator-=(const T &i);
+        template<typename U> requires std::convertible_to<U, T>
+        rect_ &operator+=(const point_<U> &i) {
+            origin_ += i;
+            return *this;
+        }
 
-        template<typename U>
-            requires std::convertible_to<U, T>
+        template<typename U> requires std::convertible_to<U, T>
         rect_ &operator+=(const U &i) {
             return *this += static_cast<T>(i);
         }
 
-        template<typename U>
-            requires std::convertible_to<U, T>
+        rect_ &operator-=(const rect_ &rhs);
+
+        rect_ &operator-=(const T &i);
+
+        template<typename U> requires std::convertible_to<U, T>
         rect_ &operator-=(const U &i) {
             return *this -= static_cast<T>(i);
         }
 
+        template<typename U> requires std::convertible_to<U, T>
+        rect_ &operator*=(const U &i) {
+            origin_ *= i;
+            rect_size_ *= i;
+            return *this;
+        }
+
         rect_ &operator*=(const size_<double> &rhs);
+
+        template<typename U> requires std::convertible_to<U, T>
+        rect_ operator*(const U &i) {
+            auto tmp = *this;
+            return tmp *= i;
+        }
 
         rect_ operator+(const rect_ &r) const;
 
         rect_ operator+(const T &i) const;
 
-        template<typename U>
-            requires std::convertible_to<U, T>
+        template<typename U> requires std::convertible_to<U, T>
         rect_ operator+(U i) const {
             return *this + static_cast<T>(i);
+        }
+
+        template<typename U> requires std::convertible_to<U, T>
+        rect_ operator+(const point_<U> &i) {
+            auto tmp = *this;
+            return tmp += i;
         }
 
         rect_ operator-(const rect_ &r) const;

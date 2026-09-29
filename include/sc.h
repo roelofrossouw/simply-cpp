@@ -17,7 +17,7 @@
 #include <color.h>
 #include <timer.h>
 #include <matrix.h>
-#include <rect.h>
+#include <geometry.h>
 #include <ollama.h>
 #include <dual.h>
 #include <ip_address.h>

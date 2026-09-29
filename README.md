@@ -97,12 +97,14 @@ add_executable(myapp main.cpp)
 target_link_libraries(myapp PRIVATE sc::sc-core)
 ```
 
-Include the aggregate header, or any of the individual ones (`base64.h`, `timer.h`, `date.h`, `color.h`, `rect.h`, `percent.h`, `rest.h`, `ollama.h`, ...):
+Include the aggregate header, or an individual one (`base64.h`, `timer.h`, `date.h`, `color.h`, `geometry.h`, `percent.h`, `rest.h`, `ollama.h`, ...). Geometry stays part of sc-core, grouped under `geometry.h`; `rect.h` remains available for existing includes. The geometry API includes points, rectangles, rotated rectangles, polygons, circles, and DBSCAN clustering:
 
 ```cpp
 #include <sc.h>
 
 auto encoded = sc::base64::encode("Hello");
+
+const auto clusters = sc::dbscan(std::vector<double>{1, 1.1, 20}, 0.5, 2);
 ```
 
 ## Requirements

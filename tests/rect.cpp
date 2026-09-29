@@ -1,6 +1,7 @@
 #include <sc.h>
 
 #include <sstream>
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -28,6 +29,83 @@ namespace {
 }
 
 int main() {
+    SECTION("Polygon points");
+    {
+        const sc::polygon polygon{{1, 2}, {3, 4}, {5, 6}, {7, 8}};
+        CHECK_EQ(polygon.size(), size_t{4});
+        CHECK_EQ(polygon[0], (sc::point_i{1, 2}));
+        CHECK_EQ(polygon[3], (sc::point_i{7, 8}));
+        CHECK_EQ(std::ranges::distance(polygon), 4);
+        CHECK(!polygon.is_rect());
+    }
+
+    SECTION("Expanding rectangular polygons");
+    {
+        const sc::polygon rectangle{{10, 10}, {30, 10}, {30, 30}, {10, 30}};
+        CHECK(rectangle.is_rect());
+        const auto expanded = rectangle.expanded(0.1);
+        CHECK_EQ(expanded, (sc::polygon{{9, 9}, {31, 9}, {31, 31}, {9, 31}}));
+        const sc::polygon wide_rectangle{{10, 10}, {40, 10}, {40, 30}, {10, 30}};
+        CHECK_NEAR(wide_rectangle.width(), 30.0, 1e-6);
+        CHECK_NEAR(wide_rectangle.height(), 20.0, 1e-6);
+        const auto wider = wide_rectangle.expand_w(0.1);
+        CHECK_NEAR(wider.width(), 33.0, 1.0);
+        CHECK_NEAR(wider.height(), 20.0, 1.0);
+        const auto taller = wide_rectangle.expand_h(3);
+        CHECK_NEAR(taller.width(), 30.0, 1.0);
+        CHECK_NEAR(taller.height(), 26.0, 1.0);
+
+        const sc::polygon rotated_rectangle{{0, 0}, {12, 16}, {8, 19}, {-4, 3}};
+        CHECK(rotated_rectangle.is_rect());
+        CHECK_NEAR(rotated_rectangle.width(), 20.0, 1e-6);
+        CHECK_NEAR(rotated_rectangle.height(), 5.0, 1e-6);
+        const auto rotated_wider = rotated_rectangle.expand_w(0.2);
+        CHECK_NEAR(rotated_wider.width(), 24.0, 1.0);
+        CHECK_NEAR(rotated_wider.height(), 5.0, 1.0);
+        const auto rotated_taller = rotated_rectangle.expand_h(5);
+        CHECK_NEAR(rotated_taller.width(), 20.0, 1.0);
+        CHECK_NEAR(rotated_taller.height(), 15.0, 1.0);
+
+        const sc::polygon triangle{{0, 0}, {1, 1}, {2, 2}};
+        CHECK(!triangle.is_rect());
+        const sc::polygon unequal_opposite_sides{{0, 0}, {100, 0}, {95, 20}, {0, 20}};
+        CHECK(!unequal_opposite_sides.is_rect());
+        const sc::polygon oblique{{0, 0}, {10, 0}, {12, 10}, {2, 10}};
+        CHECK(!oblique.is_rect());
+        CHECK_THROWS_AS(triangle.expanded(0.1), invalid_argument);
+        CHECK_THROWS_AS(rectangle.expanded(-0.1), invalid_argument);
+    }
+
+    SECTION("Rectangle, rotated rectangle, and polygon conversions");
+    {
+        const sc::rect rectangle{10.0, 20.0, 30.0, 10.0};
+        const sc::polygon axis_aligned = static_cast<sc::polygon>(rectangle);
+        CHECK_EQ(axis_aligned, (sc::polygon{{10, 20}, {40, 20}, {40, 30}, {10, 30}}));
+
+        const sc::rotated_rect axis_rotated = static_cast<sc::rotated_rect>(rectangle);
+        CHECK_EQ(axis_rotated.center(), (sc::point{25, 25}));
+        CHECK_EQ(axis_rotated.size(), (sc::size{30, 10}));
+        CHECK_EQ(axis_rotated.angle(), 0.0);
+
+        const sc::polygon rotated_polygon{{0, 0}, {12, 16}, {8, 19}, {-4, 3}};
+        const sc::rect bounds = static_cast<sc::rect>(rotated_polygon);
+        check_edges(bounds, -4.0, 0.0, 16.0, 19.0);
+
+        const sc::rotated_rect rotated = static_cast<sc::rotated_rect>(rotated_polygon);
+        CHECK_NEAR(rotated.center().x(), 4.0, 1e-6);
+        CHECK_NEAR(rotated.center().y(), 9.5, 1e-6);
+        CHECK_NEAR(rotated.width(), 20.0, 1e-6);
+        CHECK_NEAR(rotated.height(), 5.0, 1e-6);
+        CHECK_NEAR(rotated.angle(), 53.1301, 1e-3);
+
+        const sc::polygon round_trip = static_cast<sc::polygon>(rotated);
+        const sc::rotated_rect restored = static_cast<sc::rotated_rect>(round_trip);
+        CHECK_NEAR(restored.center().x(), rotated.center().x(), 1.0);
+        CHECK_NEAR(restored.center().y(), rotated.center().y(), 1.0);
+        CHECK_NEAR(restored.width(), rotated.width(), 1.0);
+        CHECK_NEAR(restored.height(), rotated.height(), 1.0);
+    }
+
     SECTION("Construction and accessors");
     {
         const sc::rect r{13.5, 20, 30, 40};

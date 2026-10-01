@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rect.h"
+#include "point.h"
 
 #include <cmath>
 #include <stdexcept>

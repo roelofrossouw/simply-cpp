@@ -86,6 +86,22 @@ int main() {
         CHECK_EQ(axis_rotated.center(), (sc::point{25, 25}));
         CHECK_EQ(axis_rotated.size(), (sc::size{30, 10}));
         CHECK_EQ(axis_rotated.angle(), 0.0);
+        CHECK_EQ(axis_rotated.area(), 300.0);
+        CHECK_EQ(axis_rotated.left(), 10.0);
+        CHECK_EQ(axis_rotated.top(), 20.0);
+        CHECK_EQ(axis_rotated.right(), 40.0);
+        CHECK_EQ(axis_rotated.bottom(), 30.0);
+        CHECK_EQ(to_text(axis_rotated), string{"(25,25)x[30,10]@0"});
+
+        const sc::rotated_rect_i integer_rotated{{1, 2}, {3, 4}, 45};
+        CHECK_EQ(integer_rotated.area(), 12);
+        CHECK_EQ(to_text(integer_rotated), string{"(1,2)x[3,4]@45"});
+
+        const sc::rotated_rect diagonal{{10, 20}, {8, 4}, 45};
+        CHECK_NEAR(diagonal.left(), 10.0 - 3 * sqrt(2), 1e-12);
+        CHECK_NEAR(diagonal.top(), 20.0 - 3 * sqrt(2), 1e-12);
+        CHECK_NEAR(diagonal.right(), 10.0 + 3 * sqrt(2), 1e-12);
+        CHECK_NEAR(diagonal.bottom(), 20.0 + 3 * sqrt(2), 1e-12);
 
         const sc::polygon rotated_polygon{{0, 0}, {12, 16}, {8, 19}, {-4, 3}};
         const sc::rect bounds = static_cast<sc::rect>(rotated_polygon);

@@ -1,4 +1,6 @@
 #include "rect.h"
+#include "polygon.h"
+#include "rotated_rect.h"
 
 #include <algorithm>
 #include <cmath>
@@ -60,19 +62,6 @@ namespace
 
 namespace sc
 {
-    template <typename Derived, Numeric T>
-    pair_<Derived, T>::pair_(const T& x, const T& y) : x_(x), y_(y)
-    {
-        validate();
-    }
-
-    template <typename T>
-    void size_<T>::on_validate()
-    {
-        this->x_ = std::max(T{0}, this->x_);
-        this->y_ = std::max(T{0}, this->y_);
-    }
-
     template <typename T>
     rect_<T>::rect_(const T left, const T top, const T width, const T height) : origin_(left, top), rect_size_(width, height)
     {
@@ -300,20 +289,24 @@ namespace sc
             return a.gap_x(b) < max_dx && a.gap_y(b) < max_dy;
         });
     }
+
+    template <typename T>
+    rect_<T>::operator polygon() const
+    {
+        return polygon{
+            point_i{detail::polygon_coordinate(left()), detail::polygon_coordinate(top())},
+            point_i{detail::polygon_coordinate(right()), detail::polygon_coordinate(top())},
+            point_i{detail::polygon_coordinate(right()), detail::polygon_coordinate(bottom())},
+            point_i{detail::polygon_coordinate(left()), detail::polygon_coordinate(bottom())}
+        };
+    }
+
+    template <typename T>
+    rect_<T>::operator rotated_rect_<T>() const
+    {
+        return rotated_rect_<T>{center(), size(), T{0}};
+    }
 }
 
-// size_<T>::on_validate() is defined here, but the arithmetic operators in the
-// header call it, so it needs an out of line copy in the library. Instantiating
-// pair_ alone is not enough: an optimised build inlines it away and the symbol
-// never reaches callers.
-template class sc::pair_<sc::point_<int>, int>;
-template class sc::pair_<sc::size_<int>, int>;
-template class sc::point_<int>;
-template class sc::size_<int>;
 template class sc::rect_<int>;
-
-template class sc::pair_<sc::point_<double>, double>;
-template class sc::pair_<sc::size_<double>, double>;
-template class sc::point_<double>;
-template class sc::size_<double>;
 template class sc::rect_<double>;

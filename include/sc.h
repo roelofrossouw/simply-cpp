@@ -21,4 +21,5 @@
 #include <ollama.h>
 #include <dual.h>
 #include <ip_address.h>
+#include <ip_endpoint.h>
 #include <percent.h>

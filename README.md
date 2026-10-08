@@ -107,6 +107,16 @@ auto encoded = sc::base64::encode("Hello");
 const auto clusters = sc::dbscan(std::vector<double>{1, 1.1, 20}, 0.5, 2);
 ```
 
+`core.h` has small PHP-style helpers: `file_get_contents()`, `file_put_contents()`,
+`basename()`, `getenv()` and `explode()`. `sc::getenv()` returns the fallback when a
+variable is unset or empty. `sc::explode()` splits on a separator (default `;`),
+keeping empty items like PHP does:
+
+```cpp
+const auto topics = sc::explode(sc::getenv("TOPICS", "a;b"));   // {"a", "b"}
+const auto parts = sc::explode("x,,y", ",");                     // {"x", "", "y"}
+```
+
 ## Demo
 
 `sc-core-demo` is installed with the runtime package (`simply-cpp`), so you can

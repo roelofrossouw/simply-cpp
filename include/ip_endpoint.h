@@ -1,6 +1,7 @@
 #pragma once
 
 #include <charconv>
+#include <ostream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -9,6 +10,18 @@ namespace sc {
     struct ip_endpoint {
         std::string host;
         int port = 0;
+
+        // "host:port", "[ipv6]:port", or just the host when there is no port (port 0).
+        // The same format parse() reads.
+        [[nodiscard]] std::string to_string() const {
+            if (port == 0) return host;
+            if (host.find(':') != std::string::npos) return '[' + host + "]:" + std::to_string(port);
+            return host + ':' + std::to_string(port);
+        }
+
+        friend std::ostream &operator<<(std::ostream &os, const ip_endpoint &endpoint) {
+            return os << endpoint.to_string();
+        }
 
         // Parses "host", "host:port", "[ipv6]" or "[ipv6]:port". A bare IPv6 address
         // ("::1") has no port. default_port is used when the text has none.

@@ -12,6 +12,7 @@
 #include <core.h>
 #include <utf8.h>
 #include <date.h>
+#include <datetime.h>
 #include <base64.h>
 #include <rest.h>
 #include <color.h>

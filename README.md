@@ -97,7 +97,7 @@ add_executable(myapp main.cpp)
 target_link_libraries(myapp PRIVATE sc::sc-core)
 ```
 
-Include the aggregate header, or an individual one (`base64.h`, `timer.h`, `date.h`, `color.h`, `geometry.h`, `ip_endpoint.h`, `percent.h`, `rest.h`, `ollama.h`, ...). Geometry stays part of sc-core, grouped under `geometry.h`; `rect.h` remains available for existing includes. The geometry API includes points, rectangles, rotated rectangles, polygons, circles, and DBSCAN clustering:
+Include the aggregate header, or an individual one (`base64.h`, `timer.h`, `date.h`, `color.h`, `geometry.h`, `ip_endpoint.h`, `demo_servers.h`, `percent.h`, `rest.h`, `ollama.h`, ...). Geometry stays part of sc-core, grouped under `geometry.h`; `rect.h` remains available for existing includes. The geometry API includes points, rectangles, rotated rectangles, polygons, circles, and DBSCAN clustering:
 
 ```cpp
 #include <sc.h>
@@ -105,6 +105,33 @@ Include the aggregate header, or an individual one (`base64.h`, `timer.h`, `date
 auto encoded = sc::base64::encode("Hello");
 
 const auto clusters = sc::dbscan(std::vector<double>{1, 1.1, 20}, 0.5, 2);
+```
+
+## Demo
+
+`sc-core-demo` is installed with the runtime package (`simply-cpp`), so you can
+check an installation works without the `-dev` package. It needs no server.
+Its source is `examples/sc-core-demo.cpp`; the code below is copied from it at
+configure time, so it always matches code that compiles:
+
+<!-- sc-example: examples/sc-core-demo.cpp -->
+```cpp
+sc::timer sw;
+const std::string sample = "Hello World!";
+const auto encoded = sc::base64::encode(sample);
+const auto decoded = sc::base64::decode(encoded);
+std::cout << sample << " => " << encoded << " => " << decoded << '\n';
+std::cout << "Done after " << sw << '\n';
+```
+<!-- /sc-example -->
+
+Demos in other modules that talk to a server read it from
+`SC_<MODULE>_DEMO_SERVER` with `sc::demo_servers()` (`demo_servers.h`). The value
+is one or more `host[:port]` / `[ipv6]:port` entries separated by `;` (quote it
+in a shell). Unset, empty or invalid falls back to `127.0.0.1:<default port>`:
+
+```cpp
+const auto servers = sc::demo_servers("SC_REDIS_DEMO_SERVER", 6379);
 ```
 
 ## Requirements

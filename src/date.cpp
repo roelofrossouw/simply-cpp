@@ -4,7 +4,7 @@
 using namespace std;
 
 namespace sc {
-    namespace base64_impl {
+    namespace impl {
         // A date here is a calendar day, not an instant, so the Julian day conversion
         // works on the civil fields directly. Going via a time_t made the result depend
         // on the local UTC offset, which put whole timezones a day out.
@@ -102,13 +102,13 @@ namespace sc {
         };
     }
 
-    date::date(const string &dateInput) : impl(new base64_impl::date(dateInput)) {
+    date::date(const string &dateInput) : impl(new impl::date(dateInput)) {
     }
 
-    date::date(const long julian_day) : impl(new base64_impl::date(julian_day)) {
+    date::date(const long julian_day) : impl(new impl::date(julian_day)) {
     }
 
-    date::date(const date &copy) : impl(new base64_impl::date((long) copy)) {
+    date::date(const date &copy) : impl(new impl::date((long) copy)) {
     }
 
     date::operator string() const { return format("%Y-%m-%d"); }
@@ -134,7 +134,7 @@ namespace sc {
 
     date &date::operator=(const string &str) {
         delete impl;
-        impl = new base64_impl::date(str);
+        impl = new impl::date(str);
         return *this;
     }
 

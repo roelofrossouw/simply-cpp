@@ -102,14 +102,22 @@ namespace sc {
         };
     }
 
-    date::date(const string &dateInput) : impl(new impl::date(dateInput)) {
+    date::date(const string &dateInput) : impl(std::make_unique<impl::date>(dateInput)) {
     }
 
-    date::date(const long julian_day) : impl(new impl::date(julian_day)) {
+    date::date(const long julian_day) : impl(std::make_unique<impl::date>(julian_day)) {
     }
 
-    date::date(const date &copy) : impl(new impl::date((long) copy)) {
+    date::date(const date &copy) : impl(std::make_unique<impl::date>(static_cast<long>(copy))) {
     }
+
+    date &date::operator=(const date &copy) {
+        if (this != &copy) impl = std::make_unique<impl::date>(static_cast<long>(copy));
+        return *this;
+    }
+
+    // Defined here, where impl::date is complete, for the unique_ptr.
+    date::~date() = default;
 
     date::operator string() const { return format("%Y-%m-%d"); }
 
@@ -133,8 +141,7 @@ namespace sc {
     date &date::operator-=(const int i) { return (*this) += (-i); }
 
     date &date::operator=(const string &str) {
-        delete impl;
-        impl = new impl::date(str);
+        impl = std::make_unique<impl::date>(str);
         return *this;
     }
 

@@ -1,5 +1,6 @@
 #ifndef SC_DATE_H
 #define SC_DATE_H
+#include <memory>
 #include <string>
 #include <ostream>
 
@@ -11,6 +12,14 @@ namespace sc {
     class date {
     public:
         date(const std::string &dateInput = "Today");
+
+        // Copies are independent: changing one doesn't change the other. There are no separate
+        // move operations, so a moved-from date stays a valid date.
+        date(const date &copy);
+
+        date &operator=(const date &copy);
+
+        ~date();
 
         operator std::string() const;
 
@@ -47,9 +56,7 @@ namespace sc {
     private:
         date(long julian_day);
 
-        date(const date &copy);
-
-        impl::date *impl;
+        std::unique_ptr<impl::date> impl;
 
         void normalize();
 

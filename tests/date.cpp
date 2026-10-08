@@ -309,5 +309,27 @@ int main() {
         CHECK_EQ(stream.str(), static_cast<string>(sample));
     }
 
+    SECTION("Copies are independent");
+    {
+        sc::date original{"2026-10-08"};
+        sc::date copy{original};
+        copy += 1;
+        CHECK_EQ(static_cast<string>(original), string{"2026-10-08"});
+        CHECK_EQ(static_cast<string>(copy), string{"2026-10-09"});
+
+        sc::date assigned{"1999-03-15"};
+        assigned = original;
+        assigned += 2;
+        CHECK_EQ(static_cast<string>(original), string{"2026-10-08"});
+        CHECK_EQ(static_cast<string>(assigned), string{"2026-10-10"});
+
+        assigned = assigned; // self-assignment keeps the value
+        CHECK_EQ(static_cast<string>(assigned), string{"2026-10-10"});
+
+        sc::date moved{std::move(copy)};
+        CHECK_EQ(static_cast<string>(moved), string{"2026-10-09"});
+        CHECK_EQ(static_cast<string>(copy), string{"2026-10-09"}); // a move copies, so this is still valid
+    }
+
     TEST_SUMMARY();
 }

@@ -7,9 +7,9 @@
 #include <vector>
 
 namespace {
-    // Stands in for constructors such as sc::redis's, which take either form.
-    int overload(const std::string &) { return 1; }
-    int overload(const std::vector<sc::ip_endpoint> &) { return 2; }
+    // Stands in for constructors such as sc::redis's and sc::postgres's.
+    std::size_t count(const sc::ip_endpoints &endpoints) { return endpoints.size(); }
+    std::string text(const std::string &value) { return value; }
 }
 
 int main() {
@@ -28,7 +28,8 @@ int main() {
     CHECK(sc::ip_endpoints{}.empty());
 
     SECTION("Without a default port, entries without one have port 0");
-    CHECK_EQ(sc::ip_endpoints{"redis1"}.front().port, 0);
+    const sc::ip_endpoints no_port{"redis1"};
+    CHECK_EQ(no_port.front().port, 0);
 
     SECTION("An invalid entry throws");
     CHECK_THROWS_AS(sc::ip_endpoints{"redis1;redis2:notaport"}, std::invalid_argument);
@@ -50,8 +51,21 @@ int main() {
     CHECK_EQ(vector[1].host, "::1");
     const sc::ip_endpoints from_vector = vector;
     CHECK((from_vector == parsed));
-    CHECK_EQ(overload(parsed), 2);
-    CHECK_EQ(overload(static_cast<std::string>(parsed)), 1);
+
+    SECTION("Implicit conversions");
+    const std::string as_string = parsed;
+    CHECK_EQ(as_string, "redis1:7000;[::1]:7001;redis3:6379");
+    CHECK_EQ(text(parsed), "redis1:7000;[::1]:7001;redis3:6379");
+    const sc::ip_endpoints from_literal = "db1;db2:5433";
+    CHECK_EQ(from_literal.to_string(), "db1;db2:5433");
+    CHECK_EQ(count("db1;db2"), size_t{2});
+    CHECK_EQ(count(std::string{"db1"}), size_t{1});
+    CHECK_EQ(count(std::string_view{"db1;db2;db3"}), size_t{3});
+    CHECK_EQ(count(vector), size_t{3});
+    CHECK_EQ(count({{"db1", 5432}, {"db2", 5433}}), size_t{2});
+    const sc::ip_endpoints with_default("db1", 5432);
+    CHECK_EQ(with_default.front().port, 5432);
+    CHECK((from_literal == "db1;db2:5433"));
 
     SECTION("Container functions");
     sc::ip_endpoints endpoints{{"db1", 5432}};

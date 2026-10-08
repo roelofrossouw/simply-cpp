@@ -111,8 +111,11 @@ const auto clusters = sc::dbscan(std::vector<double>{1, 1.1, 20}, 0.5, 2);
 `;`-separated form (`"redis1:6379;[::1]:6380"`). Whitespace and empty entries are
 ignored, and an invalid entry throws `std::invalid_argument`. It works like a
 `std::vector<sc::ip_endpoint>` (`begin()`/`end()`, `size()`, `front()`, `push_back()`,
-`[]`, ...) and converts to one implicitly, so it can go straight to `sc::redis` or
-`sc::postgres`. Converting to a string is explicit, or use `to_string(separator)`:
+`[]`, ...). It converts implicitly to and from both that vector and the string
+form, so `sc::redis` and `sc::postgres`, which take an `sc::ip_endpoints`, accept a
+string, a vector or a braced list. Don't overload a function on both
+`std::string` and `std::vector<sc::ip_endpoint>`: an `sc::ip_endpoints` argument would
+be ambiguous. Use `to_string(separator)` for another separator:
 
 ```cpp
 sc::ip_endpoints servers{"redis1;redis2:7000", 6379};   // default port 6379
@@ -120,7 +123,7 @@ servers.push_back({"redis3", 7001});
 for (const auto &server : servers) std::cout << server << '\n';
 
 sc::redis cache{servers};
-const auto text = static_cast<std::string>(servers);    // "redis1:6379;redis2:7000;redis3:7001"
+const std::string text = servers;                       // "redis1:6379;redis2:7000;redis3:7001"
 const auto bootstrap = servers.to_string(",");          // for Kafka's bootstrap.servers
 ```
 

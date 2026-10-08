@@ -13,9 +13,11 @@
 namespace sc {
     // A list of endpoints, written as "host[:port]" / "[ipv6]:port" entries separated by ';',
     // e.g. "redis1:6379;redis2:6380" - the format SC_<MODULE>_DEMO_SERVER uses.
-    // Behaves like a std::vector<ip_endpoint> and converts to one implicitly, so it can be
-    // passed straight to sc::redis or sc::postgres. The string conversion is explicit, so it
-    // never competes with those constructors' std::string overloads.
+    // Behaves like a std::vector<ip_endpoint>. It converts implicitly to and from both that
+    // vector and the string form, so a string, a vector or a braced list can be passed wherever
+    // an ip_endpoints is expected (sc::redis, sc::postgres). Because of that, don't overload a
+    // function on both std::string and std::vector<ip_endpoint>: passing an ip_endpoints would
+    // be ambiguous. Take an ip_endpoints instead.
     class ip_endpoints {
     public:
         using value_type = ip_endpoint;
@@ -36,8 +38,17 @@ namespace sc {
 
         // Parses ';'-separated endpoints. Whitespace around entries and empty entries are
         // ignored, so "" gives an empty list. default_port fills in a missing port. Throws
-        // std::invalid_argument naming the first invalid entry.
-        explicit ip_endpoints(const std::string_view text, const int default_port = 0) {
+        // std::invalid_argument naming the first invalid entry. The const char * and
+        // std::string overloads let either convert implicitly (one user conversion).
+        ip_endpoints(const char *text, const int default_port = 0)
+            : ip_endpoints(text ? std::string_view{text} : std::string_view{}, default_port) {
+        }
+
+        ip_endpoints(const std::string &text, const int default_port = 0)
+            : ip_endpoints(std::string_view{text}, default_port) {
+        }
+
+        ip_endpoints(const std::string_view text, const int default_port = 0) {
             std::string_view rest = text;
             while (!rest.empty()) {
                 const auto separator = rest.find(';');
@@ -62,7 +73,7 @@ namespace sc {
             return text;
         }
 
-        explicit operator std::string() const { return to_string(); }
+        operator std::string() const { return to_string(); }
 
         operator const std::vector<ip_endpoint> &() const { return endpoints_; }
 

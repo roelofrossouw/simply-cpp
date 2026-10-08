@@ -112,21 +112,24 @@ namespace sc {
     }
 
     timer timer::from_nanos(long long ns) {
-        return timer(std::chrono::nanoseconds(ns));
+        timer temp;
+        temp.impl->stopped = true;
+        temp.impl->taken = std::chrono::nanoseconds(ns);
+        return temp;
     }
 
     timer timer::from_micros(long long us) {
-        return timer(std::chrono::microseconds(us));
+        timer temp;
+        temp.impl->stopped = true;
+        temp.impl->taken = std::chrono::microseconds(us);
+        return temp;
     }
 
     timer timer::from_millis(long long ms) {
-        return timer(std::chrono::milliseconds(ms));
-    }
-
-    timer::timer(std::chrono::nanoseconds duration) {
-        impl = new base64_impl::timer();
-        impl->taken = duration;
-        impl->stopped = true;
+        timer temp;
+        temp.impl->stopped = true;
+        temp.impl->taken = std::chrono::milliseconds(ms);
+        return temp;
     }
 
     std::ostream &operator<<(std::ostream &lhs, timer &rhs) { return lhs << static_cast<std::string>(rhs); }

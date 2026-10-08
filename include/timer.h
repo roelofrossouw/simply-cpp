@@ -1,5 +1,5 @@
-#ifndef SC_TIMER_TIMER_H
-#define SC_TIMER_TIMER_H
+#pragma once
+
 
 class ostream;
 
@@ -45,8 +45,6 @@ namespace sc {
     private:
         base64_impl::timer *impl;
 
-        explicit timer(std::chrono::nanoseconds duration);
-
         template<typename T>
         long long getDuration() const;
 
@@ -54,5 +52,3 @@ namespace sc {
     };
 }
 
-
-#endif //SC_TIMER_TIMER_H

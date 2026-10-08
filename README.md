@@ -97,7 +97,7 @@ add_executable(myapp main.cpp)
 target_link_libraries(myapp PRIVATE sc::sc-core)
 ```
 
-Include the aggregate header, or an individual one (`base64.h`, `timer.h`, `date.h`, `color.h`, `geometry.h`, `ip_endpoint.h`, `demo_servers.h`, `percent.h`, `rest.h`, `ollama.h`, ...). Geometry stays part of sc-core, grouped under `geometry.h`; `rect.h` remains available for existing includes. The geometry API includes points, rectangles, rotated rectangles, polygons, circles, and DBSCAN clustering:
+Include the aggregate header, or an individual one (`base64.h`, `timer.h`, `date.h`, `color.h`, `geometry.h`, `ip_endpoint.h`, `ip_endpoints.h`, `demo_servers.h`, `percent.h`, `rest.h`, `ollama.h`, ...). Geometry stays part of sc-core, grouped under `geometry.h`; `rect.h` remains available for existing includes. The geometry API includes points, rectangles, rotated rectangles, polygons, circles, and DBSCAN clustering:
 
 ```cpp
 #include <sc.h>
@@ -105,6 +105,23 @@ Include the aggregate header, or an individual one (`base64.h`, `timer.h`, `date
 auto encoded = sc::base64::encode("Hello");
 
 const auto clusters = sc::dbscan(std::vector<double>{1, 1.1, 20}, 0.5, 2);
+```
+
+`sc::ip_endpoints` is a list of `sc::ip_endpoint`s that reads and writes the
+`;`-separated form (`"redis1:6379;[::1]:6380"`). Whitespace and empty entries are
+ignored, and an invalid entry throws `std::invalid_argument`. It works like a
+`std::vector<sc::ip_endpoint>` (`begin()`/`end()`, `size()`, `front()`, `push_back()`,
+`[]`, ...) and converts to one implicitly, so it can go straight to `sc::redis` or
+`sc::postgres`. Converting to a string is explicit, or use `to_string(separator)`:
+
+```cpp
+sc::ip_endpoints servers{"redis1;redis2:7000", 6379};   // default port 6379
+servers.push_back({"redis3", 7001});
+for (const auto &server : servers) std::cout << server << '\n';
+
+sc::redis cache{servers};
+const auto text = static_cast<std::string>(servers);    // "redis1:6379;redis2:7000;redis3:7001"
+const auto bootstrap = servers.to_string(",");          // for Kafka's bootstrap.servers
 ```
 
 `core.h` has small PHP-style helpers: `file_get_contents()`, `file_put_contents()`,

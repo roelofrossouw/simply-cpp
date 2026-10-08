@@ -22,5 +22,6 @@
 #include <dual.h>
 #include <ip_address.h>
 #include <ip_endpoint.h>
+#include <ip_endpoints.h>
 #include <demo_servers.h>
 #include <percent.h>

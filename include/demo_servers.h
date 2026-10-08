@@ -1,11 +1,10 @@
 #pragma once
 
-#include <ip_endpoint.h>
+#include <ip_endpoints.h>
 
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
-#include <string_view>
 #include <vector>
 
 namespace sc {
@@ -19,23 +18,13 @@ namespace sc {
         const char *value = std::getenv(variable);
         if (!value || !*value) return fallback;
 
-        std::vector<ip_endpoint> servers;
-        std::string_view rest{value};
-        while (!rest.empty()) {
-            const auto separator = rest.find(';');
-            auto item = rest.substr(0, separator);
-            rest = separator == std::string_view::npos ? std::string_view{} : rest.substr(separator + 1);
-
-            const auto first = item.find_first_not_of(" \t");
-            if (first == std::string_view::npos) continue;
-            item = item.substr(first, item.find_last_not_of(" \t") - first + 1);
-            try {
-                servers.push_back(ip_endpoint::parse(item, default_port));
-            } catch (const std::invalid_argument &error) {
-                std::cerr << variable << " ignored, " << error.what() << '\n';
-                return fallback;
-            }
+        try {
+            const ip_endpoints servers{value, default_port};
+            if (servers.empty()) return fallback;
+            return servers;
+        } catch (const std::invalid_argument &error) {
+            std::cerr << variable << " ignored, " << error.what() << '\n';
+            return fallback;
         }
-        return servers.empty() ? fallback : servers;
     }
 }

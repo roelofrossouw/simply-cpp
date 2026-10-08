@@ -1,8 +1,10 @@
 #include "core.h"
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <random>
+#include <stdexcept>
 
 namespace sc {
     std::string file_get_contents(const std::string &filename) {
@@ -26,5 +28,22 @@ namespace sc {
     double rand(double minval, double maxval) {
         std::random_device r;
         return static_cast<double>(r()) / RAND_MAX / 2 * (maxval - minval) + minval;
+    }
+
+    std::string getenv(const std::string &variable, const std::string &fallback) {
+        const char *value = std::getenv(variable.c_str());
+        return value && *value ? value : fallback;
+    }
+
+    std::vector<std::string> explode(const std::string &text, const std::string &separator) {
+        if (separator.empty()) throw std::invalid_argument{"explode: separator cannot be empty"};
+        std::vector<std::string> items;
+        std::string::size_type start = 0;
+        for (auto found = text.find(separator); found != std::string::npos; found = text.find(separator, start)) {
+            items.emplace_back(text.substr(start, found - start));
+            start = found + separator.size();
+        }
+        items.emplace_back(text.substr(start));
+        return items;
     }
 }

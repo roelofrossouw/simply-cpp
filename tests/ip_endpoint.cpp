@@ -2,6 +2,8 @@
 
 #include "sc_test.h"
 
+#include <sstream>
+
 int main() {
     SECTION("Construction");
     const sc::ip_endpoint endpoint{"example.com", 8080};
@@ -69,6 +71,25 @@ int main() {
     CHECK_THROWS_AS(sc::ip_endpoint::from_redis("MOVED x host:6380"), std::invalid_argument);
     CHECK_THROWS_AS(sc::ip_endpoint::from_redis("ERR 3999 host:6380"), std::invalid_argument);
     CHECK_THROWS_AS(sc::ip_endpoint::from_redis("host:6380"), std::invalid_argument);
+
+    SECTION("To string");
+    CHECK_EQ((sc::ip_endpoint{"example.com", 8080}.to_string()), "example.com:8080");
+    CHECK_EQ((sc::ip_endpoint{"10.0.0.1", 6379}.to_string()), "10.0.0.1:6379");
+    CHECK_EQ((sc::ip_endpoint{"::1", 6379}.to_string()), "[::1]:6379");
+    CHECK_EQ((sc::ip_endpoint{"example.com", 0}.to_string()), "example.com");
+    CHECK_EQ((sc::ip_endpoint{"::1", 0}.to_string()), "::1");
+    std::ostringstream stream;
+    stream << sc::ip_endpoint{"fe80::1", 443} << ' ' << sc::ip_endpoint{"redis1", 6379};
+    CHECK_EQ(stream.str(), "[fe80::1]:443 redis1:6379");
+
+    SECTION("To string parses back");
+    for (const sc::ip_endpoint &endpoint : {sc::ip_endpoint{"example.com", 8080}, sc::ip_endpoint{"::1", 6379},
+                                            sc::ip_endpoint{"fe80::1:2", 1}, sc::ip_endpoint{"redis1", 0},
+                                            sc::ip_endpoint{"::1", 0}}) {
+        const auto parsed = sc::ip_endpoint::parse(endpoint.to_string());
+        CHECK_EQ(parsed.host, endpoint.host);
+        CHECK_EQ(parsed.port, endpoint.port);
+    }
 
     TEST_SUMMARY();
 }

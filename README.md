@@ -97,7 +97,7 @@ add_executable(myapp main.cpp)
 target_link_libraries(myapp PRIVATE sc::sc-core)
 ```
 
-Include the aggregate header, or an individual one (`base64.h`, `timer.h`, `date.h`, `color.h`, `geometry.h`, `ip_endpoint.h`, `ip_endpoints.h`, `demo_servers.h`, `percent.h`, `rest.h`, `ollama.h`, ...). Geometry stays part of sc-core, grouped under `geometry.h`; `rect.h` remains available for existing includes. The geometry API includes points, rectangles, rotated rectangles, polygons, circles, and DBSCAN clustering:
+Include the aggregate header, or an individual one (`base64.h`, `timer.h`, `date.h`, `color.h`, `geometry.h`, `ip_endpoint.h`, `ip_endpoints.h`, `percent.h`, `rest.h`, `ollama.h`, ...). Geometry stays part of sc-core, grouped under `geometry.h`; `rect.h` remains available for existing includes. The geometry API includes points, rectangles, rotated rectangles, polygons, circles, and DBSCAN clustering:
 
 ```cpp
 #include <sc.h>
@@ -156,12 +156,12 @@ std::cout << "Done after " << sw << '\n';
 <!-- /sc-example -->
 
 Demos in other modules that talk to a server read it from
-`SC_<MODULE>_DEMO_SERVER` with `sc::demo_servers()` (`demo_servers.h`). The value
-is one or more `host[:port]` / `[ipv6]:port` entries separated by `;` (quote it
-in a shell). Unset, empty or invalid falls back to `127.0.0.1:<default port>`:
+`SC_<MODULE>_DEMO_SERVER`: one or more `host[:port]` / `[ipv6]:port` entries
+separated by `;` (quote it in a shell). Unset or empty means
+`127.0.0.1:<default port>`; an invalid value is an error:
 
 ```cpp
-const auto servers = sc::demo_servers("SC_REDIS_DEMO_SERVER", 6379);
+const sc::ip_endpoints servers{sc::getenv("SC_REDIS_DEMO_SERVER", "127.0.0.1"), 6379};
 ```
 
 ## Requirements

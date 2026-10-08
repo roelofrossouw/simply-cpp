@@ -97,7 +97,7 @@ add_executable(myapp main.cpp)
 target_link_libraries(myapp PRIVATE sc::sc-core)
 ```
 
-Include the aggregate header, or an individual one (`base64.h`, `timer.h`, `date.h`, `color.h`, `geometry.h`, `ip_endpoint.h`, `ip_endpoints.h`, `percent.h`, `rest.h`, `ollama.h`, ...). Geometry stays part of sc-core, grouped under `geometry.h`; `rect.h` remains available for existing includes. The geometry API includes points, rectangles, rotated rectangles, polygons, circles, and DBSCAN clustering:
+Include the aggregate header, or an individual one (`base64.h`, `timer.h`, `date.h`, `datetime.h`, `color.h`, `geometry.h`, `ip_endpoint.h`, `ip_endpoints.h`, `percent.h`, `rest.h`, `ollama.h`, ...). Geometry stays part of sc-core, grouped under `geometry.h`; `rect.h` remains available for existing includes. The geometry API includes points, rectangles, rotated rectangles, polygons, circles, and DBSCAN clustering:
 
 ```cpp
 #include <sc.h>
@@ -105,6 +105,19 @@ Include the aggregate header, or an individual one (`base64.h`, `timer.h`, `date
 auto encoded = sc::base64::encode("Hello");
 
 const auto clusters = sc::dbscan(std::vector<double>{1, 1.1, 20}, 0.5, 2);
+```
+
+`sc::datetime` is a point in time to the second, as `sc::date` is a calendar day.
+It reads and writes local time unless told otherwise (a trailing `Z` when
+parsing, `utc = true` when formatting), and converts to and from Unix time:
+
+```cpp
+const auto expires = sc::datetime::from_unix(1791462896);
+std::cout << expires.format() << '\n';                        // local: "2026-10-08 14:34:56" in UTC+2
+std::cout << expires.format("%d %b %Y %H:%M %Z", true) << '\n'; // "08 Oct 2026 12:34 UTC"
+const sc::datetime meeting{"2026-10-08T09:00:00Z"};
+const auto in_a_day = sc::datetime::now() + std::chrono::hours{24};
+if (meeting < in_a_day) std::cout << (in_a_day - meeting).count() << " seconds apart\n";
 ```
 
 `sc::ip_endpoints` is a list of `sc::ip_endpoint`s that reads and writes the

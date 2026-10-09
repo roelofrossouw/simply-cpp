@@ -109,10 +109,6 @@ int main() {
         CHECK_EQ(nanos.micros(), 1LL);
         CHECK_EQ(nanos.millis(), 0LL);
 
-        // Past a day, the hours keep counting rather than wrapping at 24.
-        sc::timer long_one = sc::timer::from_millis(90061001);
-        CHECK_EQ(static_cast<string>(long_one).substr(0, 12), string{"25:01:01.001"});
-
         sc::timer zero = sc::timer::from_nanos(0);
         CHECK_EQ(zero.nanos(), 0LL);
         CHECK_EQ(zero.secs(), 0LL);
@@ -142,7 +138,8 @@ int main() {
 
         // Past a day, the hours keep counting rather than wrapping at 24.
         sc::timer long_one = sc::timer::from_millis(90061001);
-        CHECK_EQ(static_cast<string>(long_one).substr(0, 12), string{"25:01:01.001"});
+        CHECK_EQ(static_cast<string>(long_one), string{"25:01:01.001000000"});
+        CHECK_EQ(static_cast<string>(sc::timer::from_nanos(5)), string{"00:00:00.000000005"});
 
         sc::timer zero = sc::timer::from_nanos(0);
         CHECK_EQ(static_cast<string>(zero).substr(0, 8), string{"00:00:00"});

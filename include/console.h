@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdlib>
 #include <iostream>
 #include <optional>
 #include <ostream>
@@ -8,6 +9,7 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <unistd.h>
 
 namespace sc {
     namespace console_detail {
@@ -18,12 +20,13 @@ namespace sc {
     }
 
     // Plain, readable console output, as the simply-cpp demos use it: a title, headings, and each
-    // step of a program shown as written with its result below it.
+    // step of a program shown as written with its result below it. Headings are bold on a
+    // terminal (not when NO_COLOR is set); everything else is plain text.
     //
-    //   sc::console::title("simply-cpp redis");
-    //   sc::console::heading("A string value");
-//   sc::console::subheading("Setting it");
-    //   SC_STEP(cache.set("greeting", "Hello World!"));   //   cache.set("greeting", "Hello World!")
+    //   sc::console::title("simply-cpp redis");            //   simply-cpp redis, underlined with =
+    //   sc::console::heading("A string value");            //   A string value, underlined with -
+    //   sc::console::subheading("Setting it");             //     ▸ Setting it
+    //   SC_STEP(cache.set("greeting", "Hello World!"));    //   cache.set("greeting", "Hello World!")
     //   SC_SHOW(cache.get("greeting"));                    //   cache.get("greeting")
     //                                                      //       -> "Hello World!"
     //
@@ -35,18 +38,18 @@ namespace sc {
         static std::ostream &output() { return *stream_; }
         static void output(std::ostream &stream) { stream_ = &stream; }
 
-        // The program's title line, underlined.
+        // The program's title line, underlined with '='.
         static void title(const std::string_view text) {
-            output() << text << '\n' << std::string(display_width(text), '=') << '\n';
+            output() << bold(text) << '\n' << std::string(display_width(text), '=') << '\n';
         }
 
-        // A blank line, then a section heading.
-        static void heading(const std::string_view text) { output() << '\n' << text << '\n'; }
-
-        // A blank line, then a heading within a section, indented with its steps and underlined.
-        static void subheading(const std::string_view text) {
-            output() << "\n  " << text << "\n  " << std::string(display_width(text), '-') << '\n';
+        // A blank line, then a section heading, underlined with '-'.
+        static void heading(const std::string_view text) {
+            output() << '\n' << bold(text) << '\n' << std::string(display_width(text), '-') << '\n';
         }
+
+        // A blank line, then a heading within a section, marked with '▸'.
+        static void subheading(const std::string_view text) { output() << "\n  \u25B8 " << bold(text) << '\n'; }
 
         // An indented line of commentary.
         static void note(const std::string_view text) { output() << "  " << text << '\n'; }
@@ -83,6 +86,14 @@ namespace sc {
 
     private:
         inline static std::ostream *stream_ = &std::cout;
+
+        // Text in bold when the output is std::cout on a terminal and NO_COLOR is not set; plain
+        // otherwise, so files, pipes and captured output get no escape codes.
+        static std::string bold(const std::string_view text) {
+            const char *no_color = std::getenv("NO_COLOR");
+            if (stream_ != &std::cout || !isatty(STDOUT_FILENO) || (no_color && *no_color)) return std::string{text};
+            return "\033[1m" + std::string{text} + "\033[0m";
+        }
 
         // Characters rather than bytes, so a UTF-8 title gets an underline of the right length.
         static std::size_t display_width(const std::string_view text) {

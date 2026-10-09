@@ -97,7 +97,7 @@ add_executable(myapp main.cpp)
 target_link_libraries(myapp PRIVATE sc::sc-core)
 ```
 
-Include the aggregate header, or an individual one (`base64.h`, `timer.h`, `date.h`, `datetime.h`, `color.h`, `geometry.h`, `ip_endpoint.h`, `ip_endpoints.h`, `percent.h`, `rest.h`, `ollama.h`, ...). Geometry stays part of sc-core, grouped under `geometry.h`; `rect.h` remains available for existing includes. The geometry API includes points, rectangles, rotated rectangles, polygons, circles, and DBSCAN clustering:
+Include the aggregate header, or an individual one (`base64.h`, `timer.h`, `date.h`, `datetime.h`, `color.h`, `geometry.h`, `ip_endpoint.h`, `ip_endpoints.h`, `console.h`, `percent.h`, `rest.h`, `ollama.h`, ...). Geometry stays part of sc-core, grouped under `geometry.h`; `rect.h` remains available for existing includes. The geometry API includes points, rectangles, rotated rectangles, polygons, circles, and DBSCAN clustering:
 
 ```cpp
 #include <sc.h>
@@ -119,6 +119,24 @@ const sc::datetime meeting{"2026-10-08T09:00:00Z"};
 const auto in_a_day = sc::datetime::now() + std::chrono::hours{24};
 if (meeting < in_a_day) std::cout << (in_a_day - meeting).count() << " seconds apart\n";
 ```
+
+`sc::console` (`console.h`) prints plain, readable output, as the simply-cpp demos
+do: a title, headings, and each step shown as written with its result below it.
+`SC_SHOW(expression)` and `SC_STEP(statement)` print the code itself:
+
+```cpp
+sc::console::title("simply-cpp redis");
+sc::console::heading("A string value");
+SC_STEP(cache.set("greeting", "Hello World!"));
+SC_SHOW(cache.get("greeting"));   // prints   cache.get("greeting")
+                                   //              -> "Hello World!"
+sc::console::show_text("GET /hello", response_body); // a result shown as plain text
+```
+
+`sc::console::format(value)` gives the text on its own: strings quoted, `bool` as
+`true`/`false`, an empty optional as `(none)`, lists as `[a, b]`, maps as
+`{key: value}`, nested ones alike, anything else with `<<`. `note(text)` adds an
+indented line, and `output(stream)` sends it all elsewhere than `std::cout`.
 
 `sc::ip_endpoints` is a list of `sc::ip_endpoint`s that reads and writes the
 `;`-separated form (`"redis1:6379;[::1]:6380"`). Whitespace and empty entries are
@@ -164,22 +182,22 @@ configure time, so it always matches code that compiles:
 
 <!-- sc-example: examples/sc-core-demo.cpp -->
 ```cpp
-heading("Base64");
-SHOW(sc::base64::encode("Hello World!"));
-SHOW(sc::base64::decode("SGVsbG8gV29ybGQh"));
+sc::console::heading("Base64");
+SC_SHOW(sc::base64::encode("Hello World!"));
+SC_SHOW(sc::base64::decode("SGVsbG8gV29ybGQh"));
 
-heading("Dates and times");
-SHOW(sc::date{"2026-01-31"}.add(1, "M"));                         // calendar arithmetic
-SHOW(sc::datetime{"2026-10-09 14:30:00"}.add(90, "i").format()); // 90 minutes later
-SHOW(sc::datetime::from_unix(0).format("%d %b %Y %H:%M %Z", true));
+sc::console::heading("Dates and times");
+SC_SHOW(sc::date{"2026-01-31"}.add(1, "M"));                         // calendar arithmetic
+SC_SHOW(sc::datetime{"2026-10-09 14:30:00"}.add(90, "i").format()); // 90 minutes later
+SC_SHOW(sc::datetime::from_unix(0).format("%d %b %Y %H:%M %Z", true));
 
-heading("Server endpoints");
-SHOW(sc::ip_endpoints("redis1;redis2:6380", 6379)); // ';'-separated, with a default port
-SHOW(sc::ip_endpoint::parse("[::1]:5432").host);
+sc::console::heading("Server endpoints");
+SC_SHOW(sc::ip_endpoints("redis1;redis2:6380", 6379)); // ';'-separated, with a default port
+SC_SHOW(sc::ip_endpoint::parse("[::1]:5432").host);
 
-heading("Strings and the environment");
-SHOW(sc::explode("a;b;;c"));
-SHOW(sc::getenv("HOME", "(not set)"));
+sc::console::heading("Strings and the environment");
+SC_SHOW(sc::explode("a;b;;c"));
+SC_SHOW(sc::getenv("HOME", "(not set)"));
 ```
 <!-- /sc-example -->
 

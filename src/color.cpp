@@ -165,6 +165,16 @@ namespace sc {
     }
 
     void color::flatten(const color &background) {
+        // Porter-Duff "over": this colour laid on top of the background, by its alpha.
+        const double alpha = a + background.a * (1 - a);
+        if (alpha <= 0) {
+            *this = Transparent;
+            return;
+        }
+        const auto blend = [&](const double top, const double bottom) {
+            return (top * a + bottom * background.a * (1 - a)) / alpha;
+        };
+        *this = color(blend(r, background.r), blend(g, background.g), blend(b, background.b), alpha);
     }
 
     namespace {

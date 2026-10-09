@@ -44,6 +44,8 @@ namespace sc {
 
         double alpha() const;
 
+        // Lays this colour over background, as if painted on it: a half-transparent red on white
+        // becomes an opaque pink. Opaque over anything stays as it is.
         void flatten(const color &background);
 
         // "#rrggbb", leaving out alpha; from_hex() reads it back.

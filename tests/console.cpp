@@ -34,6 +34,7 @@ int main() {
     sc::console::output(printed);
     sc::console::title("Demo ü");
     sc::console::heading("Section");
+    sc::console::subheading("Part ü");
     sc::console::note("a note");
     sc::console::show("call()", std::string{"result"});
     sc::console::show_text("GET /", "{\n  \"a\": 1\n}\n");
@@ -47,6 +48,9 @@ int main() {
         "======\n"
         "\n"
         "Section\n"
+        "\n"
+        "  Part ü\n"
+        "  ------\n"
         "  a note\n"
         "  call()\n"
         "      -> \"result\"\n"

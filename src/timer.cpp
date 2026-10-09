@@ -90,7 +90,9 @@ namespace sc {
     timer::operator std::string() {
         lap();
 #if defined(__cpp_lib_format)
-        return std::format("{:%H:%M:%S}", impl->taken);
+        // %H alone would give the hours modulo 24, losing whole days.
+        const auto hours = std::chrono::duration_cast<std::chrono::hours>(impl->taken);
+        return std::format("{:02}:{:%M:%S}", hours.count(), impl->taken - hours);
 #else
         std::stringstream ss;
         auto ms = impl->taken;

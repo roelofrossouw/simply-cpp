@@ -1,5 +1,7 @@
 #include "color.h"
 #include <algorithm>
+#include <cmath>
+#include <cstdio>
 #include <sstream>
 #include <regex>
 #include <unordered_map>
@@ -163,6 +165,25 @@ namespace sc {
     }
 
     void color::flatten(const color &background) {
+    }
+
+    namespace {
+        // A 0..1 channel as 0..255.
+        int channel_byte(const double value) {
+            return static_cast<int>(std::lround(std::clamp(value, 0.0, 1.0) * 255));
+        }
+    }
+
+    std::string color::to_hex() const {
+        char text[8];
+        std::snprintf(text, sizeof text, "#%02x%02x%02x", channel_byte(r), channel_byte(g), channel_byte(b));
+        return text;
+    }
+
+    std::ostream &operator<<(std::ostream &lhs, const color &rhs) {
+        const int red = channel_byte(rhs.r), green = channel_byte(rhs.g), blue = channel_byte(rhs.b);
+        if (rhs.a >= 1) return lhs << "rgb(" << red << ", " << green << ", " << blue << ')';
+        return lhs << "rgba(" << red << ", " << green << ", " << blue << ", " << rhs.a << ')';
     }
 
     bool color::operator!=(const color &c2) const {

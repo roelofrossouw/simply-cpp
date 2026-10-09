@@ -109,6 +109,10 @@ int main() {
         CHECK_EQ(nanos.micros(), 1LL);
         CHECK_EQ(nanos.millis(), 0LL);
 
+        // Past a day, the hours keep counting rather than wrapping at 24.
+        sc::timer long_one = sc::timer::from_millis(90061001);
+        CHECK_EQ(static_cast<string>(long_one).substr(0, 12), string{"25:01:01.001"});
+
         sc::timer zero = sc::timer::from_nanos(0);
         CHECK_EQ(zero.nanos(), 0LL);
         CHECK_EQ(zero.secs(), 0LL);
@@ -135,6 +139,10 @@ int main() {
         CHECK_MSG(text.size() > 8 && text[8] == '.', "expected a fractional part, got \"" + text + '"');
         // The reading survives being formatted.
         CHECK_EQ(t.millis(), 3661000LL);
+
+        // Past a day, the hours keep counting rather than wrapping at 24.
+        sc::timer long_one = sc::timer::from_millis(90061001);
+        CHECK_EQ(static_cast<string>(long_one).substr(0, 12), string{"25:01:01.001"});
 
         sc::timer zero = sc::timer::from_nanos(0);
         CHECK_EQ(static_cast<string>(zero).substr(0, 8), string{"00:00:00"});

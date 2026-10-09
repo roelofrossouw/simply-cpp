@@ -1,14 +1,7 @@
 #include <sc.h>
 
+#include <sstream>
 #include <string>
-
-// Declared before sc_test.h so the harness can print a colour when a check fails.
-namespace sc {
-    inline std::ostream &operator<<(std::ostream &lhs, const color &rhs) {
-        return lhs << "cmyk(" << rhs.cyan() << "," << rhs.magenta() << "," << rhs.yellow() << "," << rhs.black() << ")"
-                   << " rgba(" << rhs.red() << "," << rhs.green() << "," << rhs.blue() << "," << rhs.alpha() << ")";
-    }
-}
 
 #include "sc_test.h"
 
@@ -119,6 +112,19 @@ int main() {
         CHECK_NE(sc::color{"blue"}, sc::color{"red"});
         // Alpha participates in equality.
         CHECK_NE(sc::color(0, 0, 1, 1), sc::color(0, 0, 1, 0.5));
+    }
+
+    SECTION("to_hex and printing");
+    {
+        CHECK_EQ(sc::color("orange").to_hex(), std::string{"#ffa500"});
+        CHECK_EQ(sc::color::from_hex("#ffa500").to_hex(), std::string{"#ffa500"});
+        CHECK_EQ(sc::color(2, -1, 0.5).to_hex(), std::string{"#ff0080"}); // channels are clamped
+        std::ostringstream opaque, translucent;
+        opaque << sc::color::from_web(255, 128, 0);
+        translucent << sc::color::from_web(255, 128, 0, 0.5);
+        CHECK_EQ(opaque.str(), std::string{"rgb(255, 128, 0)"});
+        CHECK_EQ(translucent.str(), std::string{"rgba(255, 128, 0, 0.5)"});
+        CHECK_EQ(sc::color::from_string(translucent.str()), sc::color::from_web(255, 128, 0, 0.5));
     }
 
     TEST_SUMMARY();

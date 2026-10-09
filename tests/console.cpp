@@ -41,6 +41,7 @@ int main() {
     int runs = 0;
     SC_STEP(++runs);
     SC_SHOW(runs + 1);
+    SC_SHOW(std::map<std::string, int>{{"a", 1}}.size());
     sc::console::output(std::cout);
     CHECK_EQ(runs, 1);
     CHECK_EQ(printed.str(), std::string{
@@ -60,7 +61,9 @@ int main() {
         "         }\n"
         "  ++runs\n"
         "  runs + 1\n"
-        "      -> 2\n"});
+        "      -> 2\n"
+        "  std::map<std::string, int>{{\"a\", 1}}.size()\n"
+        "      -> 1\n"});
 
     TEST_SUMMARY();
 }

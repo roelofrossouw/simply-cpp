@@ -73,6 +73,7 @@ namespace sc {
         conn.option(CURLOPT_TIMEOUT, timeout_secs_);
         conn.headers(headers_);
         conn.option(CURLOPT_WRITEFUNCTION, write_data);
+        response.clear(); // each request starts with an empty body; curl appends to it
         conn.option(CURLOPT_WRITEDATA, &response);
         return true;
     }

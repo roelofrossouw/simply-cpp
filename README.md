@@ -107,6 +107,14 @@ auto encoded = sc::base64::encode("Hello");
 const auto clusters = sc::dbscan(std::vector<double>{1, 1.1, 20}, 0.5, 2);
 ```
 
+`sc::color` reads CSS colours: `#rgb`/`#rrggbb`, `rgb()`/`rgba()`, `hsl()`/`hsla()`
+and the CSS named colours (`sc::color{"rebeccapurple"}`), and prints as
+`rgb()`/`rgba()`. The names come from the named-color table in
+[CSS Color Module Level 4](https://www.w3.org/TR/css-color-4/#named-colors):
+configuring downloads the spec's source, at most once a day, and builds the
+table from it (`cmake/NamedColors.cmake`). Offline, the last list is kept, or
+the committed `src/named_colors.inc` is used.
+
 `sc::datetime` is a point in time to the second, as `sc::date` is a calendar day.
 It reads and writes local time unless told otherwise (a trailing `Z` when
 parsing, `utc = true` when formatting), and converts to and from Unix time:

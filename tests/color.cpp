@@ -142,6 +142,14 @@ int main() {
         CHECK_EQ(nothing, sc::color::Transparent);
     }
 
+    SECTION("Named colours come from the CSS Color 4 list");
+    {
+        CHECK_EQ(sc::color("rebeccapurple").to_hex(), std::string{"#663399"}); // added to CSS in 2014
+        CHECK_EQ(sc::color("aliceblue").to_hex(), std::string{"#f0f8ff"});
+        CHECK_EQ(sc::color("yellowgreen").to_hex(), std::string{"#9acd32"});
+        CHECK_EQ(sc::color("grey"), sc::color("gray"));
+    }
+
     SECTION("to_hex and printing");
     {
         CHECK_EQ(sc::color("orange").to_hex(), std::string{"#ffa500"});

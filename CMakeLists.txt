@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 set(SC_MODULE core)
 project(simply-cpp LANGUAGES CXX)
 include(cmake/SimplyCppFunctions.cmake)
+include(cmake/NamedColors.cmake)
 
 # Options:
 option(SC_CORE_BUILD_TESTS "Build simply-cpp-core tests" ${PROJECT_IS_TOP_LEVEL})
@@ -34,7 +35,8 @@ add_sc_object(core)
 add_sc_object(utf8)
 add_sc_object(base64)
 add_sc_object(timer)
-add_sc_object(color)
+sc_named_colors(${CMAKE_CURRENT_BINARY_DIR}/generated) # the CSS colour names, from the spec
+add_sc_object(color INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/generated)
 add_sc_object(size)
 add_sc_object(rect)
 add_sc_object(date)

@@ -25,6 +25,9 @@ int main() {
     const sc::color teal{"teal"};
     SC_SHOW(std::vector{teal.cyan(), teal.magenta(), teal.yellow(), teal.black()}); // as CMYK
     SC_SHOW(sc::color{"Teal"} == teal);
+    auto glass = sc::color{"rgba(255, 0, 0, 0.5)"};
+    SC_STEP(glass.flatten(sc::color::White)); // half-transparent red, painted on white
+    SC_SHOW(glass);
 
     sc::console::heading("Matrices: sc::matrix");
     sc::matrix<long, 2, 2> fibonacci{1, 1, 1, 0};

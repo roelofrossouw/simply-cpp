@@ -1,5 +1,6 @@
 #include <sc.h>
 
+#include <cmath>
 #include <sstream>
 #include <string>
 
@@ -112,6 +113,33 @@ int main() {
         CHECK_NE(sc::color{"blue"}, sc::color{"red"});
         // Alpha participates in equality.
         CHECK_NE(sc::color(0, 0, 1, 1), sc::color(0, 0, 1, 0.5));
+    }
+
+    SECTION("flatten lays a colour over a background");
+    {
+        auto pink = sc::color(1, 0, 0, 0.5);
+        pink.flatten(sc::color::White);
+        CHECK_EQ(pink, sc::color(1, 0.5, 0.5, 1));
+        CHECK_EQ(pink.to_hex(), std::string{"#ff8080"});
+
+        auto opaque = sc::color::Blue;
+        opaque.flatten(sc::color::Red);
+        CHECK_EQ(opaque, sc::color::Blue);
+
+        auto invisible = sc::color::Transparent;
+        invisible.flatten(sc::color::Green);
+        CHECK_EQ(invisible, sc::color::Green);
+
+        // Over a half-transparent background the result is only partly opaque.
+        auto layered = sc::color(1, 0, 0, 0.5);
+        layered.flatten(sc::color(0, 0, 1, 0.5));
+        CHECK(std::abs(layered.alpha() - 0.75) < 1e-9);
+        CHECK(std::abs(layered.red() - 2.0 / 3) < 1e-9);
+        CHECK(std::abs(layered.blue() - 1.0 / 3) < 1e-9);
+
+        auto nothing = sc::color::Transparent;
+        nothing.flatten(sc::color::Transparent);
+        CHECK_EQ(nothing, sc::color::Transparent);
     }
 
     SECTION("to_hex and printing");

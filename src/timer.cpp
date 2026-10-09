@@ -1,5 +1,7 @@
 #include "../include/sc.h"
 #include <chrono>
+#include <iomanip>
+#include <sstream>
 
 namespace sc {
     namespace base64_impl {
@@ -89,28 +91,23 @@ namespace sc {
 
     timer::operator std::string() {
         lap();
-#if defined(__cpp_lib_format)
-        // %H alone would give the hours modulo 24, losing whole days.
-        const auto hours = std::chrono::duration_cast<std::chrono::hours>(impl->taken);
-        return std::format("{:02}:{:%M:%S}", hours.count(), impl->taken - hours);
-#else
-        std::stringstream ss;
-        auto ms = impl->taken;
-        auto h = std::chrono::duration_cast<std::chrono::hours>(ms);
-        ms -= h;
-        auto m = std::chrono::duration_cast<std::chrono::minutes>(ms);
-        ms -= m;
-        auto s = std::chrono::duration_cast<std::chrono::seconds>(ms);
-        ms -= s;
-        auto millis = std::chrono::duration_cast<std::chrono::microseconds>(ms);
-
-        ss << std::setfill('0')
-                << std::setw(2) << h.count() << ":"
-                << std::setw(2) << m.count() << ":"
-                << std::setw(2) << s.count() << "."
-                << std::setw(3) << millis.count();
-        return ss.str();
-#endif
+        // HH:MM:SS.nnnnnnnnn, with the hours running on past a day. Formatted by hand rather than
+        // with std::format, which not every supported compiler has (Ubuntu 22.04's GCC 11), so
+        // there is one way to get it everywhere.
+        auto rest = impl->taken;
+        const auto hours = std::chrono::duration_cast<std::chrono::hours>(rest);
+        rest -= hours;
+        const auto minutes = std::chrono::duration_cast<std::chrono::minutes>(rest);
+        rest -= minutes;
+        const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(rest);
+        rest -= seconds;
+        std::ostringstream text;
+        text << std::setfill('0')
+                << std::setw(2) << hours.count() << ':'
+                << std::setw(2) << minutes.count() << ':'
+                << std::setw(2) << seconds.count() << '.'
+                << std::setw(9) << rest.count();
+        return text.str();
     }
 
     timer timer::from_nanos(long long ns) {

@@ -22,6 +22,7 @@ namespace sc {
     //
     //   sc::console::title("simply-cpp redis");
     //   sc::console::heading("A string value");
+//   sc::console::subheading("Setting it");
     //   SC_STEP(cache.set("greeting", "Hello World!"));   //   cache.set("greeting", "Hello World!")
     //   SC_SHOW(cache.get("greeting"));                    //   cache.get("greeting")
     //                                                      //       -> "Hello World!"
@@ -41,6 +42,11 @@ namespace sc {
 
         // A blank line, then a section heading.
         static void heading(const std::string_view text) { output() << '\n' << text << '\n'; }
+
+        // A blank line, then a heading within a section, indented with its steps and underlined.
+        static void subheading(const std::string_view text) {
+            output() << "\n  " << text << "\n  " << std::string(display_width(text), '-') << '\n';
+        }
 
         // An indented line of commentary.
         static void note(const std::string_view text) { output() << "  " << text << '\n'; }

@@ -72,6 +72,11 @@ endif ()
 # Examples #
 ############
 add_sc_example(sc-core-demo)
+add_sc_example(sc-core-geometry)
+add_sc_example(sc-core-time)
+add_sc_example(sc-core-text)
+add_sc_example(sc-core-numbers)
+add_sc_example(sc-core-network)
 
 #############
 # Packaging #

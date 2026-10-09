@@ -1,6 +1,8 @@
 #ifndef SC_COLOR_H
 #define SC_COLOR_H
+#include <ostream>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 
 namespace sc {
@@ -44,6 +46,9 @@ namespace sc {
 
         void flatten(const color &background);
 
+        // "#rrggbb", leaving out alpha; from_hex() reads it back.
+        std::string to_hex() const;
+
         bool operator!=(const color & c2) const;
 
         bool operator==(const color & c2) const;
@@ -55,6 +60,10 @@ namespace sc {
         static const color Black;
         static const color White;
         static const color Transparent;
+
+    private:
+        // CSS: rgb(255, 128, 0), or rgba(255, 128, 0, 0.5) when not opaque; from_string() reads it back.
+        friend std::ostream &operator<<(std::ostream &lhs, const color &rhs);
     };
 } // sc
 

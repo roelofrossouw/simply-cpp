@@ -139,8 +139,9 @@ namespace sc {
 }
 
 // Shows a step and its result, the expression printed as written: SC_SHOW(cache.get("key")).
-#define SC_SHOW(expression) ::sc::console::show(#expression, expression)
+// Variadic, so an expression with a comma outside parentheses, sc::point{1, 2} say, still works.
+#define SC_SHOW(...) ::sc::console::show(#__VA_ARGS__, __VA_ARGS__)
 
 // Shows a step without a result, the statement printed as written, then runs it:
 // SC_STEP(cache.set("key", "value")).
-#define SC_STEP(statement) (::sc::console::step(#statement), statement)
+#define SC_STEP(...) (::sc::console::step(#__VA_ARGS__), __VA_ARGS__)

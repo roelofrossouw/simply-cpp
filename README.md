@@ -121,12 +121,15 @@ if (meeting < in_a_day) std::cout << (in_a_day - meeting).count() << " seconds a
 ```
 
 `sc::console` (`console.h`) prints plain, readable output, as the simply-cpp demos
-do: a title, headings, and each step shown as written with its result below it.
-`SC_SHOW(expression)` and `SC_STEP(statement)` print the code itself:
+do: a title, headings and subheadings, and each step shown as written with its
+result below it. Headings are underlined and subheadings marked with `▸`; on a
+terminal (unless `NO_COLOR` is set) they are bold. `SC_SHOW(expression)` and
+`SC_STEP(expression)` print the code itself, commas and all:
 
 ```cpp
 sc::console::title("simply-cpp redis");
 sc::console::heading("A string value");
+sc::console::subheading("Setting and reading it");
 SC_STEP(cache.set("greeting", "Hello World!"));
 SC_SHOW(cache.get("greeting"));   // prints   cache.get("greeting")
                                    //              -> "Hello World!"
@@ -176,6 +179,16 @@ and what it returned. It is installed with the runtime package (`simply-cpp`),
 so it also shows an installation works without the `-dev` package, and needs no
 server. Every module has a demo like it (`sc-<module>-demo`); they demonstrate,
 they aren't tests, so CTest doesn't run them.
+
+sc-core has a closer look at each area too, installed alongside it:
+
+| Demo | Shows |
+|---|---|
+| `sc-core-geometry` | points and sizes, rectangles (overlap, distance, grouping), rotated rectangles and polygons, DBSCAN clustering |
+| `sc-core-time` | `sc::date` calendar arithmetic, `sc::datetime` and Unix time, `sc::timer` |
+| `sc-core-text` | UTF-8 measuring, slicing and repair, base64, `explode`, `getenv`, files |
+| `sc-core-numbers` | `sc::percent`, `sc::color`, `sc::matrix`, dual numbers for derivatives |
+| `sc-core-network` | `ip_address`, `sc::ip_endpoint` and `sc::ip_endpoints` |
 
 Its source is `examples/sc-core-demo.cpp`; the code below is copied from it at
 configure time, so it always matches code that compiles:

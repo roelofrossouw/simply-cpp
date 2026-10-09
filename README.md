@@ -152,19 +152,34 @@ const auto parts = sc::explode("x,,y", ",");                     // {"x", "", "y
 
 ## Demo
 
-`sc-core-demo` is installed with the runtime package (`simply-cpp`), so you can
-check an installation works without the `-dev` package. It needs no server.
+`sc-core-demo` is a short tour of the basics: base64, dates and times, server
+endpoints, and strings and the environment. Each line shows a call, as written,
+and what it returned. It is installed with the runtime package (`simply-cpp`),
+so it also shows an installation works without the `-dev` package, and needs no
+server. Every module has a demo like it (`sc-<module>-demo`); they demonstrate,
+they aren't tests, so CTest doesn't run them.
+
 Its source is `examples/sc-core-demo.cpp`; the code below is copied from it at
 configure time, so it always matches code that compiles:
 
 <!-- sc-example: examples/sc-core-demo.cpp -->
 ```cpp
-sc::timer sw;
-const std::string sample = "Hello World!";
-const auto encoded = sc::base64::encode(sample);
-const auto decoded = sc::base64::decode(encoded);
-std::cout << sample << " => " << encoded << " => " << decoded << '\n';
-std::cout << "Done after " << sw << '\n';
+heading("Base64");
+SHOW(sc::base64::encode("Hello World!"));
+SHOW(sc::base64::decode("SGVsbG8gV29ybGQh"));
+
+heading("Dates and times");
+SHOW(sc::date{"2026-01-31"}.add(1, "M"));                         // calendar arithmetic
+SHOW(sc::datetime{"2026-10-09 14:30:00"}.add(90, "i").format()); // 90 minutes later
+SHOW(sc::datetime::from_unix(0).format("%d %b %Y %H:%M %Z", true));
+
+heading("Server endpoints");
+SHOW(sc::ip_endpoints("redis1;redis2:6380", 6379)); // ';'-separated, with a default port
+SHOW(sc::ip_endpoint::parse("[::1]:5432").host);
+
+heading("Strings and the environment");
+SHOW(sc::explode("a;b;;c"));
+SHOW(sc::getenv("HOME", "(not set)"));
 ```
 <!-- /sc-example -->
 

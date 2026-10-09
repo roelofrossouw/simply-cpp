@@ -71,7 +71,7 @@ endif ()
 ############
 # Examples #
 ############
-add_sc_example(sc-core-demo RUN_AS_TEST)
+add_sc_example(sc-core-demo)
 
 #############
 # Packaging #

@@ -93,6 +93,9 @@ int main() {
             CHECK_LT(body.size(), size_t{64});
             CHECK_MSG(body.find_first_not_of("0123456789.:abcdefABCDEF") == string::npos,
                       "expected an IP address, got \"" + body + '"');
+            // A second request on the same object answers on its own, not appended to the first.
+            CHECK_EQ(trimmed(probe.get()), body);
+            CHECK_EQ(trimmed(probe.post()), body);
             // fetch() goes over the network for a url with no local file, and caches it.
             const auto fetched = trimmed(sc::rest::fetch(probe_url));
             CHECK_EQ(fetched, body);

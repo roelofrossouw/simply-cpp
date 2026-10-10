@@ -43,7 +43,7 @@ add_sc_object(date)
 add_sc_object(datetime)
 add_sc_object(percent)
 add_sc_object(ollama LINK_LIBRARIES nlohmann_json::nlohmann_json)
-add_sc_object(config_file LINK_LIBRARIES nlohmann_json::nlohmann_json PUBLIC_LINK_LIBRARIES nlohmann_json::nlohmann_json)
+add_sc_object(config LINK_LIBRARIES nlohmann_json::nlohmann_json PUBLIC_LINK_LIBRARIES nlohmann_json::nlohmann_json)
 add_sc_object(rest LINK_LIBRARIES curl PUBLIC_LINK_LIBRARIES curl)
 
 ######################

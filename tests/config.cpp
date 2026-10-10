@@ -1,4 +1,4 @@
-#include <config_file.h>
+#include <config.h>
 
 #include "sc_test.h"
 
@@ -8,7 +8,7 @@
 #include <string>
 
 namespace {
-    const auto directory = std::filesystem::temp_directory_path() / "sc-config-file-test";
+    const auto directory = std::filesystem::temp_directory_path() / "sc-config-test";
 
     std::filesystem::path write(const std::filesystem::path &name, const std::string &content) {
         const auto path = directory / name;

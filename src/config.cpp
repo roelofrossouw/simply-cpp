@@ -1,4 +1,4 @@
-#include "config_file.h"
+#include "config.h"
 
 #include "ip_endpoint.h"
 

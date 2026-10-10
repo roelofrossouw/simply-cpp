@@ -6,7 +6,9 @@
 #define _RSIZE_T
 typedef ssize_t rsize_t;
 #endif /* _RSIZE_T */
-#include <cstring>
+#include <algorithm>
+#include <cstddef>
+#include <stdexcept>
 
 namespace sc {
 
@@ -22,9 +24,10 @@ namespace sc {
             }
         }
 
+        // From both layouts at once: rdata row by row, cdata column by column.
         matrix(const T *rdata, const T *cdata) {
-            std::memcpy(this->rdata, cdata, elements * sizeof(cdata));
-            std::memcpy(this->cdata, rdata, elements * sizeof(rdata));
+            std::copy_n(rdata, elements, this->rdata);
+            std::copy_n(cdata, elements, this->cdata);
         }
 
         matrix(std::initializer_list<T> values) {
@@ -112,10 +115,11 @@ namespace sc {
             return result;
         }
 
-        matrix<T, cols, rows> transpose() { return {cdata, rdata}; }
+        // The columns become the rows: this matrix's column order is the transpose's row order.
+        matrix<T, cols, rows> transpose() const { return {cdata, rdata}; }
 
     private:
-        std::size_t elements = rows * cols;
+        static constexpr std::size_t elements = rows * cols;
 
         friend std::ostream &operator<<(std::ostream &lhs, const matrix &rhs) {
             for (std::size_t r = 0; r < rows; ++r) {

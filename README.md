@@ -169,16 +169,34 @@ const std::string text = servers;                       // "redis1:6379;redis2:7
 const auto bootstrap = servers.to_string(",");          // for Kafka's bootstrap.servers
 ```
 
-`sc::config` (`config_file.h`, not part of `sc.h`) reads a Linux-style configuration
-file into an `nlohmann::ordered_json`, so values read the way JSON does. A `.` in a key
-nests it, `[section]` puts the keys after it in that section, and `key[] = value`
-appends to a list (an empty `key[] =` clears it). `include <path>` reads another file,
-relative to this one; a directory or a `*` in the name reads every match in name order.
-After the file, every `*.conf` in `<file>.d/` is read in name order, so local drop-ins
-override the packaged file. `true`/`false` and numbers that read back as written are
-typed, anything else (or anything in double quotes) is a string. A key set twice in one
-file is an error; a later file replaces it. Errors are `std::runtime_error`s naming the
-file and line, or the key:
+`sc::config` (`config_file.h`, not part of `sc.h`) reads a configuration file into an
+`nlohmann::ordered_json`, so values read the way JSON does, and checks it against an
+optional structure.
+
+Files are JSON (a `.json` name, or text starting with `{`; comments allowed) or the Linux
+`.conf` style. In a `.conf` file a `.` in a key nests it, `[section]` puts the keys after
+it in that section, and `key[] = value` appends to a list (an empty `key[] =` clears it).
+`include <path>` reads another file, relative to this one; a directory or a `*` in the
+name reads every match in name order. After the file, every `*.conf` and `*.json` in
+`<file>.d/` is read in name order, so local drop-ins override the packaged file (JSON
+objects merge key by key). `.conf` values `true`/`false` and numbers that read back as
+written are typed, anything else (or anything in double quotes) is a string. A key set
+twice in one `.conf` file is an error; a later file replaces it.
+
+The structure is a [JSON Schema](https://json-schema.org), as an `nlohmann::json` or JSON
+text, normally fixed at compile time (a big one can live in its own header). After
+reading, defaults are filled in and every value is checked. A number or boolean where
+the structure wants a string becomes the text written (so a password `1234` stays
+`"1234"`), and a single value where it wants an array becomes a list of one. The
+supported keywords are `type`, `properties`, `required`, `additionalProperties` (false
+makes unknown keys errors), `default`, `items`, `minItems`, `maxItems`, `uniqueItems`,
+`enum`, `const`, `minimum`, `maximum`, `exclusiveMinimum`, `exclusiveMaximum`,
+`multipleOf`, `minLength`, `maxLength`, `pattern` and `format` (`ipv4`, `hostname`, and
+`ip-endpoint` for `host:port`). Annotations (`title`, `description`, `$schema`, ...) are
+ignored. Anything else (`$ref`, `oneOf`, `if`, ...) throws `std::invalid_argument` when
+the `sc::config` is made, so a structure never silently checks less than it says.
+Errors in the files or values are `std::runtime_error`s naming the file and line, or the
+key:
 
 ```ini
 # /etc/oneapi/oneapi.conf
@@ -193,11 +211,22 @@ topic[] = second
 ```cpp
 #include <config_file.h>
 
-const sc::config conf{"/etc/oneapi/oneapi.conf"};            // plus oneapi.conf.d/*.conf
+const nlohmann::json structure{
+    {"type", "object"},
+    {"additionalProperties", false},
+    {"required", {"server"}},
+    {"properties", {
+        {"server", {{"type", "object"}, {"required", {"endpoint"}}, {"properties", {
+            {"endpoint", {{"type", "string"}, {"format", "ip-endpoint"}}},
+            {"threads", {{"type", "integer"}, {"minimum", 1}, {"default", 4}}}}}}},
+        {"kafka", {{"type", "object"}, {"properties", {
+            {"topic", {{"type", "array"}, {"items", {{"type", "string"}}}, {"minItems", 1}}}}}}}}}};
+
+const sc::config conf{"/etc/oneapi/oneapi.conf", structure}; // plus oneapi.conf.d/*
 const auto endpoint = conf["server"]["endpoint"].get<std::string>();
+const int threads = conf["server"]["threads"].get<int>();      // 4, the default
 const auto topics = conf.as<std::vector<std::string>>("kafka.topic"); // errors name the key
-const auto secret = conf.as<std::string>("jwt.secret", "");  // with a default
-for (const auto &key : conf.keys()) std::cout << key << '\n'; // "server.endpoint", ...
+const auto secret = conf.as<std::string>("jwt.secret", "");    // with a fallback
 ```
 
 `core.h` has small PHP-style helpers: `file_get_contents()`, `file_put_contents()`,

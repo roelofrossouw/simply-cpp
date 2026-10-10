@@ -167,6 +167,151 @@ int main() {
         CHECK_THROWS_AS(sc::config{directory}, std::runtime_error);
     }
 
+    SECTION("JSON files");
+    {
+        write("json.conf.d/30-override.json", R"({"server": {"port": 9443}, "extra": [1, 2]})");
+        write("json.conf.d/40-more.conf", "[server]\nname = drop-in\n");
+        const sc::config conf{write("json.conf",
+            "// a comment\n"
+            R"({"server": {"port": 8443, "address": "0.0.0.0", "tls": true}, "topics": ["a", "b"]})")};
+        CHECK_EQ(conf.as<int>("server.port"), 9443); // merged key by key
+        CHECK_EQ(conf.as<std::string>("server.address"), std::string{"0.0.0.0"});
+        CHECK_EQ(conf.as<std::string>("server.name"), std::string{"drop-in"});
+        CHECK(conf.as<bool>("server.tls"));
+        CHECK_EQ(conf["topics"].size(), size_t{2});
+        CHECK_EQ(conf["extra"][1].get<int>(), 2);
+        CHECK_EQ(conf.files().size(), size_t{3});
+
+        const sc::config named{write("named.json", "  \n{\"a\": 1}")};
+        CHECK_EQ(named.as<int>("a"), 1);
+        const sc::config included{write("includes-json.conf", "include named.json\nb = 2\n")};
+        CHECK_EQ(included.as<int>("a"), 1);
+        CHECK(contains(error_for("{\"a\": }"), "invalid JSON"));
+        try {
+            sc::config{write("list.json", "[1, 2]")};
+            CHECK(false);
+        } catch (const std::runtime_error &error) {
+            CHECK(contains(error.what(), "must be an object"));
+        }
+    }
+
+    SECTION("A structure fills in defaults and checks values");
+    {
+        const nlohmann::json structure{
+            {"type", "object"},
+            {"additionalProperties", false},
+            {"required", {"server"}},
+            {"properties", {
+                {"server", {
+                    {"type", "object"},
+                    {"additionalProperties", false},
+                    {"required", {"endpoint"}},
+                    {"properties", {
+                        {"endpoint", {{"type", "string"}, {"format", "ip-endpoint"}}},
+                        {"threads", {{"type", "integer"}, {"minimum", 1}, {"maximum", 64}, {"default", 4}}},
+                        {"name", {{"type", "string"}, {"default", "oneapi"}}}}}}},
+                {"auth", {
+                    {"type", "object"},
+                    {"properties", {
+                        {"user", {{"type", "string"}, {"minLength", 1}, {"default", "demo"}}},
+                        {"password", {{"type", "string"}, {"default", ""}}}}}}},
+                {"topics", {{"type", "array"}, {"items", {{"type", "string"}, {"minLength", 1}}}, {"minItems", 1}, {"uniqueItems", true}}},
+                {"level", {{"enum", {"debug", "info", "error"}}, {"default", "info"}}}}}};
+        const auto path = write("schema.conf", "topics[] = a\n[server]\nendpoint = 127.0.0.1:8080\n");
+        const sc::config conf{path, structure};
+        CHECK_EQ(conf.as<int>("server.threads"), 4);
+        CHECK_EQ(conf.as<std::string>("server.name"), std::string{"oneapi"});
+        CHECK_EQ(conf.as<std::string>("auth.user"), std::string{"demo"}); // a section made for its defaults
+        CHECK_EQ(conf.as<std::string>("level"), std::string{"info"});
+        CHECK_EQ(conf.structure(), structure);
+
+        // Text as well as JSON, and coercions.
+        const auto text = structure.dump();
+        const sc::config numbers{write("numbers.conf", "topics = single\n[server]\nendpoint = 10.0.0.1:1\n[auth]\npassword = 1234\n"), text};
+        CHECK(numbers["auth"]["password"].is_string());
+        CHECK_EQ(numbers.as<std::string>("auth.password"), std::string{"1234"});
+        CHECK(numbers["topics"].is_array() && numbers["topics"].size() == 1);
+
+        const auto rejected = [&](const std::string &content) {
+            try {
+                sc::config{write("rejected.conf", content), structure};
+                return std::string{};
+            } catch (const std::runtime_error &error) {
+                return std::string{error.what()};
+            }
+        };
+        const std::string valid = "topics[] = a\n[server]\nendpoint = 127.0.0.1:8080\n";
+        CHECK(rejected(valid).empty());
+        CHECK_EQ(rejected("topics[] = a\n"), std::string{"Missing required configuration key: server.endpoint"}); // made for its defaults
+        CHECK_EQ(rejected("topics[] = a\n[server]\nthreads = 2\n"), std::string{"Missing required configuration key: server.endpoint"});
+        CHECK_EQ(rejected(valid + "port = 1\n"), std::string{"Unknown configuration key: server.port"});
+        CHECK_EQ(rejected(valid + "[other]\nx = 1\n"), std::string{"Unknown configuration key: other"});
+        CHECK(contains(rejected(valid + "threads = 0\n"), "Invalid configuration value for server.threads: 0 is below the minimum 1"));
+        CHECK(contains(rejected(valid + "threads = many\n"), "server.threads: expected integer, not \"many\""));
+        CHECK(contains(rejected("topics[] = a\n[server]\nendpoint = localhost\n"), "server.endpoint: \"localhost\" is not a valid ip-endpoint"));
+        CHECK(contains(rejected("topics[] =\n[server]\nendpoint = 127.0.0.1:1\n"), "topics: needs at least one item"));
+        CHECK(contains(rejected("topics[] = a\ntopics[] = a\n[server]\nendpoint = 127.0.0.1:1\n"), "topics: \"a\" is listed twice"));
+        CHECK(contains(rejected(valid + "[auth]\nuser =\n"), "auth.user: must not be empty"));
+        CHECK(contains(rejected("level = loud\n" + valid), "level: \"loud\" is not one of"));
+        CHECK(contains(rejected("topics.a = 1\n[server]\nendpoint = 127.0.0.1:1\n"), "topics: expected array, not a section"));
+    }
+
+    SECTION("More checks");
+    {
+        const auto check = [&](const nlohmann::json &schema, const std::string &content) {
+            try {
+                sc::config{write("more.conf", content), schema};
+                return std::string{};
+            } catch (const std::runtime_error &error) {
+                return std::string{error.what()};
+            }
+        };
+        const nlohmann::json number{{"properties", {{"n", {{"type", "number"}, {"exclusiveMinimum", 0}, {"exclusiveMaximum", 1}, {"multipleOf", 0.25}}}}}};
+        CHECK(check(number, "n = 0.5\n").empty());
+        CHECK(contains(check(number, "n = 0\n"), "must be above 0"));
+        CHECK(contains(check(number, "n = 1\n"), "must be below 1"));
+        CHECK(contains(check(number, "n = 0.3\n"), "not a multiple of 0.25"));
+        const nlohmann::json strings{{"properties", {
+            {"ip", {{"type", "string"}, {"format", "ipv4"}}},
+            {"host", {{"type", "string"}, {"format", "hostname"}}},
+            {"code", {{"type", "string"}, {"pattern", "^[A-Z]{3}$"}, {"maxLength", 3}}},
+            {"mode", {{"const", "fast"}}},
+            {"any", {{"type", {"integer", "string"}}}},
+            {"never", false}}}};
+        CHECK(check(strings, "ip = 10.0.0.255\nhost = db3.example.com\ncode = ZAF\nmode = fast\nany = 1\n").empty());
+        CHECK(check(strings, "any = x\n").empty());
+        CHECK(contains(check(strings, "ip = 10.0.0.256\n"), "not a valid ipv4"));
+        CHECK(contains(check(strings, "host = bad_host\n"), "not a valid hostname"));
+        CHECK(contains(check(strings, "code = ZA\n"), "doesn't match"));
+        CHECK(contains(check(strings, "mode = slow\n"), "must be \"fast\""));
+        CHECK_EQ(sc::config(write("any.conf", "any = true\n"), strings)["any"].get<std::string>(), std::string{"true"});
+        CHECK(contains(check(strings, "any.x = 1\n"), "expected integer or string, not a section"));
+        CHECK(contains(check(strings, "never = 1\n"), "never: not allowed here"));
+        CHECK(contains(check({{"properties", {{"n", {{"type", "integer"}}}}}}, "n = 1.5\n"), "expected integer"));
+    }
+
+    SECTION("A structure the checker can't do is refused");
+    {
+        const auto path = write("plain.conf", "a = 1\n");
+        const auto refused = [&](const nlohmann::json &schema) {
+            try {
+                sc::config{path, schema};
+                return std::string{};
+            } catch (const std::invalid_argument &error) {
+                return std::string{error.what()};
+            }
+        };
+        CHECK(refused(nullptr).empty());
+        CHECK(contains(refused({{"properties", {{"a", {{"$ref", "#/x"}}}}}}), "configuration structure at a: unsupported keyword \"$ref\""));
+        CHECK(contains(refused({{"oneOf", nlohmann::json::array()}}), "unsupported keyword \"oneOf\""));
+        CHECK(contains(refused({{"type", "text"}}), "unknown type \"text\""));
+        CHECK(contains(refused({{"format", "email"}}), "unsupported format"));
+        CHECK(contains(refused({{"pattern", "("}}), "invalid pattern"));
+        CHECK(contains(refused({{"minimum", "1"}}), "minimum must be a number"));
+        CHECK(contains(refused(std::string{"{not json"}), "invalid JSON"));
+        CHECK(refused({{"title", "x"}, {"description", "y"}, {"$schema", "https://json-schema.org/draft/2020-12/schema"}}).empty());
+    }
+
     std::filesystem::remove_all(directory);
     TEST_SUMMARY();
 }

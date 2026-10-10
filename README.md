@@ -2,6 +2,8 @@
 
 Library that wraps common C++ libraries behind one simple, consistent API.
 
+**Documentation:** the [simply-cpp wiki](https://github.com/roelofrossouw/simply-cpp/wiki) covers the whole suite: [getting started](https://github.com/roelofrossouw/simply-cpp/wiki/Getting-Started), guides to [configuration files](https://github.com/roelofrossouw/simply-cpp/wiki/Configuration-Files), [command-line parameters](https://github.com/roelofrossouw/simply-cpp/wiki/Command-Line-Parameters), [core utilities](https://github.com/roelofrossouw/simply-cpp/wiki/Core-Utilities), [geometry](https://github.com/roelofrossouw/simply-cpp/wiki/Geometry) and [networking](https://github.com/roelofrossouw/simply-cpp/wiki/Networking), and the [sc-core reference](https://github.com/roelofrossouw/simply-cpp/wiki/Reference-sc-core).
+
 The idea of this library is to make it easier to use C++, especially for those who are new to C++.
 The concept is to create wrappers around existing libraries, not to implement them from scratch.
 This should keep maintenance to the minimum.

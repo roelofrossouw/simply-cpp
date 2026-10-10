@@ -97,7 +97,7 @@ add_executable(myapp main.cpp)
 target_link_libraries(myapp PRIVATE sc::sc-core)
 ```
 
-Include the aggregate header, or an individual one (`base64.h`, `timer.h`, `date.h`, `datetime.h`, `color.h`, `geometry.h`, `ip_endpoint.h`, `ip_endpoints.h`, `console.h`, `percent.h`, `rest.h`, `ollama.h`, ...). Geometry stays part of sc-core, grouped under `geometry.h`; `rect.h` remains available for existing includes. The geometry API includes points, rectangles, rotated rectangles, polygons, circles, and DBSCAN clustering:
+Include the aggregate header, or an individual one (`base64.h`, `timer.h`, `date.h`, `datetime.h`, `color.h`, `geometry.h`, `ip_endpoint.h`, `ip_endpoints.h`, `console.h`, `percent.h`, `rest.h`, `ollama.h`, ...; `config_file.h` only individually). Geometry stays part of sc-core, grouped under `geometry.h`; `rect.h` remains available for existing includes. The geometry API includes points, rectangles, rotated rectangles, polygons, circles, and DBSCAN clustering:
 
 ```cpp
 #include <sc.h>
@@ -167,6 +167,37 @@ for (const auto &server : servers) std::cout << server << '\n';
 sc::redis cache{servers};
 const std::string text = servers;                       // "redis1:6379;redis2:7000;redis3:7001"
 const auto bootstrap = servers.to_string(",");          // for Kafka's bootstrap.servers
+```
+
+`sc::config` (`config_file.h`, not part of `sc.h`) reads a Linux-style configuration
+file into an `nlohmann::ordered_json`, so values read the way JSON does. A `.` in a key
+nests it, `[section]` puts the keys after it in that section, and `key[] = value`
+appends to a list (an empty `key[] =` clears it). `include <path>` reads another file,
+relative to this one; a directory or a `*` in the name reads every match in name order.
+After the file, every `*.conf` in `<file>.d/` is read in name order, so local drop-ins
+override the packaged file. `true`/`false` and numbers that read back as written are
+typed, anything else (or anything in double quotes) is a string. A key set twice in one
+file is an error; a later file replaces it. Errors are `std::runtime_error`s naming the
+file and line, or the key:
+
+```ini
+# /etc/oneapi/oneapi.conf
+[server]
+endpoint = 0.0.0.0:8080
+
+[kafka]
+topic[] = first
+topic[] = second
+```
+
+```cpp
+#include <config_file.h>
+
+const sc::config conf{"/etc/oneapi/oneapi.conf"};            // plus oneapi.conf.d/*.conf
+const auto endpoint = conf["server"]["endpoint"].get<std::string>();
+const auto topics = conf.as<std::vector<std::string>>("kafka.topic"); // errors name the key
+const auto secret = conf.as<std::string>("jwt.secret", "");  // with a default
+for (const auto &key : conf.keys()) std::cout << key << '\n'; // "server.endpoint", ...
 ```
 
 `core.h` has small PHP-style helpers: `file_get_contents()`, `file_put_contents()`,

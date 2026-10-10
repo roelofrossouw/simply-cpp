@@ -1,7 +1,7 @@
 #pragma once
 
-
-class ostream;
+#include <iosfwd>
+#include <string>
 
 namespace sc {
     namespace base64_impl {
@@ -11,6 +11,11 @@ namespace sc {
     class timer {
     public:
         timer();
+
+        // A copy has its own state, starting from this timer's: copying is a snapshot.
+        timer(const timer &other);
+
+        timer &operator=(const timer &other);
 
         ~timer();
 

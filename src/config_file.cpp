@@ -451,7 +451,17 @@ namespace {
             if (const auto names = schema.find("required"); names != schema.end()) {
                 for (const auto &name: names->is_array() ? *names : nlohmann::json::array({*names})) required.push_back(name.get<std::string>());
             }
+            // Unknown keys first: a misspelt key is the likely reason a required one is missing.
             const auto properties = schema.find("properties");
+            const auto additional = schema.find("additionalProperties");
+            for (auto child = value.begin(); child != value.end(); ++child) {
+                if (properties != schema.end() && properties->contains(child.key())) continue;
+                if (additional == schema.end()) continue;
+                if (additional->is_boolean() && !additional->get<bool>()) {
+                    throw std::runtime_error("Unknown configuration key: " + join_key(key, child.key()));
+                }
+                apply_schema(child.value(), *additional, join_key(key, child.key()));
+            }
             if (properties != schema.end()) {
                 for (const auto &[name, property]: properties->items()) {
                     const auto child_key = join_key(key, name);
@@ -470,15 +480,6 @@ namespace {
             }
             for (const auto &name: required) {
                 if (!value.contains(name)) throw std::runtime_error("Missing required configuration key: " + join_key(key, name));
-            }
-            const auto additional = schema.find("additionalProperties");
-            for (auto child = value.begin(); child != value.end(); ++child) {
-                if (properties != schema.end() && properties->contains(child.key())) continue;
-                if (additional == schema.end()) continue;
-                if (additional->is_boolean() && !additional->get<bool>()) {
-                    throw std::runtime_error("Unknown configuration key: " + join_key(key, child.key()));
-                }
-                apply_schema(child.value(), *additional, join_key(key, child.key()));
             }
         }
     }

@@ -245,6 +245,7 @@ int main() {
         CHECK_EQ(rejected("topics[] = a\n"), std::string{"Missing required configuration key: server.endpoint"}); // made for its defaults
         CHECK_EQ(rejected("topics[] = a\n[server]\nthreads = 2\n"), std::string{"Missing required configuration key: server.endpoint"});
         CHECK_EQ(rejected(valid + "port = 1\n"), std::string{"Unknown configuration key: server.port"});
+        CHECK_EQ(rejected("topics[] = a\n[server]\nendpont = 127.0.0.1:1\n"), std::string{"Unknown configuration key: server.endpont"});
         CHECK_EQ(rejected(valid + "[other]\nx = 1\n"), std::string{"Unknown configuration key: other"});
         CHECK(contains(rejected(valid + "threads = 0\n"), "Invalid configuration value for server.threads: 0 is below the minimum 1"));
         CHECK(contains(rejected(valid + "threads = many\n"), "server.threads: expected integer, not \"many\""));

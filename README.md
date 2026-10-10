@@ -54,33 +54,6 @@ curl -fsSL https://apt.roelof.co.za/setup.sh | bash # registers the apt repo - s
 sudo apt -y install simply-cpp-dev
 ```
 
-### CMake FetchContent
-
-```cmake
-include(FetchContent)
-FetchContent_Declare(
-        sc-core
-        GIT_REPOSITORY https://github.com/roelofrossouw/simply-cpp.git
-        GIT_TAG main # or a specific tag, e.g. v1.1.9, to stay stable
-        GIT_SHALLOW TRUE
-)
-FetchContent_MakeAvailable(sc-core)
-
-add_executable(myapp main.cpp)
-target_link_libraries(myapp PRIVATE sc::sc-core)
-```
-
-### Git submodule
-
-```bash
-git submodule add https://github.com/roelofrossouw/simply-cpp.git third_party/sc-core
-```
-
-```cmake
-add_subdirectory(third_party/sc-core)
-target_link_libraries(myapp PRIVATE sc::sc-core)
-```
-
 ## Dependencies
 
 sc-core is the base of the suite - it doesn't depend on any other `sc-*` module. It does use:
@@ -352,3 +325,9 @@ cmake -B build -S .
 cmake --build build -j
 ctest --test-dir build --output-on-failure
 ```
+
+## Other ways to use it
+
+The packages above are the simplest route. sc-core can also be built from source, with
+CMake's `FetchContent` or as a git submodule (`add_subdirectory`), from
+https://github.com/roelofrossouw/simply-cpp.

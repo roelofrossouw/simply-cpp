@@ -8,7 +8,7 @@ include("${CMAKE_CURRENT_LIST_DIR}/SimplyCppFunctions.cmake")
 # Where sc_test.h was installed. add_sc_test() puts this on the include path.
 set_and_check(SC_TEST_INCLUDE_DIR "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@")
 
-# sc::config (config_file.h) hands out nlohmann::ordered_json.
+# sc::config (config.h) hands out nlohmann::ordered_json.
 include(CMakeFindDependencyMacro)
 find_dependency(nlohmann_json CONFIG)
 

@@ -22,6 +22,15 @@ namespace sc {
         impl = new base64_impl::timer();
     }
 
+    timer::timer(const timer &other) {
+        impl = new base64_impl::timer(*other.impl);
+    }
+
+    timer &timer::operator=(const timer &other) {
+        *impl = *other.impl;
+        return *this;
+    }
+
     timer::~timer() {
         delete impl;
     }

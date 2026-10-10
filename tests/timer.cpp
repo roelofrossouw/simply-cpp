@@ -3,6 +3,7 @@
 #include <chrono>
 #include <string>
 #include <thread>
+#include <vector>
 
 #include "sc_test.h"
 
@@ -148,6 +149,27 @@ int main() {
         ostringstream stream;
         stream << streamed;
         CHECK_EQ(stream.str(), static_cast<string>(streamed));
+    }
+
+    SECTION("Copies are independent snapshots");
+    {
+        sc::timer original = sc::timer::from_millis(1500);
+        sc::timer copy = original; // copy constructor
+        CHECK_EQ(copy.millis(), 1500LL);
+        copy.reset();
+        copy.stop();
+        CHECK_EQ(original.millis(), 1500LL); // resetting the copy leaves the original alone
+
+        sc::timer assigned;
+        assigned = original; // copy assignment
+        CHECK_EQ(assigned.millis(), 1500LL);
+        assigned = assigned; // to itself
+        CHECK_EQ(assigned.millis(), 1500LL);
+
+        std::vector<sc::timer> timers(3, original); // copies made and destroyed by the vector
+        timers.push_back(sc::timer::from_nanos(7));
+        CHECK_EQ(timers.front().millis(), 1500LL);
+        CHECK_EQ(timers.back().nanos(), 7LL);
     }
 
     TEST_SUMMARY();

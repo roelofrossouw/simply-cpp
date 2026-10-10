@@ -43,6 +43,7 @@ add_sc_object(date)
 add_sc_object(datetime)
 add_sc_object(percent)
 add_sc_object(ollama LINK_LIBRARIES nlohmann_json::nlohmann_json)
+add_sc_object(params LINK_LIBRARIES nlohmann_json::nlohmann_json PUBLIC_LINK_LIBRARIES nlohmann_json::nlohmann_json)
 add_sc_object(config LINK_LIBRARIES nlohmann_json::nlohmann_json PUBLIC_LINK_LIBRARIES nlohmann_json::nlohmann_json)
 add_sc_object(rest LINK_LIBRARIES curl PUBLIC_LINK_LIBRARIES curl)
 
@@ -80,6 +81,7 @@ add_sc_example(sc-core-time)
 add_sc_example(sc-core-text)
 add_sc_example(sc-core-numbers)
 add_sc_example(sc-core-network)
+add_sc_example(sc-core-params)
 
 #############
 # Packaging #

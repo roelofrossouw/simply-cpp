@@ -97,7 +97,7 @@ add_executable(myapp main.cpp)
 target_link_libraries(myapp PRIVATE sc::sc-core)
 ```
 
-Include the aggregate header, or an individual one (`base64.h`, `timer.h`, `date.h`, `datetime.h`, `color.h`, `geometry.h`, `ip_endpoint.h`, `ip_endpoints.h`, `console.h`, `percent.h`, `rest.h`, `ollama.h`, ...; `config.h` only individually). Geometry stays part of sc-core, grouped under `geometry.h`; `rect.h` remains available for existing includes. The geometry API includes points, rectangles, rotated rectangles, polygons, circles, and DBSCAN clustering:
+Include the aggregate header, or an individual one (`base64.h`, `timer.h`, `date.h`, `datetime.h`, `color.h`, `geometry.h`, `ip_endpoint.h`, `ip_endpoints.h`, `console.h`, `percent.h`, `rest.h`, `ollama.h`, ...; `config.h` and `params.h` only individually). Geometry stays part of sc-core, grouped under `geometry.h`; `rect.h` remains available for existing includes. The geometry API includes points, rectangles, rotated rectangles, polygons, circles, and DBSCAN clustering:
 
 ```cpp
 #include <sc.h>
@@ -229,6 +229,54 @@ const auto topics = conf.as<std::vector<std::string>>("kafka.topic"); // errors 
 const auto secret = conf.as<std::string>("jwt.secret", "");    // with a fallback
 ```
 
+`sc::params` (`params.h`, not part of `sc.h`) reads command-line arguments by a
+structure, the way `sc::config` reads a file. The structure is plain JSON (not a JSON
+Schema): `options` keyed by long name (`short`, `type` string/integer/number/boolean,
+`default`, `required`, `multiple`, `choices`, `value` for the help placeholder, `help`),
+`positional` arguments in order, and `extra` for any arguments after them, plus `name`,
+`description`, `version` and `epilog` for the help. Parsing follows GNU conventions:
+`--name=value` or `--name value`, an unambiguous prefix of a long name, `-n value` or
+`-nvalue`, flags together (`-vf`), `--` to end the options, `-` as an argument, and
+options anywhere among the arguments. `-h`/`--help` (and `--version` when there is a
+version) are reserved: from `main()`'s `argc`/`argv` they print and exit 0, and a mistake
+prints `<name>: <mistake>` and `Try '<name> --help' for more information.` and exits 2.
+Given a vector of arguments instead, it throws `sc::params::error` and only reports
+`help_requested()`. The values are an `nlohmann::ordered_json` keyed by name:
+
+```cpp
+#include <params.h>
+
+int main(int argc, char *argv[]) {
+    const sc::params args{argc, argv, {
+        {"description", "Copies INPUT to OUTPUT."},
+        {"version", "1.0.0"},
+        {"options", {
+            {"verbose", {{"short", "v"}, {"type", "boolean"}, {"help", "say what is being done"}}},
+            {"count", {{"short", "n"}, {"type", "integer"}, {"default", 10}}}}},
+        {"positional", {
+            {"input", {{"help", "the file to read"}}},
+            {"output", {{"default", "-"}, {"help", "where to write"}}}}}}};
+    if (args["verbose"].get<bool>()) std::cout << "copying " << args["input"].get<std::string>() << '\n';
+    const int count = args.as<int>("count");
+}
+```
+
+```text
+$ copy --help
+Usage: copy [OPTION]... INPUT [OUTPUT]
+Copies INPUT to OUTPUT.
+
+Arguments:
+  INPUT              the file to read
+  OUTPUT             where to write (default: -)
+
+Options:
+  -v, --verbose      say what is being done
+  -n, --count=COUNT  (default: 10)
+  -h, --help         display this help and exit
+      --version      output version information and exit
+```
+
 `core.h` has small PHP-style helpers: `file_get_contents()`, `file_put_contents()`,
 `basename()`, `getenv()` and `explode()`. `sc::getenv()` returns the fallback when a
 variable is unset or empty. `sc::explode()` splits on a separator (default `;`),
@@ -257,6 +305,7 @@ sc-core has a closer look at each area too, installed alongside it:
 | `sc-core-text` | UTF-8 measuring, slicing and repair, base64, `explode`, `getenv`, files |
 | `sc-core-numbers` | `sc::percent`, `sc::color`, `sc::matrix`, dual numbers for derivatives |
 | `sc-core-network` | `ip_address`, `sc::ip_endpoint` and `sc::ip_endpoints` |
+| `sc-core-params` | `sc::params`: reading a command line, the values, its mistakes and `--help` |
 
 Its source is `examples/sc-core-demo.cpp`; the code below is copied from it at
 configure time, so it always matches code that compiles:

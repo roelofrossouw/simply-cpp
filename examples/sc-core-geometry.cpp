@@ -46,7 +46,7 @@ int main() {
     const sc::rotated_rect tilted{{50, 50}, {40, 20}, 30}; // centre, size, angle in degrees
     SC_SHOW(tilted);
     SC_SHOW(static_cast<sc::rect>(tilted)); // its upright bounding box
-    const sc::polygon corners = tilted;    // its corners, rounded to whole pixels
+    const sc::polygon corners = tilted;    // its corners (sc::polygon_i rounds them to whole pixels)
     SC_SHOW(corners);
     SC_SHOW(corners.is_rect());
     SC_SHOW(corners.expanded(0.5)); // half as big again, both ways

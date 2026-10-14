@@ -52,7 +52,9 @@ namespace sc {
             };
         }
 
-        [[nodiscard]] operator polygon() const;
+        /// Its corners; rounded for polygon_i, throwing std::overflow_error when one doesn't fit an int.
+        template<Numeric U>
+        [[nodiscard]] operator polygon_<U>() const;
 
         bool operator==(const rotated_rect_ &) const = default;
 
@@ -70,7 +72,8 @@ namespace sc {
     using rotated_rect_i = rotated_rect_<int>;
 
     template<Numeric T>
-    rotated_rect_<T>::operator polygon() const {
+    template<Numeric U>
+    rotated_rect_<T>::operator polygon_<U>() const {
         const double radians = static_cast<double>(angle_) * std::acos(-1.0) / 180.0;
         const double cosine = std::cos(radians);
         const double sine = std::sin(radians);
@@ -82,13 +85,13 @@ namespace sc {
             point{half_width, half_height},
             point{-half_width, half_height}
         };
-        std::vector<point_i> points;
+        std::vector<point_<U> > points;
         points.reserve(local_points.size());
         for (const auto &local: local_points) {
             const double x = center_.x() + local.x() * cosine - local.y() * sine;
             const double y = center_.y() + local.x() * sine + local.y() * cosine;
-            points.emplace_back(detail::polygon_coordinate(x), detail::polygon_coordinate(y));
+            points.emplace_back(detail::coordinate<U>(x), detail::coordinate<U>(y));
         }
-        return polygon{std::move(points)};
+        return polygon_<U>{std::move(points)};
     }
 } // namespace sc

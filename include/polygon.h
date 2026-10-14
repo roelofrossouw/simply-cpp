@@ -17,15 +17,6 @@ namespace sc {
     template<Numeric T>
     class rotated_rect_;
 
-    namespace detail {
-        /// A coordinate as type T: rounded (and range checked) for an int, as is otherwise.
-        template<Numeric T>
-        T coordinate(const double value) {
-            if constexpr (std::integral<T>) return static_cast<T>(polygon_coordinate(value));
-            else return static_cast<T>(value);
-        }
-    }
-
     /// A list of corner points: polygon (double) or polygon_i (whole pixels), like point and rect.
     /// An int polygon converts to a double one implicitly; the other way rounds, so it's explicit.
     template<Numeric T>

@@ -189,5 +189,13 @@ namespace sc {
                 throw std::overflow_error{"Polygon coordinate exceeds integer range"};
             return static_cast<int>(std::lround(value));
         }
+
+        /// A coordinate as type T: rounded (and range checked) for an int, as is otherwise. What
+        /// converting a shape between its double and int flavours does to each number.
+        template<Numeric T>
+        T coordinate(const double value) {
+            if constexpr (std::integral<T>) return static_cast<T>(polygon_coordinate(value));
+            else return static_cast<T>(value);
+        }
     }
 } // namespace sc

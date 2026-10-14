@@ -31,9 +31,7 @@ namespace sc {
         template<typename T>
         void draw(const rect_<T> &shape, const color &stroke = color::Black, const color &fill = color::Transparent,
                   const double width = 1, const double radius = 0) {
-            draw_rect(rect{static_cast<double>(shape.left()), static_cast<double>(shape.top()),
-                           static_cast<double>(shape.width()), static_cast<double>(shape.height())},
-                      stroke, fill, width, radius);
+            draw_rect(rect(shape), stroke, fill, width, radius);
         }
 
         /// A rectangle turned angle degrees about its centre, clockwise (y points down).
@@ -54,8 +52,7 @@ namespace sc {
         template<Numeric T>
         void draw(const circle_<T> &shape, const color &stroke = color::Black, const color &fill = color::Transparent,
                   const double width = 1) {
-            draw_circle(circle{point{static_cast<double>(shape.center().x()), static_cast<double>(shape.center().y())},
-                               static_cast<double>(shape.radius())}, stroke, fill, width);
+            draw_circle(circle(shape), stroke, fill, width);
         }
 
         /// A line of text, its baseline starting at sample.position, in colour.

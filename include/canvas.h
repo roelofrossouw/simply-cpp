@@ -24,31 +24,39 @@ namespace sc {
     public:
         virtual ~canvas() = default;
 
+        // Each shape in either flavour (rect or rect_i, circle or circle_i, ...): drawn in doubles.
+
         /// A rectangle, its corners rounded with radius when that's above 0 (at most half the
         /// shorter side).
-        void draw(const rect &shape, const color &stroke = color::Black, const color &fill = color::Transparent,
-                  double width = 1, double radius = 0);
-
-        void draw(const rect_i &shape, const color &stroke = color::Black, const color &fill = color::Transparent,
-                  double width = 1, double radius = 0);
+        template<typename T>
+        void draw(const rect_<T> &shape, const color &stroke = color::Black, const color &fill = color::Transparent,
+                  const double width = 1, const double radius = 0) {
+            draw_rect(rect{static_cast<double>(shape.left()), static_cast<double>(shape.top()),
+                           static_cast<double>(shape.width()), static_cast<double>(shape.height())},
+                      stroke, fill, width, radius);
+        }
 
         /// A rectangle turned angle degrees about its centre, clockwise (y points down).
-        void draw(const rotated_rect &shape, const color &stroke = color::Black, const color &fill = color::Transparent,
-                  double width = 1);
+        template<Numeric T>
+        void draw(const rotated_rect_<T> &shape, const color &stroke = color::Black,
+                  const color &fill = color::Transparent, const double width = 1) {
+            draw_polygon(static_cast<polygon>(shape), stroke, fill, width);
+        }
 
         /// A closed polygon through the points; fewer than two draw nothing.
-        void draw(const polygon &shape, const color &stroke = color::Black, const color &fill = color::Transparent,
-                  double width = 1);
-
-        void draw(const polygon_i &shape, const color &stroke = color::Black, const color &fill = color::Transparent,
-                  double width = 1);
+        template<Numeric T>
+        void draw(const polygon_<T> &shape, const color &stroke = color::Black, const color &fill = color::Transparent,
+                  const double width = 1) {
+            draw_polygon(polygon(shape), stroke, fill, width);
+        }
 
         /// A circle; a radius of 0 draws nothing.
-        void draw(const circle &shape, const color &stroke = color::Black, const color &fill = color::Transparent,
-                  double width = 1);
-
-        void draw(const circle_i &shape, const color &stroke = color::Black, const color &fill = color::Transparent,
-                  double width = 1);
+        template<Numeric T>
+        void draw(const circle_<T> &shape, const color &stroke = color::Black, const color &fill = color::Transparent,
+                  const double width = 1) {
+            draw_circle(circle{point{static_cast<double>(shape.center().x()), static_cast<double>(shape.center().y())},
+                               static_cast<double>(shape.radius())}, stroke, fill, width);
+        }
 
         /// A line of text, its baseline starting at sample.position, in colour.
         void draw(const text &sample, const color &colour = color::Black);
@@ -62,6 +70,13 @@ namespace sc {
 
         /// A straight line.
         void draw_line(const point &from, const point &to, const color &colour = color::Black, double width = 1);
+
+    private:
+        void draw_rect(const rect &shape, const color &stroke, const color &fill, double width, double radius);
+
+        void draw_polygon(const polygon &shape, const color &stroke, const color &fill, double width);
+
+        void draw_circle(const circle &shape, const color &stroke, const color &fill, double width);
 
     protected:
         // The primitives. draw() has already left out a transparent stroke or fill (passing it as

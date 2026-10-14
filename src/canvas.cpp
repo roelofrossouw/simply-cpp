@@ -19,44 +19,27 @@ namespace sc {
         }
     }
 
-    void canvas::draw(const rect &shape, const color &stroke, const color &fill, const double width, const double radius) {
+    void canvas::draw_rect(const rect &shape, const color &stroke, const color &fill, const double width, const double radius) {
         if (!visible(stroke, fill, width)) return;
         const double limit = std::min(shape.width(), shape.height()) / 2;
         if (radius > 0 && limit > 0) {
             const auto [line, line_width] = outline(stroke, width);
             paint_rounded_rect(shape, std::min(radius, limit), line, fill, line_width);
         } else {
-            draw(static_cast<polygon>(shape), stroke, fill, width);
+            draw_polygon(static_cast<polygon>(shape), stroke, fill, width);
         }
     }
 
-    void canvas::draw(const rect_i &shape, const color &stroke, const color &fill, const double width, const double radius) {
-        draw(rect{shape.left(), shape.top(), shape.width(), shape.height()}, stroke, fill, width, radius);
-    }
-
-    void canvas::draw(const rotated_rect &shape, const color &stroke, const color &fill, const double width) {
-        draw(static_cast<polygon>(shape), stroke, fill, width);
-    }
-
-    void canvas::draw(const polygon &shape, const color &stroke, const color &fill, const double width) {
+    void canvas::draw_polygon(const polygon &shape, const color &stroke, const color &fill, const double width) {
         if (shape.size() < 2 || !visible(stroke, fill, width)) return;
         const auto [line, line_width] = outline(stroke, width);
         paint_polygon(shape, line, fill, line_width);
     }
 
-    void canvas::draw(const polygon_i &shape, const color &stroke, const color &fill, const double width) {
-        draw(polygon{shape}, stroke, fill, width);
-    }
-
-    void canvas::draw(const circle &shape, const color &stroke, const color &fill, const double width) {
+    void canvas::draw_circle(const circle &shape, const color &stroke, const color &fill, const double width) {
         if (shape.radius() <= 0 || !visible(stroke, fill, width)) return;
         const auto [line, line_width] = outline(stroke, width);
         paint_circle(shape, line, fill, line_width);
-    }
-
-    void canvas::draw(const circle_i &shape, const color &stroke, const color &fill, const double width) {
-        draw(circle{point{static_cast<double>(shape.center().x()), static_cast<double>(shape.center().y())},
-                    static_cast<double>(shape.radius())}, stroke, fill, width);
     }
 
     void canvas::draw(const text &sample, const color &colour) {

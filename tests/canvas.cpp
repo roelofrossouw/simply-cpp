@@ -59,6 +59,10 @@ int main() {
         canvas.draw(sc::rotated_rect{{0, 0}, {2, 2}, 45});
         CHECK_NEAR(canvas.last_polygon[0].y(), -std::sqrt(2.0), 1e-12); // exact corners
 
+        canvas.draw(sc::rotated_rect_i{{10, 10}, {4, 2}, 90}); // every flavour of each shape
+        CHECK_EQ(canvas.calls.back(), std::string{"polygon 4"});
+        CHECK_NEAR(canvas.last_polygon[0].x(), 11.0, 1e-12);
+
         canvas.draw(sc::polygon_i{{0, 0}, {5, 0}, {5, 5}});
         CHECK_EQ(canvas.calls.back(), std::string{"polygon 3"});
 

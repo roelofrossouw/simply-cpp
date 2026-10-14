@@ -8,7 +8,8 @@
 #include <vector>
 
 namespace sc {
-    class polygon;
+    template<Numeric T>
+    class polygon_;
 
     template<Numeric T>
     class rotated_rect_;
@@ -174,7 +175,10 @@ namespace sc {
         point_<T> left_top() const { return {left(), top()}; }
         point_<T> right_bottom() const { return {right(), bottom()}; }
 
-        [[nodiscard]] operator polygon() const;
+        /// Its corners (left-top, right-top, right-bottom, left-bottom); rounded for polygon_i,
+        /// throwing std::overflow_error when one doesn't fit an int.
+        template<Numeric U>
+        [[nodiscard]] operator polygon_<U>() const;
 
         [[nodiscard]] operator rotated_rect_<T>() const;
 
@@ -200,3 +204,6 @@ namespace sc {
     using rect = rect_<double>;
     using rect_i = rect_<int>;
 } // namespace sc
+
+// The polygon conversion is defined there, where polygon_ is complete.
+#include "polygon.h"

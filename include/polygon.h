@@ -1,5 +1,6 @@
 #pragma once
 #include "point.h"
+#include "rect.h"
 #include "size.h"
 
 #include <algorithm>
@@ -13,29 +14,47 @@
 #include <vector>
 
 namespace sc {
-    template<typename T>
-    class rect_;
-
     template<Numeric T>
     class rotated_rect_;
 
-    class polygon {
+    namespace detail {
+        /// A coordinate as type T: rounded (and range checked) for an int, as is otherwise.
+        template<Numeric T>
+        T coordinate(const double value) {
+            if constexpr (std::integral<T>) return static_cast<T>(polygon_coordinate(value));
+            else return static_cast<T>(value);
+        }
+    }
+
+    /// A list of corner points: polygon (double) or polygon_i (whole pixels), like point and rect.
+    /// An int polygon converts to a double one implicitly; the other way rounds, so it's explicit.
+    template<Numeric T>
+    class polygon_ {
     public:
-        using iterator = std::vector<point_i>::iterator;
-        using const_iterator = std::vector<point_i>::const_iterator;
+        using point_type = point_<T>;
+        using iterator = typename std::vector<point_type>::iterator;
+        using const_iterator = typename std::vector<point_type>::const_iterator;
 
-        polygon() = default;
+        polygon_() = default;
 
-        polygon(std::initializer_list<point_i> points) : points_(points) {
+        polygon_(std::initializer_list<point_type> points) : points_(points) {
         }
 
-        explicit polygon(std::vector<point_i> points) : points_(std::move(points)) {
+        explicit polygon_(std::vector<point_type> points) : points_(std::move(points)) {
+        }
+
+        template<Numeric U> requires (!std::same_as<T, U>)
+        explicit(std::integral<T> && std::floating_point<U>) polygon_(const polygon_<U> &other) {
+            points_.reserve(other.size());
+            for (const auto &point: other)
+                points_.emplace_back(detail::coordinate<T>(static_cast<double>(point.x())),
+                                     detail::coordinate<T>(static_cast<double>(point.y())));
         }
 
         [[nodiscard]] size_t size() const noexcept { return points_.size(); }
         [[nodiscard]] bool empty() const noexcept { return points_.empty(); }
-        [[nodiscard]] point_i &operator[](const size_t index) { return points_[index]; }
-        [[nodiscard]] const point_i &operator[](const size_t index) const { return points_[index]; }
+        [[nodiscard]] point_type &operator[](const size_t index) { return points_[index]; }
+        [[nodiscard]] const point_type &operator[](const size_t index) const { return points_[index]; }
         [[nodiscard]] iterator begin() noexcept { return points_.begin(); }
         [[nodiscard]] iterator end() noexcept { return points_.end(); }
         [[nodiscard]] const_iterator begin() const noexcept { return points_.begin(); }
@@ -71,13 +90,13 @@ namespace sc {
         }
 
         /// Returns the axis-aligned bounding box of this polygon's points.
-        template<Numeric T>
-        [[nodiscard]] operator rect_<T>() const {
+        template<typename U>
+        [[nodiscard]] operator rect_<U>() const {
             if (points_.empty()) return {};
-            int left = points_.front().x();
-            int right = left;
-            int top = points_.front().y();
-            int bottom = top;
+            T left = points_.front().x();
+            T right = left;
+            T top = points_.front().y();
+            T bottom = top;
             for (const auto &point: points_) {
                 left = std::min(left, point.x());
                 right = std::max(right, point.x());
@@ -85,16 +104,16 @@ namespace sc {
                 bottom = std::max(bottom, point.y());
             }
             return {
-                static_cast<T>(left),
-                static_cast<T>(top),
-                static_cast<T>(right - left),
-                static_cast<T>(bottom - top)
+                static_cast<U>(left),
+                static_cast<U>(top),
+                static_cast<U>(right - left),
+                static_cast<U>(bottom - top)
             };
         }
 
         /// Recovers a rotated rect from its four corners - throws if they aren't one.
-        template<Numeric T>
-        [[nodiscard]] operator rotated_rect_<T>() const {
+        template<Numeric U>
+        [[nodiscard]] operator rotated_rect_<U>() const {
             if (points_.size() != 4)
                 throw std::invalid_argument{"Rotated rectangle conversion requires four polygon points"};
 
@@ -132,10 +151,10 @@ namespace sc {
                                      points_[2].x() + points_[3].x()) / 4;
             const double center_y = (static_cast<double>(points_[0].y()) + points_[1].y() +
                                      points_[2].y() + points_[3].y()) / 4;
-            return rotated_rect_<T>{
-                point_<T>{static_cast<T>(center_x), static_cast<T>(center_y)},
-                size_<T>{static_cast<T>(width), static_cast<T>(height)},
-                static_cast<T>(angle)
+            return rotated_rect_<U>{
+                point_<U>{static_cast<U>(center_x), static_cast<U>(center_y)},
+                size_<U>{static_cast<U>(width), static_cast<U>(height)},
+                static_cast<U>(angle)
             };
         }
 
@@ -149,22 +168,22 @@ namespace sc {
             return std::min(dimensions.edge_01, dimensions.edge_12);
         }
 
-        /// Expands the longer dimension by a fraction (<= 1) or pixels per side (> 1).
-        [[nodiscard]] polygon expand_w(const double amount) const {
+        /// Expands the longer dimension by a fraction (<= 1) or points per side (> 1).
+        [[nodiscard]] polygon_ expand_w(const double amount) const {
             return expand_dimensions(amount, 0);
         }
 
-        /// Expands the shorter dimension by a fraction (<= 1) or pixels per side (> 1).
-        [[nodiscard]] polygon expand_h(const double amount) const {
+        /// Expands the shorter dimension by a fraction (<= 1) or points per side (> 1).
+        [[nodiscard]] polygon_ expand_h(const double amount) const {
             return expand_dimensions(0, amount);
         }
 
-        /// Expands both dimensions by a fraction (<= 1) or pixels per side (> 1).
-        [[nodiscard]] polygon expanded(const double amount) const {
+        /// Expands both dimensions by a fraction (<= 1) or points per side (> 1).
+        [[nodiscard]] polygon_ expanded(const double amount) const {
             return expand_dimensions(amount, amount);
         }
 
-        bool operator==(const polygon &) const = default;
+        bool operator==(const polygon_ &) const = default;
 
     private:
         struct rectangle_geometry {
@@ -217,7 +236,7 @@ namespace sc {
             };
         }
 
-        [[nodiscard]] polygon expand_dimensions(const double width_amount, const double height_amount) const {
+        [[nodiscard]] polygon_ expand_dimensions(const double width_amount, const double height_amount) const {
             if (!std::isfinite(width_amount) || width_amount < 0 ||
                 !std::isfinite(height_amount) || height_amount < 0)
                 throw std::invalid_argument{"Polygon expansion must be finite and non-negative"};
@@ -230,7 +249,7 @@ namespace sc {
             const double width_scale = scale(width_amount, width_edge);
             const double height_scale = scale(height_amount, height_edge);
 
-            polygon result;
+            polygon_ result;
             for (const auto &point: points_) {
                 const double offset_x = point.x() - geometry.center_x;
                 const double offset_y = point.y() - geometry.center_y;
@@ -250,13 +269,22 @@ namespace sc {
         }
 
         void add_checked(const double x, const double y) {
-            if (!std::isfinite(x) || !std::isfinite(y) ||
-                x < std::numeric_limits<int>::min() || x > std::numeric_limits<int>::max() ||
-                y < std::numeric_limits<int>::min() || y > std::numeric_limits<int>::max())
-                throw std::overflow_error{"Expanded polygon coordinates exceed integer range"};
-            points_.emplace_back(static_cast<int>(std::lround(x)), static_cast<int>(std::lround(y)));
+            points_.emplace_back(detail::coordinate<T>(x), detail::coordinate<T>(y));
         }
 
-        std::vector<point_i> points_;
+        std::vector<point_type> points_;
     };
+
+    using polygon = polygon_<double>;
+    using polygon_i = polygon_<int>;
+
+    // rect.h declares this; it's here, where polygon_ is complete.
+    template<typename T>
+    template<Numeric U>
+    rect_<T>::operator polygon_<U>() const {
+        const auto corner = [](const T x, const T y) {
+            return point_<U>{detail::coordinate<U>(static_cast<double>(x)), detail::coordinate<U>(static_cast<double>(y))};
+        };
+        return polygon_<U>{corner(left(), top()), corner(right(), top()), corner(right(), bottom()), corner(left(), bottom())};
+    }
 } // namespace sc

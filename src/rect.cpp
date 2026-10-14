@@ -291,17 +291,6 @@ namespace sc
     }
 
     template <typename T>
-    rect_<T>::operator polygon() const
-    {
-        return polygon{
-            point_i{detail::polygon_coordinate(left()), detail::polygon_coordinate(top())},
-            point_i{detail::polygon_coordinate(right()), detail::polygon_coordinate(top())},
-            point_i{detail::polygon_coordinate(right()), detail::polygon_coordinate(bottom())},
-            point_i{detail::polygon_coordinate(left()), detail::polygon_coordinate(bottom())}
-        };
-    }
-
-    template <typename T>
     rect_<T>::operator rotated_rect_<T>() const
     {
         return rotated_rect_<T>{center(), size(), T{0}};

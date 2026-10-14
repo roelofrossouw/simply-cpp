@@ -31,7 +31,7 @@ namespace {
 int main() {
     SECTION("Polygon points");
     {
-        const sc::polygon polygon{{1, 2}, {3, 4}, {5, 6}, {7, 8}};
+        const sc::polygon_i polygon{{1, 2}, {3, 4}, {5, 6}, {7, 8}};
         CHECK_EQ(polygon.size(), size_t{4});
         CHECK_EQ(polygon[0], (sc::point_i{1, 2}));
         CHECK_EQ(polygon[3], (sc::point_i{7, 8}));
@@ -41,11 +41,11 @@ int main() {
 
     SECTION("Expanding rectangular polygons");
     {
-        const sc::polygon rectangle{{10, 10}, {30, 10}, {30, 30}, {10, 30}};
+        const sc::polygon_i rectangle{{10, 10}, {30, 10}, {30, 30}, {10, 30}};
         CHECK(rectangle.is_rect());
         const auto expanded = rectangle.expanded(0.1);
-        CHECK_EQ(expanded, (sc::polygon{{9, 9}, {31, 9}, {31, 31}, {9, 31}}));
-        const sc::polygon wide_rectangle{{10, 10}, {40, 10}, {40, 30}, {10, 30}};
+        CHECK_EQ(expanded, (sc::polygon_i{{9, 9}, {31, 9}, {31, 31}, {9, 31}}));
+        const sc::polygon_i wide_rectangle{{10, 10}, {40, 10}, {40, 30}, {10, 30}};
         CHECK_NEAR(wide_rectangle.width(), 30.0, 1e-6);
         CHECK_NEAR(wide_rectangle.height(), 20.0, 1e-6);
         const auto wider = wide_rectangle.expand_w(0.1);
@@ -55,7 +55,7 @@ int main() {
         CHECK_NEAR(taller.width(), 30.0, 1.0);
         CHECK_NEAR(taller.height(), 26.0, 1.0);
 
-        const sc::polygon rotated_rectangle{{0, 0}, {12, 16}, {8, 19}, {-4, 3}};
+        const sc::polygon_i rotated_rectangle{{0, 0}, {12, 16}, {8, 19}, {-4, 3}};
         CHECK(rotated_rectangle.is_rect());
         CHECK_NEAR(rotated_rectangle.width(), 20.0, 1e-6);
         CHECK_NEAR(rotated_rectangle.height(), 5.0, 1e-6);
@@ -66,11 +66,11 @@ int main() {
         CHECK_NEAR(rotated_taller.width(), 20.0, 1.0);
         CHECK_NEAR(rotated_taller.height(), 15.0, 1.0);
 
-        const sc::polygon triangle{{0, 0}, {1, 1}, {2, 2}};
+        const sc::polygon_i triangle{{0, 0}, {1, 1}, {2, 2}};
         CHECK(!triangle.is_rect());
-        const sc::polygon unequal_opposite_sides{{0, 0}, {100, 0}, {95, 20}, {0, 20}};
+        const sc::polygon_i unequal_opposite_sides{{0, 0}, {100, 0}, {95, 20}, {0, 20}};
         CHECK(!unequal_opposite_sides.is_rect());
-        const sc::polygon oblique{{0, 0}, {10, 0}, {12, 10}, {2, 10}};
+        const sc::polygon_i oblique{{0, 0}, {10, 0}, {12, 10}, {2, 10}};
         CHECK(!oblique.is_rect());
         CHECK_THROWS_AS(triangle.expanded(0.1), invalid_argument);
         CHECK_THROWS_AS(rectangle.expanded(-0.1), invalid_argument);
@@ -120,6 +120,32 @@ int main() {
         CHECK_NEAR(restored.center().y(), rotated.center().y(), 1.0);
         CHECK_NEAR(restored.width(), rotated.width(), 1.0);
         CHECK_NEAR(restored.height(), rotated.height(), 1.0);
+    }
+
+    SECTION("Whole-number and double polygons");
+    {
+        const sc::polygon exact{{0.5, 0.25}, {10.75, 0.25}, {10.75, 5.5}};
+        CHECK_EQ(exact[1], (sc::point{10.75, 0.25}));
+        const sc::polygon_i pixels{exact}; // rounds, so explicit
+        CHECK_EQ(pixels, (sc::polygon_i{{1, 0}, {11, 0}, {11, 6}}));
+        const sc::polygon widened = pixels; // whole numbers fit a double: implicit
+        CHECK_EQ(widened[2], (sc::point{11, 6}));
+        const sc::polygon huge{{1e300, 0}};
+        CHECK_THROWS_AS(sc::polygon_i(huge), overflow_error);
+
+        const sc::rotated_rect tilted{{0, 0}, {2, 2}, 45};
+        const sc::polygon corners = tilted; // exact, not rounded
+        CHECK_NEAR(corners[0].x(), 0.0, 1e-12);
+        CHECK_NEAR(corners[0].y(), -sqrt(2), 1e-12);
+        const sc::polygon_i rounded = static_cast<sc::polygon_i>(tilted);
+        CHECK_EQ(rounded[0], (sc::point_i{0, -1}));
+        CHECK_EQ(static_cast<sc::polygon_i>(sc::rect{0.4, 0.6, 2, 2}), (sc::polygon_i{{0, 1}, {2, 1}, {2, 3}, {0, 3}}));
+
+        const sc::polygon expanded = sc::polygon{{0, 0}, {3, 0}, {3, 1}, {0, 1}}.expanded(0.5);
+        CHECK_NEAR(expanded[0].x(), -0.75, 1e-12); // not rounded to whole points
+        CHECK_NEAR(expanded[0].y(), -0.25, 1e-12);
+        const sc::rect_i box = static_cast<sc::rect_i>(sc::polygon_i{{1, 2}, {5, 9}});
+        CHECK_EQ(box.width(), 4);
     }
 
     SECTION("Construction and accessors");

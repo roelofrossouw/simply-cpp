@@ -37,6 +37,13 @@ namespace {
         void paint_text(const sc::text &sample, const sc::color &) override {
             calls.push_back("text " + sample.content + " " + sample.font.family);
         }
+
+        // Half an em per character, x-height half the size, capitals 0.7 of it.
+        double measure_width(const sc::text &sample) override { return sample.content.size() * sample.font.size / 2; }
+
+        double measure_x_height(const sc::font &font) override { return font.size / 2; }
+
+        double measure_cap_height(const sc::font &font) override { return font.size * 0.7; }
     };
 }
 
@@ -114,6 +121,16 @@ int main() {
         CHECK(canvas.last_stroke == sc::color::Transparent);
         CHECK_EQ(canvas.last_width, 0.0);
         CHECK(canvas.last_fill == sc::color::Red);
+    }
+
+    SECTION("Measuring text");
+    {
+        recording_canvas canvas;
+        CHECK_EQ(canvas.text_width(sc::text{"abcd", {5, 5}, {"serif", 10}}), 20.0);
+        CHECK_EQ(canvas.text_width(sc::text{}), 0.0);                           // nothing to measure
+        CHECK_EQ(canvas.text_width(sc::text{"abcd", {}, {"serif", 0}}), 0.0);
+        CHECK_EQ(canvas.text_x_height(), 6.0);                                  // the default font, 12
+        CHECK_NEAR(canvas.text_cap_height({"serif", 20}), 14.0, 1e-12);
     }
 
     SECTION("Fonts");

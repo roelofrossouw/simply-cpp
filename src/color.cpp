@@ -7,6 +7,19 @@
 #include <unordered_map>
 
 namespace sc {
+    namespace {
+        // The CSS colour names. A function-local static, not a global: sc-core is linked statically
+        // into several shared libraries and the programs using them, and a global with a destructor
+        // (as the old color::NamedColors was) is then merged into one object but destroyed by every
+        // copy: "double free" at exit.
+        const std::unordered_map<std::string, std::tuple<int, int, int> > &named_colors() {
+            static const std::unordered_map<std::string, std::tuple<int, int, int> > names = {
+#include "named_colors.inc" // generated from the CSS Color 4 spec by cmake/NamedColors.cmake
+            };
+            return names;
+        }
+    }
+
     color::color(double red, double green, double blue, double alpha) : r(red), g(green), b(blue), a(alpha) {
         k = 1 - std::max(r, std::max(g, b));
         if (k == 1) {
@@ -110,8 +123,8 @@ namespace sc {
         }
 
 
-        auto it = NamedColors.find(str);
-        if (it != NamedColors.end()) {
+        auto it = named_colors().find(str);
+        if (it != named_colors().end()) {
             auto [red,green,blue] = it->second;
             return from_web(red, green, blue, 1);
         }
@@ -122,8 +135,8 @@ namespace sc {
         std::transform(lstr.begin(), lstr.end(), lstr.begin(), [](unsigned char c) { return std::tolower(c); });
 
 
-        it = NamedColors.find(lstr);
-        if (it != NamedColors.end()) {
+        it = named_colors().find(lstr);
+        if (it != named_colors().end()) {
             auto [red,green,blue] = it->second;
             return from_web(red, green, blue, 1);
         }
@@ -211,7 +224,4 @@ namespace sc {
     const color color::White = color(1.0, 1.0, 1.0);
     const color color::Transparent = color(0.0, 0.0, 0.0, 0.0);
 
-    const std::unordered_map<std::string, std::tuple<int, int, int> > color::NamedColors = {
-#include "named_colors.inc" // generated from the CSS Color 4 spec by cmake/NamedColors.cmake
-    };
 } // sc

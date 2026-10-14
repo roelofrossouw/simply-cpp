@@ -72,7 +72,7 @@ add_executable(myapp main.cpp)
 target_link_libraries(myapp PRIVATE sc::sc-core)
 ```
 
-Include the aggregate header, or an individual one (`base64.h`, `timer.h`, `date.h`, `datetime.h`, `color.h`, `geometry.h`, `ip_endpoint.h`, `ip_endpoints.h`, `console.h`, `percent.h`, `rest.h`, `ollama.h`, ...; `config.h` and `params.h` only individually). Geometry stays part of sc-core, grouped under `geometry.h`; `rect.h` remains available for existing includes. The geometry API includes points, rectangles, rotated rectangles, polygons, circles, and DBSCAN clustering:
+Include the aggregate header, or an individual one (`base64.h`, `timer.h`, `date.h`, `datetime.h`, `color.h`, `geometry.h`, `ip_endpoint.h`, `ip_endpoints.h`, `console.h`, `percent.h`, `rest.h`, `ollama.h`, ...; `config.h` and `params.h` only individually). Geometry stays part of sc-core, grouped under `geometry.h`; `rect.h` remains available for existing includes. The geometry API includes points, rectangles, rotated rectangles, polygons (`polygon` with double points, `polygon_i` with whole pixels), circles, and DBSCAN clustering. `canvas.h` (in `sc.h`) adds `sc::canvas`, the drawing interface sc-image's `sc::image` and sc-pdf's `sc::pdf` share: `draw(shape, stroke, fill, width)`, `draw(sc::text{content, position, sc::font})` and `draw_line()`.
 
 ```cpp
 #include <sc.h>

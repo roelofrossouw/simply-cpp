@@ -9,7 +9,6 @@ namespace sc {
     class color {
         double c, m, y, k;
         double r, g, b, a;
-        static const std::unordered_map<std::string, std::tuple<int, int, int> > NamedColors;
 
     public:
         color() = default;

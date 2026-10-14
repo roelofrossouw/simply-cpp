@@ -21,6 +21,14 @@ namespace sc {
 
         rect_(point_<T> origin, size_<T> size);
 
+        /// From the other flavour: rect_i to rect implicitly; rect to rect_i explicitly, rounding
+        /// each of left, top, width and height (std::overflow_error when one doesn't fit an int).
+        template<typename U> requires (!std::same_as<T, U>)
+        explicit(std::integral<T> && std::floating_point<U>) rect_(const rect_<U> &other)
+            : rect_(detail::coordinate<T>(static_cast<double>(other.left())), detail::coordinate<T>(static_cast<double>(other.top())),
+                    detail::coordinate<T>(static_cast<double>(other.width())), detail::coordinate<T>(static_cast<double>(other.height()))) {
+        }
+
         static rect_ ltrb(T left, T top, T right, T bottom) { return {left, top, right - left, bottom - top}; }
 
         template<typename U1, typename U2, typename U3, typename U4>

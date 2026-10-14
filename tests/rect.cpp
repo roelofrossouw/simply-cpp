@@ -144,6 +144,13 @@ int main() {
         const sc::polygon expanded = sc::polygon{{0, 0}, {3, 0}, {3, 1}, {0, 1}}.expanded(0.5);
         CHECK_NEAR(expanded[0].x(), -0.75, 1e-12); // not rounded to whole points
         CHECK_NEAR(expanded[0].y(), -0.25, 1e-12);
+        const sc::rect widened_rect = sc::rect_i{1, 2, 3, 4}; // int to double: implicit
+        CHECK_EQ(widened_rect.width(), 3.0);
+        const sc::rect_i rounded_rect(sc::rect{0.4, 1.6, 2.5, 3.49}); // rounded, so explicit
+        check_edges(rounded_rect, 0, 2, 3, 3);
+        const sc::circle widened_circle = sc::circle_i{{1, 2}, 3};
+        CHECK_EQ(widened_circle.radius(), 3.0);
+        CHECK_EQ(sc::circle_i(sc::circle{{1.6, 2.4}, 2.5}), (sc::circle_i{{2, 2}, 3}));
         const sc::rect_i box = static_cast<sc::rect_i>(sc::polygon_i{{1, 2}, {5, 9}});
         CHECK_EQ(box.width(), 4);
     }

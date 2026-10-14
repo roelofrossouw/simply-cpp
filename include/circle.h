@@ -13,6 +13,15 @@ namespace sc {
             validate_radius(radius_);
         }
 
+        /// From the other flavour: circle_i to circle implicitly; circle to circle_i explicitly,
+        /// rounding the centre and radius (std::overflow_error when one doesn't fit an int).
+        template<Numeric U> requires (!std::same_as<T, U>)
+        explicit(std::integral<T> && std::floating_point<U>) circle_(const circle_<U> &other)
+            : circle_({detail::coordinate<T>(static_cast<double>(other.center().x())),
+                       detail::coordinate<T>(static_cast<double>(other.center().y()))},
+                      detail::coordinate<T>(static_cast<double>(other.radius()))) {
+        }
+
         [[nodiscard]] point_<T> center() const { return center_; }
         point_<T> center(const point_<T> &value) { return center_ = value; }
         [[nodiscard]] T radius() const { return radius_; }

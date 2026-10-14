@@ -40,5 +40,16 @@ int main() {
         CHECK_THROWS_AS((sc::circle{{}, std::numeric_limits<double>::infinity()}), std::invalid_argument);
     }
 
+    SECTION("Lines");
+    {
+        const sc::line diagonal{{0, 0}, {3, 4}};
+        CHECK_EQ(diagonal.length(), 5.0);
+        CHECK_EQ(diagonal.to(), (sc::point{3, 4}));
+        const sc::line widened = sc::line_i{{1, 2}, {3, 4}}; // int to double: implicit
+        CHECK_EQ(widened.from(), (sc::point{1, 2}));
+        const sc::line_i rounded(sc::line{{0.4, 1.6}, {2.5, -0.5}}); // rounded, so explicit
+        CHECK_EQ(rounded, (sc::line_i{{0, 2}, {3, -1}}));
+    }
+
     TEST_SUMMARY();
 }

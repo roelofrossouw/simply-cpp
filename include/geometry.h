@@ -6,4 +6,5 @@
 #include "rotated_rect.h"
 #include "polygon.h"
 #include "circle.h"
+#include "line.h"
 #include "dbscan.h"

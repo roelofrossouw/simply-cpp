@@ -47,6 +47,19 @@ namespace sc {
         paint_text(sample, colour);
     }
 
+    double canvas::text_width(const text &sample) {
+        if (sample.content.empty() || sample.font.size <= 0) return 0;
+        return measure_width(sample);
+    }
+
+    double canvas::text_x_height(const font &font) {
+        return font.size > 0 ? measure_x_height(font) : 0;
+    }
+
+    double canvas::text_cap_height(const font &font) {
+        return font.size > 0 ? measure_cap_height(font) : 0;
+    }
+
     void canvas::draw_segment(const line &shape, const color &stroke, const double width) {
         if (stroke.alpha() <= 0 || width <= 0) return;
         paint_line(shape.from(), shape.to(), stroke, width);

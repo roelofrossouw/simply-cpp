@@ -79,6 +79,15 @@ namespace sc {
             for (const auto &shape: shapes) draw(shape, stroke, width);
         }
 
+        /// How far sample advances in its own font, in the canvas's units: the width it takes when
+        /// drawn. 0 for empty text or a size of 0.
+        [[nodiscard]] double text_width(const text &sample);
+
+        /// The height of a lowercase x and of a capital H in font, in the canvas's units.
+        [[nodiscard]] double text_x_height(const font &font = {});
+
+        [[nodiscard]] double text_cap_height(const font &font = {});
+
     private:
         void draw_rect(const rect &shape, const color &stroke, const color &fill, double width, double radius);
 
@@ -98,6 +107,13 @@ namespace sc {
         virtual void paint_line(const point &from, const point &to, const color &colour, double width) = 0;
 
         virtual void paint_text(const text &sample, const color &colour) = 0;
+
+        // Text measurements: content isn't empty and the size is above 0.
+        virtual double measure_width(const text &sample) = 0;
+
+        virtual double measure_x_height(const font &font) = 0;
+
+        virtual double measure_cap_height(const font &font) = 0;
 
         /// radius is above 0 and at most half the shorter side. By default the corners are arcs of
         /// short straight segments; a canvas with curves can do better.

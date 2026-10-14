@@ -72,8 +72,12 @@ int main() {
 
         canvas.draw(sc::text{"Hello", {10, 20}, {"serif", 14}});
         CHECK_EQ(canvas.calls.back(), std::string{"text Hello serif"});
-        canvas.draw_line({0, 0}, {10, 10}, sc::color::Black, 3);
+        canvas.draw(sc::line{{0, 0}, {10, 10}}, sc::color::Black, 3);
         CHECK_EQ(canvas.calls.back(), std::string{"line 3"});
+        canvas.draw(sc::line_i{{0, 0}, {10, 10}});
+        CHECK_EQ(canvas.calls.back(), std::string{"line 1"});
+        canvas.draw(std::vector<sc::line>{{{0, 0}, {1, 1}}, {{1, 1}, {2, 0}}}, sc::color::Red, 2);
+        CHECK_EQ(canvas.calls.back(), std::string{"line 2"});
 
         canvas.draw(std::vector<sc::circle>{{{1, 1}, 1}, {{2, 2}, 2}}, sc::color::Green);
         CHECK_EQ(canvas.calls.back(), std::string{"circle 2"});
@@ -103,7 +107,7 @@ int main() {
         canvas.draw(sc::circle{{1, 1}, 0});
         canvas.draw(sc::text{"", {0, 0}});
         canvas.draw(sc::text{"x", {0, 0}}, sc::color::Transparent);
-        canvas.draw_line({0, 0}, {1, 1}, sc::color::Black, 0);
+        canvas.draw(sc::line{{0, 0}, {1, 1}}, sc::color::Black, 0);
         CHECK(canvas.calls.empty());
 
         canvas.draw(sc::rect{0, 0, 10, 10}, sc::color::Black, sc::color::Red, 0); // fill only

@@ -2,6 +2,7 @@
 
 #include "circle.h"
 #include "color.h"
+#include "line.h"
 #include "point.h"
 #include "polygon.h"
 #include "rect.h"
@@ -17,6 +18,8 @@ namespace sc {
     /// and its inside in fill. A transparent colour (alpha 0, such as color::Transparent, the fill's
     /// default) leaves that part out. Coordinates are the canvas's own (pixels on an image, points on
     /// a PDF), from the top-left corner with y down.
+    ///
+    /// Lines have no fill: draw(line, stroke, width).
     ///
     /// A canvas implements a few primitives (polygon, circle, line, text and, if it can do better
     /// than a polygon, rounded rectangles); the draw() calls here turn everything else into those.
@@ -55,6 +58,12 @@ namespace sc {
             draw_circle(circle(shape), stroke, fill, width);
         }
 
+        /// A straight line, width wide: a line has no inside to fill.
+        template<Numeric T>
+        void draw(const line_<T> &shape, const color &stroke = color::Black, const double width = 1) {
+            draw_segment(line(shape), stroke, width);
+        }
+
         /// A line of text, its baseline starting at sample.position, in colour.
         void draw(const text &sample, const color &colour = color::Black);
 
@@ -65,8 +74,10 @@ namespace sc {
             for (const auto &shape: shapes) draw(shape, stroke, fill, width);
         }
 
-        /// A straight line.
-        void draw_line(const point &from, const point &to, const color &colour = color::Black, double width = 1);
+        template<Numeric T>
+        void draw(const std::vector<line_<T> > &shapes, const color &stroke = color::Black, const double width = 1) {
+            for (const auto &shape: shapes) draw(shape, stroke, width);
+        }
 
     private:
         void draw_rect(const rect &shape, const color &stroke, const color &fill, double width, double radius);
@@ -74,6 +85,8 @@ namespace sc {
         void draw_polygon(const polygon &shape, const color &stroke, const color &fill, double width);
 
         void draw_circle(const circle &shape, const color &stroke, const color &fill, double width);
+
+        void draw_segment(const line &shape, const color &stroke, double width);
 
     protected:
         // The primitives. draw() has already left out a transparent stroke or fill (passing it as

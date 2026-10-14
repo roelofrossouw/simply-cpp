@@ -47,9 +47,9 @@ namespace sc {
         paint_text(sample, colour);
     }
 
-    void canvas::draw_line(const point &from, const point &to, const color &colour, const double width) {
-        if (colour.alpha() <= 0 || width <= 0) return;
-        paint_line(from, to, colour, width);
+    void canvas::draw_segment(const line &shape, const color &stroke, const double width) {
+        if (stroke.alpha() <= 0 || width <= 0) return;
+        paint_line(shape.from(), shape.to(), stroke, width);
     }
 
     void canvas::paint_rounded_rect(const rect &shape, const double radius, const color &stroke, const color &fill,

@@ -19,6 +19,7 @@
 #include <timer.h>
 #include <matrix.h>
 #include <geometry.h>
+#include <canvas.h>
 #include <ollama.h>
 #include <dual.h>
 #include <ip_address.h>

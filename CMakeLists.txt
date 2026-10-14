@@ -39,6 +39,7 @@ sc_named_colors(${CMAKE_CURRENT_BINARY_DIR}/generated) # the CSS colour names, f
 add_sc_object(color INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/generated)
 add_sc_object(size)
 add_sc_object(rect)
+add_sc_object(canvas)
 add_sc_object(date)
 add_sc_object(datetime)
 add_sc_object(percent)

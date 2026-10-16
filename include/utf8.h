@@ -7,6 +7,7 @@
 #include <cstddef>
 
 namespace sc {
+    // What utf8::analyze() found, counted in code points (an invalid byte counts as one U+FFFD).
     struct TextAnalysis {
         std::size_t bytes = 0;
         std::size_t codepoints = 0;
@@ -21,6 +22,7 @@ namespace sc {
 
         bool valid_utf8 = true;
 
+        // Valid UTF-8 with no U+FFFD or private-use characters, and under 5% control characters.
         [[nodiscard]]
         bool likely_text() const {
             return valid_utf8 &&
@@ -103,6 +105,10 @@ namespace sc {
                                        std::size_t cp_start,
                                        std::size_t cp_count = npos);
 
+
+        // ---------------------------------------------------------------------
+        // Analysis
+        // ---------------------------------------------------------------------
 
         static TextAnalysis analyze(std::string_view s);
 

@@ -30,7 +30,6 @@ namespace sc {
 
         bool operator==(const pair_ &) const = default;
 
-        // + operators...
         Derived operator+=(const pair_ &r) {
             x_ += r.x_;
             y_ += r.y_;
@@ -58,7 +57,6 @@ namespace sc {
             return tmp += r;
         }
 
-        // - operators...
         Derived operator-=(const pair_ &r) {
             x_ -= r.x_;
             y_ -= r.y_;
@@ -86,7 +84,6 @@ namespace sc {
             return tmp -= r;
         }
 
-        // * operators...
         Derived operator*=(const pair_ &r) {
             x_ *= r.x_;
             y_ *= r.y_;
@@ -114,7 +111,6 @@ namespace sc {
             return tmp *= r;
         }
 
-        // / operators...
         Derived operator/=(const pair_ &r) {
             x_ /= r.x_;
             y_ /= r.y_;
@@ -158,6 +154,7 @@ namespace sc {
         }
     };
 
+    /// A position: point (double) or point_i (whole pixels). y grows downwards, as on a screen.
     template<typename T>
     class point_ : public pair_<point_<T>, T> {
     public:
@@ -181,8 +178,7 @@ namespace sc {
     using point_i = point_<int>;
 
     namespace detail {
-        /// Rounds to the nearest int, throwing if the value doesn't fit - used wherever
-        /// a double-valued shape (rect, rotated_rect) is converted to an int-pixel one.
+        /// Rounds to the nearest int; std::overflow_error when the value doesn't fit (or isn't finite).
         inline int polygon_coordinate(const double value) {
             if (!std::isfinite(value) || value < std::numeric_limits<int>::min() ||
                 value > std::numeric_limits<int>::max())
@@ -190,7 +186,7 @@ namespace sc {
             return static_cast<int>(std::lround(value));
         }
 
-        /// A coordinate as type T: rounded (and range checked) for an int, as is otherwise. What
+        /// A coordinate as type T: rounded and range checked for an int, as is otherwise. What
         /// converting a shape between its double and int flavours does to each number.
         template<Numeric T>
         T coordinate(const double value) {

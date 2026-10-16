@@ -1,14 +1,13 @@
 #pragma once
 
-
-// Include common standard libraries
+// All of sc-core but config.h and params.h, which bring in nlohmann/json, plus the common standard
+// headers.
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <filesystem>
 
-// Include common libraries
 #include <core.h>
 #include <utf8.h>
 #include <date.h>

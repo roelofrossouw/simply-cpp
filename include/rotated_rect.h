@@ -12,6 +12,8 @@ namespace sc {
     template<typename T>
     class rect_;
 
+    /// A rectangle turned about its centre: centre, size and angle in degrees (clockwise on screen,
+    /// as y grows downwards). rotated_rect (double) or rotated_rect_i (whole pixels).
     template<Numeric T>
     class rotated_rect_ {
     public:
@@ -37,7 +39,6 @@ namespace sc {
         [[nodiscard]] T angle() const { return angle_; }
         T angle(const T value) { return angle_ = value; }
 
-        /// Returns the axis-aligned bounding box of this rotated rect.
         /// The area it covers: the axis-aligned box around its corners.
         [[nodiscard]] rect_<T> bounds() const { return static_cast<rect_<T>>(*this); }
 

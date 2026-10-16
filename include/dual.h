@@ -28,23 +28,25 @@ namespace sc {
     struct is_dual<dual<T> > : std::true_type {
     };
 
+    /// A dual number, real + eps ε with ε² = 0: arithmetic on it carries a derivative along.
+    /// ~x makes x the variable (ε part 1), so f(~x) has f'(x) as its ε part; nesting goes further.
+    ///
+    ///     auto x = ~sc::dual<double>{3};
+    ///     std::string(x * x * x + x * 2);   // "33 + 29ε": f(3) and f'(3)
     template<dual_type T>
     class dual {
     public:
         T real{0};
         T eps{0};
 
-        // Constructors
         dual(T real, T eps = {0}) : real(real), eps(eps) {
         }
 
         template<numeric_type R>
         dual(R scalar) { real = scalar; }
 
-        // Operators
         dual<dual> operator~() { return {*this, 1}; }
 
-        // Math Operators
         dual operator+(const dual &rhs) const { return {real + rhs.real, eps + rhs.eps}; }
         dual operator-(const dual &rhs) const { return {real - rhs.real, eps - rhs.eps}; }
         dual operator-() const { return {-real, -eps}; }
@@ -55,7 +57,6 @@ namespace sc {
         dual &operator*=(const dual &rhs) { return *this = *this * rhs; }
         dual &operator/=(const dual &rhs) { return *this = *this / rhs; }
 
-        // Implicit numeric opertations
         template<numeric_type R>
         dual operator+(const R &rhs) const { return *this + dual(rhs); }
 
@@ -69,14 +70,13 @@ namespace sc {
         dual operator/(const R &rhs) const { return *this / dual(rhs); }
 
 
-        // Math functions
         dual cos() const { return get_cos(*this); }
         dual sin() const { return get_sin(*this); }
         dual exp() const { return get_exp(*this); }
         dual sqrt() const { return get_sqrt(*this); }
         T abs() const { return this->get_abs(); }
 
-        // Casts
+        /// The value and its ε parts, as "33 + 29ε".
         operator std::string() const { return print(*this); }
 
         template<std::floating_point R>
@@ -158,7 +158,7 @@ namespace sc {
         }
     };
 
-    // Always just give value, cast to string for full display.
+    /// The value only; std::string(d) shows the ε parts too.
     template<dual_type R>
     std::ostream &operator<<(std::ostream &os, const dual<R> &rhs) { return os << static_cast<double>(rhs); }
 
@@ -179,41 +179,6 @@ namespace sc {
 
     template<dual_type T>
     dual<T> sqrt(const dual<T> &d) { return d.sqrt(); }
-
-
-    // Not needed now...
-    //     template<std::size_t I, dual_type T>
-    //     constexpr T get(const dual<T> &d) noexcept {
-    //         if constexpr (I == 0)
-    //             return static_cast<T>(d.real);
-    //         else
-    //             return static_cast<T>(d.eps);
-    //     }
 } // namespace sc
-
-
-// (Removed) using namespace sc; -> Don't want to force other files that include this file to the namespace
-// Not needed for now, but might want it later...
-// template<sc::dual_type T>
-// struct std::tuple_size<sc::dual<T> > : std::integral_constant<std::size_t, 2> {
-// };
-//
-// template<sc::dual_type T>
-// struct std::tuple_element<0, sc::dual<T> > {
-//     using type = T;
-// };
-//
-// template<sc::dual_type T>
-// struct std::tuple_element<1, sc::dual<T> > {
-//     using type = T;
-// };
-// template<sc::dual_type T>
-// struct std::hash<sc::dual<T> > {
-//     std::size_t operator()(const sc::dual<T> &d) const noexcept {
-//         const std::size_t h1 = std::hash<T>{}(d.real);
-//         const std::size_t h2 = std::hash<T>{}(d.eps);
-//         return h1 ^ (h2 << 1);
-//     }
-// };
 
 #endif // SC_DUAL_H

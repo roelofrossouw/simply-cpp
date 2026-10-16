@@ -6,6 +6,7 @@
 #include <unordered_map>
 
 namespace sc {
+    // A colour with alpha, its channels from 0 to 1 (alpha 1 is opaque), readable as RGB or CMYK.
     class color {
         double c, m, y, k;
         double r, g, b, a;
@@ -15,16 +16,22 @@ namespace sc {
 
         color(double red, double green, double blue, double alpha = 1);
 
+        // CSS text, as from_string() reads it.
         color(const std::string &color_name);
 
         static color from_cmyk(double cyan, double magenta, double yellow, double black, double alpha);
 
+        // Channels from 0 to 255, as on the web.
         static color from_web(int red, int green, int blue, double alpha = 1);
 
+        // "#rrggbb" or "#rgb"; anything else is black.
         static color from_hex(const std::string &hex);
 
+        // Hue in degrees, saturation and lightness in percent.
         static color from_hsl(double x, double s, double l, double a);
 
+        // CSS: #rgb, #rrggbb, rgb(), rgba(), hsl(), hsla(), a CSS colour name (in any case),
+        // "transparent" or "none". Anything else is black.
         static color from_string(const std::string &str);
 
         double cyan() const;
@@ -54,7 +61,6 @@ namespace sc {
 
         bool operator==(const color & c2) const;
 
-        // Standard color constants
         static const color Red;
         static const color Green;
         static const color Blue;

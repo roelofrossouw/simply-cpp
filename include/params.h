@@ -79,13 +79,15 @@ namespace sc {
         params() = default;
 
         // Reads main()'s arguments. For -h or --help it prints help() to stdout and exits 0, for
-        // --version the version; for a mistake it prints "<name>: <mistake>" and a pointer to
-        // --help to stderr and exits 2, like the GNU tools.
+        // --version the version, for --license the licence's name and where to read it, and for
+        // --license-text its text (exiting 1 when it can't be read). For a mistake it prints
+        // "<name>: <mistake>" and a pointer to --help to stderr and exits 2, like the GNU tools.
         params(int argc, const char *const argv[], nlohmann::ordered_json structure);
 
         // Reads arguments (without the program name) and throws params::error for a mistake,
-        // without printing or exiting. help_requested() and version_requested() tell whether
-        // -h/--help or --version was given; required parameters aren't checked then.
+        // without printing or exiting. help_requested(), version_requested(), license_requested()
+        // and license_text_requested() tell which of those was given; required parameters aren't
+        // checked then.
         params(const std::vector<std::string> &arguments, nlohmann::ordered_json structure);
 
         [[nodiscard]] const nlohmann::ordered_json &structure() const { return structure_; }
@@ -164,9 +166,9 @@ namespace sc::detail {
 // sc_program_info(<target>) (add_sc_example() calls it) generates a header with the licence's
 // name and where to read it, and names that header in SC_PROGRAM_INFO_HEADER for that target only.
 // The values are fixed when the program is compiled, as a version is. A program built without it
-// (any project that doesn't use sc_program_info) compiles exactly as before, without the options.
-// Each file that includes params.h hands them over before main() runs, from an object with
-// internal linkage, so files compiled with and without the header don't clash.
+// has no --license or --license-text. Each file that includes params.h hands them over before
+// main() runs, from an object with internal linkage, so files compiled with and without the
+// header don't clash.
 #ifdef SC_PROGRAM_INFO_HEADER
 #include SC_PROGRAM_INFO_HEADER
 namespace {

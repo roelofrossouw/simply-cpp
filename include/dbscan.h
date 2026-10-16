@@ -67,8 +67,9 @@ namespace sc {
         }
     }
 
-    /// Clusters numeric values using DBSCAN. Labels start at zero; -1 denotes noise.
-    /// minimum_neighbors includes the point itself.
+    /// Clusters numbers with DBSCAN: a label per value, counting from 0, and -1 for noise.
+    /// minimum_neighbors includes the value itself. A period above 0 makes distances wrap around
+    /// (360 for compass bearings). Floating point values must be finite (std::invalid_argument).
     template<std::integral T>
     [[nodiscard]] std::vector<int> dbscan(const std::vector<T> &values, const double epsilon,
                                           const std::size_t minimum_neighbors, const double period = 0) {
@@ -101,7 +102,8 @@ namespace sc {
         });
     }
 
-    /// Clusters values using a caller-provided distance metric. Labels -1 denote noise.
+    /// Clusters any values by a distance of your own, which must be finite and non-negative.
+    /// Labels as dbscan().
     template<std::ranges::forward_range Range, typename Distance>
         requires std::copy_constructible<std::ranges::range_value_t<Range>> &&
                  std::invocable<Distance &, const std::ranges::range_value_t<Range> &,

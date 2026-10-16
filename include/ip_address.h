@@ -6,6 +6,8 @@
 #include <stdexcept>
 #include <string>
 
+// An IPv4 address, held as in_addr's s_addr (network byte order). It is in the global namespace,
+// not sc. Text that isn't an IPv4 address throws std::invalid_argument.
 class ip_address {
 public:
     using value_type = std::uint32_t;

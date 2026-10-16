@@ -39,7 +39,7 @@ namespace sc {
         [[nodiscard]] T angle() const { return angle_; }
         T angle(const T value) { return angle_ = value; }
 
-        /// The area it covers: the axis-aligned box around its corners.
+        /// The upright box around its corners.
         [[nodiscard]] rect_<T> bounds() const { return static_cast<rect_<T>>(*this); }
 
         [[nodiscard]] operator rect_<T>() const {

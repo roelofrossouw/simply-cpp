@@ -33,7 +33,7 @@ namespace sc {
             return radius_ = value;
         }
 
-        /// The area it covers: the square around it.
+        /// The square around it.
         [[nodiscard]] rect_<T> bounds() const { return {center_.x() - radius_, center_.y() - radius_, 2 * radius_, 2 * radius_}; }
 
         bool operator==(const circle_ &) const = default;

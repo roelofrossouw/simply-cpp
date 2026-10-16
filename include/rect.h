@@ -34,7 +34,7 @@ namespace sc {
         /// From its edges (as from_points()).
         static rect_ ltrb(T left, T top, T right, T bottom) { return {left, top, right - left, bottom - top}; }
 
-        /// Itself: the area it covers (every shape has bounds(); see sc::geometry).
+        /// Itself (see sc::geometry).
         [[nodiscard]] rect_ bounds() const { return *this; }
 
         template<typename U1, typename U2, typename U3, typename U4>

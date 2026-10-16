@@ -12,7 +12,7 @@ namespace sc {
     ///     const sc::shape moved = turn.apply(sc::rect{50, 50, 100, 40});      // a rotated_rect now
     class transform {
     public:
-        /// The identity: leaves everything where it is.
+        /// The identity.
         transform() = default;
 
         transform(double a, double b, double c, double d, double e, double f);
@@ -20,15 +20,14 @@ namespace sc {
         static transform translate(double dx, double dy);
         static transform translate(const point &by);
 
-        /// Scaled by sx and sy about the point about (the origin by default); one factor scales both.
+        /// About the point about (the origin by default); one factor scales both axes.
         static transform scale(double sx, double sy, const point &about = {});
         static transform scale(double factor, const point &about = {});
 
-        /// Turned degrees clockwise (on screen) about the point about.
+        /// Degrees clockwise on screen, about the point about.
         static transform rotate(double degrees, const point &about = {});
 
-        /// Mirrored left to right about the vertical line x = axis_x, or top to bottom about the
-        /// horizontal line y = axis_y.
+        /// Mirrored about the line x = axis_x, or y = axis_y.
         static transform flip_horizontal(double axis_x = 0);
         static transform flip_vertical(double axis_y = 0);
 
@@ -42,16 +41,14 @@ namespace sc {
         [[nodiscard]] double e() const { return e_; }
         [[nodiscard]] double f() const { return f_; }
 
-        /// How much it scales lengths: the square root of its area scale (2 for scale(2)). For
-        /// stroke widths, which should grow with what they outline.
+        /// How much it scales lengths: the square root of its area scale (2 for scale(2)); for
+        /// stroke widths.
         [[nodiscard]] double scale_factor() const;
 
-        /// Whether it turns angles and circles into the same (moves, rotations, mirrors and even
-        /// scales only: no stretching or shearing).
+        /// Whether it keeps angles and circles: moves, rotations, mirrors and even scales only.
         [[nodiscard]] bool conformal() const;
 
-        /// Whether axis-aligned rectangles stay axis-aligned (no rotation other than by quarter
-        /// turns, and no shearing).
+        /// Whether upright rectangles stay upright: quarter turns at most, no shear.
         [[nodiscard]] bool keeps_axes() const;
 
         [[nodiscard]] point apply(const point &at) const;
@@ -61,8 +58,7 @@ namespace sc {
         [[nodiscard]] polygon apply(const polygon &shape) const;
         [[nodiscard]] path apply(const path &shape) const;
 
-        /// The other shapes keep their kind when the transform allows it, else become the closest
-        /// that's exact:
+        /// The others keep their kind when the transform allows it, else become the closest exact one:
         ///   - rect: a rect when it keeps_axes(), a rotated_rect when conformal(), else a polygon;
         ///   - rounded_rect: a rounded_rect when both, else a path;
         ///   - rotated_rect: a rotated_rect when conformal(), else a polygon;
@@ -76,7 +72,7 @@ namespace sc {
         [[nodiscard]] shape apply(const shape &shape) const;
         [[nodiscard]] group apply(const group &shapes) const;
 
-        /// The int flavours, in doubles.
+        /// Int shapes, in doubles.
         template<Numeric T> requires std::integral<T>
         [[nodiscard]] auto apply(const rect_<T> &shape) const { return apply(rect{shape}); }
 

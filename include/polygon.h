@@ -17,7 +17,7 @@ namespace sc {
     template<Numeric T>
     class rotated_rect_;
 
-    /// A list of corner points: polygon (double) or polygon_i (whole pixels), like point and rect.
+    /// A list of corner points: polygon (double) or polygon_i (whole pixels).
     /// An int polygon converts to a double one implicitly; the other way rounds, so it's explicit.
     template<Numeric T>
     class polygon_ {
@@ -82,7 +82,7 @@ namespace sc {
             return angle >= 80.0 && angle <= 100.0;
         }
 
-        /// The area it covers: the axis-aligned box around its points (empty without points).
+        /// The upright box around its points; empty without points.
         [[nodiscard]] rect_<T> bounds() const { return static_cast<rect_<T>>(*this); }
 
         /// bounds(), in either rect flavour.

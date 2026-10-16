@@ -9,7 +9,7 @@ namespace sc {
     /// A rectangle with rounded corners: the rectangle, and the corners' radius. A canvas draws the
     /// radius as at most half the rectangle's shorter side, and a radius of 0 as square corners.
     ///
-    ///     canvas.draw(sc::rounded_rect{sc::rect{50, 130, 200, 80}, 8}, sc::color::Black, sc::color{0.9, 0.95, 1});
+    ///     canvas.draw(sc::rounded_rect{sc::rect{50, 130, 200, 80}, 8}, {sc::color::Black, sc::color{0.9, 0.95, 1}});
     template<Numeric T>
     class rounded_rect_ {
     public:

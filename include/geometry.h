@@ -19,7 +19,7 @@ namespace sc {
     /// A shape: something with an area it covers, bounds(), and an outline, to_path(shape) (an
     /// sc::path of lines and curves, exactly the shape). rect, rounded_rect, rotated_rect, polygon,
     /// circle, line and path are, in both flavours, and so is sc::shape; point and size aren't (they're
-    /// coordinates). sc-graphics' canvas draws any of them: draw(shape, stroke, fill).
+    /// coordinates). sc-graphics' canvas draws any of them: draw(shape, appearance).
     ///
     /// A shape of your own is one too with a bounds() member and a to_path(const your_shape &)
     /// function next to it (found by argument-dependent lookup).

@@ -1,6 +1,9 @@
 #pragma once
 
 #include "point.h"
+#include "rect.h"
+
+#include <algorithm>
 
 #include <cmath>
 #include <concepts>
@@ -28,6 +31,12 @@ namespace sc {
 
         [[nodiscard]] double length() const {
             return std::hypot(static_cast<double>(to_.x()) - from_.x(), static_cast<double>(to_.y()) - from_.y());
+        }
+
+        /// The area it covers: the box with the line as its diagonal (no width: a line is only drawn
+        /// by a stroke).
+        [[nodiscard]] rect_<T> bounds() const {
+            return rect_<T>::ltrb(std::min(from_.x(), to_.x()), std::min(from_.y(), to_.y()), std::max(from_.x(), to_.x()), std::max(from_.y(), to_.y()));
         }
 
         bool operator==(const line_ &) const = default;

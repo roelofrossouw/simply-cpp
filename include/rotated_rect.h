@@ -38,6 +38,9 @@ namespace sc {
         T angle(const T value) { return angle_ = value; }
 
         /// Returns the axis-aligned bounding box of this rotated rect.
+        /// The area it covers: the axis-aligned box around its corners.
+        [[nodiscard]] rect_<T> bounds() const { return static_cast<rect_<T>>(*this); }
+
         [[nodiscard]] operator rect_<T>() const {
             const double radians = static_cast<double>(angle_) * std::acos(-1.0) / 180.0;
             const double cosine = std::abs(std::cos(radians));

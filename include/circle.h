@@ -1,6 +1,7 @@
 #pragma once
 
 #include "point.h"
+#include "rect.h"
 
 #include <cmath>
 #include <stdexcept>
@@ -29,6 +30,9 @@ namespace sc {
             validate_radius(value);
             return radius_ = value;
         }
+
+        /// The area it covers: the square around it.
+        [[nodiscard]] rect_<T> bounds() const { return {center_.x() - radius_, center_.y() - radius_, 2 * radius_, 2 * radius_}; }
 
         bool operator==(const circle_ &) const = default;
 

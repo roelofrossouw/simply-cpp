@@ -80,6 +80,9 @@ namespace sc {
             return angle >= 80.0 && angle <= 100.0;
         }
 
+        /// The area it covers: the axis-aligned box around its points (empty without points).
+        [[nodiscard]] rect_<T> bounds() const { return static_cast<rect_<T>>(*this); }
+
         /// Returns the axis-aligned bounding box of this polygon's points.
         template<typename U>
         [[nodiscard]] operator rect_<U>() const {

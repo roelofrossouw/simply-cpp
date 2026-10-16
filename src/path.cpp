@@ -41,13 +41,40 @@ namespace sc {
             top = std::min(top, p.y());
             bottom = std::max(bottom, p.y());
         };
-        for (const auto &s: steps_) {
-            if (s.type == kind::close) continue;
-            include(s.to);
-            if (s.type == kind::cubic) {
-                include(s.first);
-                include(s.second);
+        // A cubic's extent: its end points and, per axis, where it turns: the roots in (0, 1) of its
+        // derivative, the quadratic a t^2 + b t + c (divided by 3).
+        const auto turns = [](const double p0, const double p1, const double p2, const double p3, double roots[2]) {
+            const double a = -p0 + 3 * p1 - 3 * p2 + p3, b = 2 * (p0 - 2 * p1 + p2), c = p1 - p0;
+            int count = 0;
+            const auto keep = [&](const double t) {
+                if (t > 0 && t < 1) roots[count++] = t;
+            };
+            if (std::abs(a) < 1e-12) {
+                if (std::abs(b) > 1e-12) keep(-c / b);
+            } else if (const double d = b * b - 4 * a * c; d >= 0) {
+                const double root = std::sqrt(d);
+                keep((-b + root) / (2 * a));
+                keep((-b - root) / (2 * a));
             }
+            return count;
+        };
+        const auto at = [](const point &p0, const point &p1, const point &p2, const point &p3, const double t) {
+            const double u = 1 - t, a = u * u * u, b = 3 * u * u * t, c = 3 * u * t * t, d = t * t * t;
+            return point{a * p0.x() + b * p1.x() + c * p2.x() + d * p3.x(), a * p0.y() + b * p1.y() + c * p2.y() + d * p3.y()};
+        };
+        point current{};
+        for (const auto &s: steps_) {
+            if (s.type == kind::close) continue; // back to its subpath's start, already counted
+            if (s.type == kind::cubic) {
+                double roots[2];
+                for (int axis = 0; axis < 2; ++axis) {
+                    const auto coordinate = [axis](const point &p) { return axis == 0 ? p.x() : p.y(); };
+                    const int n = turns(coordinate(current), coordinate(s.first), coordinate(s.second), coordinate(s.to), roots);
+                    for (int i = 0; i < n; ++i) include(at(current, s.first, s.second, s.to, roots[i]));
+                }
+            }
+            include(s.to);
+            current = s.to;
         }
         return rect::ltrb(left, top, right, bottom);
     }

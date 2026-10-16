@@ -4,6 +4,7 @@
 #include "size.h"
 #include "rect.h"
 #include "rotated_rect.h"
+#include "rounded_rect.h"
 #include "polygon.h"
 #include "circle.h"
 #include "line.h"

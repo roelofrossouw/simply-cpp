@@ -10,6 +10,8 @@ enum {
 };
 
 namespace sc {
+    // A client for an Ollama server's generate API, by default at http://127.0.0.1:11434. Without
+    // a model it takes the server's first one, so making one asks the server.
     class ollama {
         static constexpr std::string_view DEFAULT_IP = "http://127.0.0.1";
         static constexpr int DEFAULT_PORT = 11434;
@@ -18,15 +20,18 @@ namespace sc {
     public:
         ollama(const std::string &model = {}, const std::string &host = std::string(DEFAULT_IP), int port = DEFAULT_PORT);
 
+        // The models the server has.
         std::vector<std::string> models();
 
+        // The model's response to prompt. images are base64 data, or (under 1000 characters) file
+        // names to read. The context it returns is kept for the next call, as a conversation.
         std::string generate(const std::string &prompt, const std::vector<std::string> &images = {});
 
+        // The last result's statistics (durations, token counts) as JSON text.
         std::string stats();
 
         int context_size() const { return context.size(); }
 
-        // Getters
         std::string getLastResult() const { return last_result; }
         std::string getUrl() const { return url; }
         std::string getModel() const { return model; }
@@ -38,7 +43,6 @@ namespace sc {
         bool isThink() const { return think; }
         std::vector<int> getContext() { return context; }
 
-        // Setters
         void setUrl(const std::string &url) { this->url = url; }
         void setModel(const std::string &model) { this->model = model; }
         void clearFormat() { this->format = ""; }
@@ -56,8 +60,15 @@ namespace sc {
         void setContext(std::vector<int> context) { this->context = context; }
         void setTimeout(int timeout) { this->timeout = timeout; }
 
+        // "json", or a JSON schema (as text) for the response to follow; surrounding quotes are
+        // dropped.
         void setFormat(std::string format_string);
 
+        // One request as JSON in, the result as JSON text out: model, server, port, instruction (the
+        // text, or a file of it), and optionally data (added to the instruction), images, schema
+        // and the generation options. The result has the model's response (parsed when it's JSON)
+        // and ai_data statistics; a failure is reported in "error", not thrown. Debug builds use
+        // debug_model, debug_server and debug_port when the request has them.
         static std::string process(const std::string &json_request);
 
     private:

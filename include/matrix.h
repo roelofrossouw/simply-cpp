@@ -12,11 +12,14 @@ typedef ssize_t rsize_t;
 
 namespace sc {
 
+    /// A fixed-size rows x cols matrix, all zeros by default. It keeps its values both row by row and
+    /// column by column, so row(), col() and transpose() are copies rather than gathers.
     template<typename T, std::size_t rows, std::size_t cols>
     class matrix {
     public:
         matrix() = default;
 
+        /// rows * cols values, row by row.
         matrix(const T *data) {
             for (std::size_t i = 0; i < elements; ++i) {
                 rdata[i] = data[i];
@@ -30,6 +33,7 @@ namespace sc {
             std::copy_n(cdata, elements, this->cdata);
         }
 
+        /// Row by row; values past rows * cols are ignored, missing ones are 0.
         matrix(std::initializer_list<T> values) {
             std::size_t i = 0;
             for (auto value: values) {
@@ -100,6 +104,7 @@ namespace sc {
             return *this;
         }
 
+        /// To the power exponent, by repeated squaring; std::invalid_argument unless square.
         template<std::unsigned_integral U>
         matrix<T, rows, cols> operator^(U exponent) {
             if (cols != rows) {

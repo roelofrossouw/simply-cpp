@@ -55,8 +55,6 @@ namespace sc {
 
     void timer::lap() {
         if (impl->stopped) {
-            // Work like a real stopwatch button where lap/reset is the same button?
-            // reset();
             return;
         }
         auto stopTime = std::chrono::steady_clock::now();

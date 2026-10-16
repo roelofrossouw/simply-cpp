@@ -5,9 +5,9 @@ using namespace std;
 
 namespace sc {
     namespace impl {
-        // A date here is a calendar day, not an instant, so the Julian day conversion
-        // works on the civil fields directly. Going via a time_t made the result depend
-        // on the local UTC offset, which put whole timezones a day out.
+        // A calendar day, not an instant, so the Julian day conversion works on the civil fields
+        // directly: going via a time_t would tie the result to the local UTC offset and put whole
+        // timezones a day out.
         class date {
         public:
             date(const string &dateInput) { initialize(dateInput); }
@@ -27,12 +27,10 @@ namespace sc {
                 return days_from_civil(storage.tm_year + 1900, storage.tm_mon + 1, storage.tm_mday) + julian_epoch;
             }
 
-            // Carries any out of range field (day 32, month 13, day 0) into the next one
-            // and re-derives tm_wday/tm_yday. mktime() used to do this, but it resolved
-            // the fields against the local timezone: a date built from today carried
-            // today's tm_isdst, so truncating into a non-DST month moved the day back an
-            // hour and, at midnight, off the day entirely. Civil arithmetic has no such
-            // trap, and no time_t range limit either.
+            // Carries any out of range field (day 32, month 13, day 0) into the next one and
+            // re-derives tm_wday/tm_yday, by civil arithmetic. Not mktime(): it resolves the fields
+            // against the local timezone, so a date built from today carries today's tm_isdst and
+            // truncating into a non-DST month can move it off the day; and it has time_t's range.
             void normalize() {
                 // Months first, so the year is settled before the day count is taken.
                 const long months = static_cast<long>(storage.tm_year) * 12 + storage.tm_mon;
@@ -67,7 +65,6 @@ namespace sc {
                 } else if (dateInput.find('-') != std::string::npos) {
                     strptime(dateInput.c_str(), "%Y-%m-%d", &storage);
                 } else {
-                    // throw invalid_argument("Invalid date format");
                     time_t now = time(nullptr);
                     storage = *localtime(&now);
                 }

@@ -14,6 +14,8 @@ namespace sc {
     template<Numeric T>
     class rotated_rect_;
 
+    /// An upright rectangle: left, top, width and height; rect (double) or rect_i (whole pixels).
+    /// y grows downwards, so bottom() is top() + height(). The size is never negative.
     template<typename T>
     class rect_ {
     public:
@@ -29,6 +31,7 @@ namespace sc {
                     detail::coordinate<T>(static_cast<double>(other.width())), detail::coordinate<T>(static_cast<double>(other.height()))) {
         }
 
+        /// From its edges (as from_points()).
         static rect_ ltrb(T left, T top, T right, T bottom) { return {left, top, right - left, bottom - top}; }
 
         /// Itself: the area it covers (every shape has bounds(); see sc::geometry).
@@ -54,6 +57,7 @@ namespace sc {
 
         rect_ &operator+=(const rect_ &rhs);
 
+        /// Grows by i on every side (-= shrinks); adding a point moves it instead.
         rect_ &operator+=(const T &i);
 
         template<typename U> requires std::convertible_to<U, T>
@@ -153,6 +157,8 @@ namespace sc {
 
         [[nodiscard]] size_<T> size() const;
 
+        /// Orders left to right, then top to bottom; ^ orders top to bottom, then left to right
+        /// (reading order).
         bool operator<(const rect_ &r) const;
 
         bool operator^(const rect_ &r) const;
@@ -161,26 +167,29 @@ namespace sc {
 
         [[nodiscard]] T area() const;
 
+        /// Intersection over union: 0 for boxes apart, 1 for the same box.
         [[nodiscard]] double iou(const rect_ &rhs) const;
 
+        /// Grows to cover rhs as well.
         void include(const rect_ &rhs);
 
+        /// Distance from the point (cx, cy) to the box; 0 inside it.
         [[nodiscard]] T distance(T cx, T cy) const;
 
-        // Exact minimum distance between the two boxes (0 if they touch/overlap).
-        // Symmetric: a.distance(b) == b.distance(a).
+        /// The shortest distance between the two boxes; 0 when they touch or overlap.
         [[nodiscard]] T distance(const rect_ &rhs) const;
 
-        // Horizontal gap between x-ranges (0 if they overlap on x).
+        /// The horizontal gap between their x ranges; 0 when they overlap on x.
         [[nodiscard]] T gap_x(const rect_ &rhs) const;
 
-        // Vertical gap between y-ranges (0 if they overlap on y).
+        /// The vertical gap between their y ranges; 0 when they overlap on y.
         [[nodiscard]] T gap_y(const rect_ &rhs) const;
 
         [[nodiscard]] bool overlaps_x(const rect_ &rhs) const;
 
         [[nodiscard]] bool overlaps_y(const rect_ &rhs) const;
 
+        /// The overlap; empty (no width or height) when they don't overlap.
         [[nodiscard]] rect_ intersect(const rect_ &rhs) const;
 
         point_<T> left_top() const { return {left(), top()}; }
@@ -195,16 +204,14 @@ namespace sc {
 
         static rect_ from_points(T left, T top, T right, T bottom);
 
-        // Connected-component grouping (union-find, order-independent).
-        // Boxes i and j are linked when iou > min_iou (min_iou == 1 disables)
-        // OR box-to-box distance < max_dist (max_dist < 0 disables).
-        // Group rect is the union of its members.
+        /// Groups boxes that are linked, directly or through others (order doesn't matter): linked
+        /// when iou > min_iou (min_iou 1 turns that off) or distance < max_dist (max_dist < 0 turns
+        /// that off). Each group is the box around its members, and their indices.
         static std::vector<std::pair<rect_, std::vector<size_t> > > group(const std::vector<rect_> &boxes, T min_iou = 0, T max_dist = 0);
 
-        // Document-layout grouping with per-axis thresholds: boxes are linked when
-        // gap_x < max_dx AND gap_y < max_dy. Use a strict max_dx (~1 char width) and
-        // a generous max_dy (~1.5 line heights) so paragraphs merge vertically
-        // without welding adjacent columns.
+        /// group() for page layout, by axis: linked when gap_x < max_dx and gap_y < max_dy. A tight
+        /// max_dx (about a character) and a generous max_dy (about 1.5 lines) merge a paragraph's
+        /// lines without joining neighbouring columns.
         static std::vector<std::pair<rect_, std::vector<size_t> > > group_adjacent(const std::vector<rect_> &boxes, T max_dx, T max_dy);
 
     protected:

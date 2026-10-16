@@ -61,7 +61,7 @@ namespace sc {
     //                 {"address", {{"type", "string"}, {"format", "ipv4"}, {"default", "0.0.0.0"}}}}}}}}},
     //         {"required", {"server"}}}};
     //     const int port = conf["server"]["port"].get<int>();     // nlohmann::json access
-    //     const int port = conf.as<int>("server.port");           // errors name the key
+    //     const int same = conf.as<int>("server.port");           // errors name the key
     //     const auto secret = conf.as<std::string>("jwt.secret", ""); // with a default
     //
     // Errors in the files or their values are std::runtime_error, naming the file and line or the

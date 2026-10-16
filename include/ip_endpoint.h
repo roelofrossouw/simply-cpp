@@ -7,6 +7,7 @@
 #include <string_view>
 
 namespace sc {
+    // A host (name, IPv4 or IPv6 address) and port; port 0 means none was given.
     struct ip_endpoint {
         std::string host;
         int port = 0;

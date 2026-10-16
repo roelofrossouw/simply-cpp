@@ -8,10 +8,10 @@
 
 namespace sc {
     namespace {
-        // The CSS colour names. A function-local static, not a global: sc-core is linked statically
-        // into several shared libraries and the programs using them, and a global with a destructor
-        // (as the old color::NamedColors was) is then merged into one object but destroyed by every
-        // copy: "double free" at exit.
+        // The CSS colour names, in a function-local static rather than a global: sc-core is linked
+        // statically into several shared libraries and the programs using them, and a global with a
+        // destructor is then merged into one object but destroyed by every copy (a double free at
+        // exit).
         const std::unordered_map<std::string, std::tuple<int, int, int> > &named_colors() {
             static const std::unordered_map<std::string, std::tuple<int, int, int> > names = {
 #include "named_colors.inc" // generated from the CSS Color 4 spec by cmake/NamedColors.cmake
@@ -65,7 +65,7 @@ namespace sc {
     }
 
     color color::from_hsl(double h, double s, double l, double a) {
-        h /= 360.0; // std::fmod(h, 360.0) / 360.0;
+        h /= 360.0;
         s /= 100.0;
         l /= 100.0;
 

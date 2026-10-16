@@ -51,6 +51,8 @@ namespace sc {
         [[nodiscard]] const_iterator begin() const noexcept { return points_.begin(); }
         [[nodiscard]] const_iterator end() const noexcept { return points_.end(); }
 
+        /// Whether it's a rectangle at any angle, allowing for rounding: four non-zero sides,
+        /// opposite ones within 5% of each other, and a corner within 10 degrees of square.
         [[nodiscard]] bool is_rect() const noexcept {
             if (points_.size() != 4) return false;
 
@@ -83,7 +85,7 @@ namespace sc {
         /// The area it covers: the axis-aligned box around its points (empty without points).
         [[nodiscard]] rect_<T> bounds() const { return static_cast<rect_<T>>(*this); }
 
-        /// Returns the axis-aligned bounding box of this polygon's points.
+        /// bounds(), in either rect flavour.
         template<typename U>
         [[nodiscard]] operator rect_<U>() const {
             if (points_.empty()) return {};
@@ -105,7 +107,8 @@ namespace sc {
             };
         }
 
-        /// Recovers a rotated rect from its four corners - throws if they aren't one.
+        /// The rotated rect with these four corners: height the shorter side, angle in [-90, 90).
+        /// std::invalid_argument without four points or with a zero-length side.
         template<Numeric U>
         [[nodiscard]] operator rotated_rect_<U>() const {
             if (points_.size() != 4)
@@ -152,6 +155,8 @@ namespace sc {
             };
         }
 
+        /// The longer and shorter side. These and the expand functions need a rectangle (is_rect());
+        /// std::invalid_argument otherwise.
         [[nodiscard]] double width() const {
             const auto dimensions = rectangle_dimensions();
             return std::max(dimensions.edge_01, dimensions.edge_12);

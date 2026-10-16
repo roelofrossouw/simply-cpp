@@ -4,6 +4,8 @@
 #include <ostream>
 
 namespace sc {
+    /// A width and height: size (double) or size_i (whole pixels). Never negative: a value below 0,
+    /// given or worked out, becomes 0.
     template<typename T>
     class size_ : public pair_<size_<T>, T> {
     public:

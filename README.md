@@ -72,15 +72,45 @@ add_executable(myapp main.cpp)
 target_link_libraries(myapp PRIVATE sc::sc-core)
 ```
 
-Include the aggregate header, or an individual one (`base64.h`, `timer.h`, `date.h`, `datetime.h`, `color.h`, `geometry.h`, `ip_endpoint.h`, `ip_endpoints.h`, `console.h`, `percent.h`, `rest.h`, `ollama.h`, ...; `config.h` and `params.h` only individually). Geometry stays part of sc-core, grouped under `geometry.h`; `rect.h` remains available for existing includes. The geometry API includes points, rectangles, rotated rectangles, polygons (`polygon` with double points, `polygon_i` with whole pixels), circles, lines (`sc::line`, `sc::line_i`), and DBSCAN clustering. Drawing these shapes is sc-graphics' `sc::canvas`, which sc-image's `sc::image` and sc-pdf's `sc::pdf` implement.
+Include the aggregate header `sc.h`, or an individual one (`base64.h`, `timer.h`, `date.h`,
+`datetime.h`, `color.h`, `geometry.h`, `ip_endpoint.h`, `ip_endpoints.h`, `console.h`,
+`percent.h`, `rest.h`, `ollama.h`, ...). `config.h` and `params.h` bring in nlohmann/json, so
+they are only included individually.
 
 ```cpp
 #include <sc.h>
 
 auto encoded = sc::base64::encode("Hello");
 
-const auto clusters = sc::dbscan(std::vector<double>{1, 1.1, 20}, 0.5, 2);
+const auto clusters = sc::dbscan(std::vector<double>{1, 1.1, 20}, 0.5, 2); // {0, 0, -1}
 ```
+
+### Geometry
+
+`geometry.h` has points and sizes, and the shapes: `sc::rect`, `sc::rounded_rect`,
+`sc::rotated_rect`, `sc::polygon`, `sc::circle`, `sc::line` and `sc::path` (lines and cubic
+Bezier curves, as in SVG). Each shape but `path` also comes in whole pixels (`sc::rect_i`,
+`sc::polygon_i`, ...); all but `rotated_rect` convert between the two, int to double
+implicitly and double to int explicitly, rounding. Coordinates are y down, as on a screen.
+It also has DBSCAN clustering (`sc::dbscan`, `sc::dbscan_by`).
+
+Every shape has `bounds()`, the box it covers (a path's is exact, curves included), and a free
+`sc::to_path(shape)` giving its outline as a path. The `sc::geometry` concept is exactly that,
+so a shape of your own with both counts too. `sc::shape` holds any one of them, for a list of
+different shapes. The shapes are only geometry: drawing them is sc-graphics' `sc::canvas`, which
+sc-image's `sc::image` and sc-pdf's `sc::pdf` implement.
+
+```cpp
+const sc::rounded_rect button{sc::rect{10, 10, 80, 30}, 6};
+const sc::path outline = sc::to_path(button);   // straight sides, a curve per corner
+const sc::rect box = outline.bounds();          // 10, 10, 80 x 30
+
+std::vector<sc::shape> marks{button, sc::circle{{50, 60}, 5}, sc::line{{0, 0}, {9, 9}}};
+auto all = marks.front().bounds();
+for (const auto &mark: marks) all.include(mark.bounds());
+```
+
+### Colours, dates and times
 
 `sc::color` reads CSS colours: `#rgb`/`#rrggbb`, `rgb()`/`rgba()`, `hsl()`/`hsla()`
 and the CSS named colours (`sc::color{"rebeccapurple"}`), and prints as
@@ -103,6 +133,8 @@ const auto in_a_day = sc::datetime::now() + std::chrono::hours{24};
 if (meeting < in_a_day) std::cout << (in_a_day - meeting).count() << " seconds apart\n";
 ```
 
+### Console output
+
 `sc::console` (`console.h`) prints plain, readable output, as the simply-cpp demos
 do: a title, headings and subheadings, and each step shown as written with its
 result below it. Headings are underlined and subheadings marked with `▸`; on a
@@ -124,6 +156,8 @@ sc::console::show_text("GET /hello", response_body); // a result shown as plain 
 `{key: value}`, nested ones alike, anything else with `<<`. `note(text)` adds an
 indented line, and `output(stream)` sends it all elsewhere than `std::cout`.
 
+### Server endpoints
+
 `sc::ip_endpoints` is a list of `sc::ip_endpoint`s that reads and writes the
 `;`-separated form (`"redis1:6379;[::1]:6380"`). Whitespace and empty entries are
 ignored, and an invalid entry throws `std::invalid_argument`. It works like a
@@ -143,6 +177,8 @@ sc::redis cache{servers};
 const std::string text = servers;                       // "redis1:6379;redis2:7000;redis3:7001"
 const auto bootstrap = servers.to_string(",");          // for Kafka's bootstrap.servers
 ```
+
+### Configuration files
 
 `sc::config` (`config.h`, not part of `sc.h`) reads a configuration file into an
 `nlohmann::ordered_json`, so values read the way JSON does, and checks it against an
@@ -204,6 +240,8 @@ const auto topics = conf.as<std::vector<std::string>>("kafka.topic"); // errors 
 const auto secret = conf.as<std::string>("jwt.secret", "");    // with a fallback
 ```
 
+### Command-line parameters
+
 `sc::params` (`params.h`, not part of `sc.h`) reads command-line arguments by a
 structure, the way `sc::config` reads a file. The structure is plain JSON (not a JSON
 Schema): `options` keyed by long name (`short`, `type` string/integer/number/boolean,
@@ -216,7 +254,10 @@ options anywhere among the arguments. `-h`/`--help` (and `--version` when there 
 version) are reserved: from `main()`'s `argc`/`argv` they print and exit 0, and a mistake
 prints `<name>: <mistake>` and `Try '<name> --help' for more information.` and exits 2.
 Given a vector of arguments instead, it throws `sc::params::error` and only reports
-`help_requested()`. The values are an `nlohmann::ordered_json` keyed by name:
+`help_requested()`. A program built with `sc_program_info(<target>)` (from
+`SimplyCppFunctions.cmake`; every sc demo is) also has `--license`, printing its licence and
+where to read it, and `--license-text`, printing the text. The values are an
+`nlohmann::ordered_json` keyed by name:
 
 ```cpp
 #include <params.h>
@@ -251,6 +292,8 @@ Options:
   -h, --help         display this help and exit
       --version      output version information and exit
 ```
+
+### Helpers
 
 `core.h` has small PHP-style helpers: `file_get_contents()`, `file_put_contents()`,
 `basename()`, `getenv()` and `explode()`. `sc::getenv()` returns the fallback when a

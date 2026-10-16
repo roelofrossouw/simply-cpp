@@ -8,6 +8,9 @@ namespace sc {
         class timer;
     }
 
+    // A stopwatch on the steady clock, running from when it's made. stop() pauses it, start()
+    // carries on, reset() zeroes it. The readings include the time so far while it runs; as text
+    // (or <<) it is HH:MM:SS.nnnnnnnnn. from_nanos() and the like make a stopped one of that length.
     class timer {
     public:
         timer();

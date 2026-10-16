@@ -7,6 +7,8 @@
 #include <stdexcept>
 
 namespace sc {
+    /// A centre and radius: circle (double) or circle_i (whole pixels). The radius must be finite
+    /// and non-negative (std::invalid_argument otherwise).
     template<Numeric T>
     class circle_ {
     public:

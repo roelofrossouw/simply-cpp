@@ -21,7 +21,8 @@ namespace sc {
     public:
         enum class kind { move, line, cubic, close };
 
-        /// One step: to is where it ends; a cubic's control points are first and second.
+        /// One step: to is where it ends; first and second are a cubic's control points (unused
+        /// otherwise).
         struct step {
             kind type;
             point to;
@@ -31,13 +32,16 @@ namespace sc {
             bool operator==(const step &) const = default;
         };
 
+        /// Starts a subpath. On an empty path, line_to() starts at its point and cubic_to() at its
+        /// first control point.
         path &move_to(const point &to);
 
         path &line_to(const point &to);
 
         path &cubic_to(const point &first, const point &second, const point &to);
 
-        /// Closes the current subpath, back to where it started.
+        /// Closes the current subpath, back to where it started; nothing on an empty path or after
+        /// another close().
         path &close();
 
         [[nodiscard]] const std::vector<step> &steps() const noexcept { return steps_; }
@@ -58,7 +62,8 @@ namespace sc {
         };
 
         /// The subpaths as straight segments, curves cut into segments no more than tolerance
-        /// off the curve, for canvases that only draw straight lines.
+        /// off the curve, for canvases that only draw straight lines. A subpath of one point is left
+        /// out.
         [[nodiscard]] std::vector<outline> flattened(double tolerance = 0.25) const;
 
         bool operator==(const path &) const = default;
@@ -67,12 +72,10 @@ namespace sc {
         std::vector<step> steps_;
     };
 
-    // Each shape as a path of the same outline, in doubles: rectangles, polygons and rotated
-    // rectangles as closed straight lines, a line as an open one, a circle as four cubic curves and a
-    // rounded rectangle's corners as one each (the usual Bezier approximation of a quarter circle,
-    // within 0.03% of the radius). To draw any shape the same way, or measure it as a path. A shape
-    // of your own satisfies sc::geometry with a bounds() member and a to_path(const your_shape &) of
-    // its own, found next to it (by argument-dependent lookup).
+    // to_path(): each shape as a path of the same outline, in doubles, so any shape can be drawn or
+    // measured the same way (see sc::geometry). Rectangles, polygons and rotated rectangles are closed
+    // straight lines, a line an open one, a circle four cubic curves and a rounded rectangle's corners
+    // one each (the usual Bezier quarter circle, within 0.03% of the radius).
 
     /// Control point distance for a quarter circle drawn as one cubic Bezier curve, as a fraction of
     /// its radius.

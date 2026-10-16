@@ -13,16 +13,13 @@
 #include <vector>
 
 namespace sc {
-    /// A shape of straight lines and cubic Bezier curves, such as an SVG path: one or more
-    /// subpaths, each started by move_to() and optionally closed by close(). Coordinates are y down.
-    /// Only the shape: how it's drawn (stroke, fill, and how overlapping subpaths fill, an "o"'s
-    /// hole) is sc-graphics' paint (sc::stroke, sc::fill, sc::fill_rule).
+    /// Straight lines and cubic Bezier curves, as an SVG path: subpaths started by move_to(),
+    /// optionally closed. Only geometry: stroke, fill and fill rule are sc-graphics' paint.
     class path {
     public:
         enum class kind { move, line, cubic, close };
 
-        /// One step: to is where it ends; first and second are a cubic's control points (unused
-        /// otherwise).
+        /// first and second are a cubic's control points, unused otherwise.
         struct step {
             kind type;
             point to;
@@ -40,8 +37,7 @@ namespace sc {
 
         path &cubic_to(const point &first, const point &second, const point &to);
 
-        /// Closes the current subpath, back to where it started; nothing on an empty path or after
-        /// another close().
+        /// Back to the subpath's start; nothing on an empty path or after another close().
         path &close();
 
         /// Adds other's subpaths after this one's.
@@ -50,23 +46,19 @@ namespace sc {
         [[nodiscard]] const std::vector<step> &steps() const noexcept { return steps_; }
         [[nodiscard]] bool empty() const noexcept { return steps_.empty(); }
 
-        /// The area it covers, exactly: every point it passes through, curves included (where a
-        /// curve turns, not its control points). Empty for an empty path.
+        /// Exact: curves count where they turn, not their control points. Empty for an empty path.
         [[nodiscard]] rect bounds() const;
 
         /// Scaled about the origin, then moved by offset.
         [[nodiscard]] path transformed(double scale_x, double scale_y, const point &offset = {}) const;
 
-        /// One subpath as straight segments: its points, curves cut into short lines, and whether
-        /// it was closed.
         struct outline {
             polygon points;
             bool closed;
         };
 
-        /// The subpaths as straight segments, curves cut into segments no more than tolerance
-        /// off the curve, for canvases that only draw straight lines. A subpath of one point is left
-        /// out.
+        /// The subpaths as straight segments, curves cut to within tolerance of the curve. A
+        /// subpath of one point is left out.
         [[nodiscard]] std::vector<outline> flattened(double tolerance = 0.25) const;
 
         bool operator==(const path &) const = default;
@@ -75,10 +67,8 @@ namespace sc {
         std::vector<step> steps_;
     };
 
-    // to_path(): each shape as a path of the same outline, in doubles, so any shape can be drawn or
-    // measured the same way (see sc::geometry). Rectangles, polygons and rotated rectangles are closed
-    // straight lines, a line an open one, a circle four cubic curves and a rounded rectangle's corners
-    // one each (the usual Bezier quarter circle, within 0.03% of the radius).
+    // to_path(): each shape's outline in doubles (see sc::geometry). A circle is four cubics and a
+    // rounded corner one, the usual Bezier quarter circle (within 0.03% of the radius).
 
     /// Control point distance for a quarter circle drawn as one cubic Bezier curve, as a fraction of
     /// its radius.

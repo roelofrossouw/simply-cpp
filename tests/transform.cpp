@@ -1,5 +1,4 @@
-// sc::transform and sc::group: points through each kind of transform, composing them, which
-// shapes keep their kind, a group's bounds and path, and flipping a group across a page.
+// sc::transform and sc::group.
 #include <transform.h>
 
 #include <sc_test.h>

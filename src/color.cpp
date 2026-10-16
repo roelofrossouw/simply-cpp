@@ -142,7 +142,7 @@ namespace sc {
         }
         if (lstr == "transparent" || lstr == "none") return {0, 0, 0, 0};
 
-        return {0, 0, 0, 1}; // fallback: black
+        return {0, 0, 0, 1};
     }
 
     double color::cyan() const {

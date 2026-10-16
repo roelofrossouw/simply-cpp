@@ -86,7 +86,6 @@ namespace sc {
         }
 
     private:
-        // Utility Functions
         template<std::floating_point R> // Base order - no eps
         static std::string print(const dual<R> &num) {
             std::ostringstream oss;

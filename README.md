@@ -4,21 +4,20 @@ Library that wraps common C++ libraries behind one simple, consistent API.
 
 **Documentation:** the [simply-cpp wiki](https://github.com/roelofrossouw/simply-cpp/wiki) covers the whole suite: [getting started](https://github.com/roelofrossouw/simply-cpp/wiki/Getting-Started), guides to [configuration files](https://github.com/roelofrossouw/simply-cpp/wiki/Configuration-Files), [command-line parameters](https://github.com/roelofrossouw/simply-cpp/wiki/Command-Line-Parameters), [core utilities](https://github.com/roelofrossouw/simply-cpp/wiki/Core-Utilities), [geometry](https://github.com/roelofrossouw/simply-cpp/wiki/Geometry) and [networking](https://github.com/roelofrossouw/simply-cpp/wiki/Networking), and the [sc-core reference](https://github.com/roelofrossouw/simply-cpp/wiki/Reference-sc-core).
 
-The idea of this library is to make it easier to use C++, especially for those who are new to C++.
-The concept is to create wrappers around existing libraries, not to implement them from scratch.
-This should keep maintenance to the minimum.
+The aim is to make C++ easier to use, especially for newcomers, by wrapping existing libraries
+rather than reimplementing them, which keeps maintenance low.
 
-In my opinion, ease of use means that there should not be a need to maintain state or have a lot of work to do for setting up.
-All functionality is run from a global or static function if no state is required. Otherwise by creating an object with a simple constructor and methods.
-Most objects should be able to be streamed as a string (e.g. `cout << obj`).
+Ease of use means little state and no setup: stateless functionality is a free or static
+function, anything else an object with a simple constructor and methods. Most objects stream as
+text (`cout << obj`).
 
-Example for a static function of the `base64` class:
+A static function:
 
 ```cpp
 sc::base64::encode("Hello World!");
 ```
 
-Example for using a simple class:
+A simple class:
 
 ```cpp
 sc::timer t, t2;
@@ -35,10 +34,9 @@ cout << "Some work and more work together took " << t << endl;
 
 ## Factors considered to keep things simple
 
-1. Headers should not include third party headers so that users don't have issues with needing 3rd party headers or include paths (only use forward declarations).
-1. Headers should not affect the global namespace.
-1. Headers should not add namespace usages.
-1. Headers should include comments to document the public methods.
+1. Headers don't include third-party headers (forward declarations only), so users need no extra headers or include paths.
+1. Headers don't touch the global namespace or add `using namespace`.
+1. Headers document the public API.
 
 ## Install
 
@@ -87,19 +85,17 @@ const auto clusters = sc::dbscan(std::vector<double>{1, 1.1, 20}, 0.5, 2); // {0
 
 ### Geometry
 
-`geometry.h` has points and sizes, and the shapes: `sc::rect`, `sc::rounded_rect`,
+`geometry.h` has points, sizes and the shapes: `sc::rect`, `sc::rounded_rect`,
 `sc::rotated_rect`, `sc::polygon`, `sc::circle`, `sc::line` and `sc::path` (lines and cubic
-Bezier curves, as in SVG). Each shape but `path` also comes in whole pixels (`sc::rect_i`,
-`sc::polygon_i`, ...); all but `rotated_rect` convert between the two, int to double
-implicitly and double to int explicitly, rounding. Coordinates are y down, as on a screen.
-It also has DBSCAN clustering (`sc::dbscan`, `sc::dbscan_by`).
+Bezier curves, as in SVG). Each but `path` also comes in whole pixels (`sc::rect_i`, ...); all
+but `rotated_rect` convert int to double implicitly and back explicitly, rounding. Coordinates
+are y down. It also has DBSCAN clustering (`sc::dbscan`, `sc::dbscan_by`).
 
-Every shape has `bounds()`, the box it covers (a path's is exact, curves included), and a free
-`sc::to_path(shape)` giving its outline as a path. The `sc::geometry` concept is exactly that,
-so a shape of your own with both counts too. `sc::shape` holds any one of them, and `sc::group`
-is a list of them that is a shape itself (its bounds cover them all; groups nest). The shapes are
-only geometry: drawing them is sc-graphics' `sc::canvas`, which
-sc-image's `sc::image` and sc-pdf's `sc::pdf` implement.
+The `sc::geometry` concept is `bounds()` (a path's exact, curves included) plus a free
+`sc::to_path(shape)` giving the outline; a shape of your own with both counts too. `sc::shape`
+holds any one shape, and `sc::group` is a collection of them that is a shape itself (groups
+nest). Shapes are only geometry: sc-graphics' `sc::canvas` draws them, implemented by
+sc-image's `sc::image` and sc-pdf's `sc::pdf`.
 
 ```cpp
 const sc::rounded_rect button{sc::rect{10, 10, 80, 30}, 6};
@@ -111,12 +107,12 @@ marks.bounds();                                 // all three
 marks.flip_horizontal(sc::rect{0, 0, 595, 842}); // mirrored across an A4 page, as a whole
 ```
 
-`transform.h` has `sc::transform`, an affine transform (SVG's `matrix(a b c d e f)`): `translate`,
-`scale`, `rotate` (degrees, clockwise on screen) and `flip_horizontal`/`flip_vertical`, about any
-point or line, composed with `then()`. `apply()` keeps a shape's kind where the transform allows
-it: a rect stays a rect when moved, scaled or flipped, becomes a `rotated_rect` when turned and a
-polygon when sheared; a circle stays a circle unless stretched (then a path). Lines, polygons and
-paths keep their kind under any transform.
+`transform.h` has `sc::transform`, an affine transform (SVG's `matrix(a b c d e f)`):
+`translate`, `scale`, `rotate` (degrees, clockwise on screen) and `flip_horizontal`/`flip_vertical`,
+about any point or line, composed with `then()`. `apply()` keeps a shape's kind where it can: a
+rect stays a rect when moved, scaled, flipped or quarter-turned, becomes a `rotated_rect` when
+turned and a polygon when sheared; a circle stays a circle unless stretched (then a path). Lines,
+polygons and paths always keep theirs, and a group applies it to each shape (`group::apply()`).
 
 ```cpp
 const auto turn = sc::transform::rotate(30, {50, 50}).then(sc::transform::translate(10, 0));
@@ -321,14 +317,12 @@ const auto parts = sc::explode("x,,y", ",");                     // {"x", "", "y
 
 ## Demo
 
-`sc-core-demo` is a short tour of the basics: base64, dates and times, server
-endpoints, and strings and the environment. Each line shows a call, as written,
-and what it returned. It is installed with the runtime package (`simply-cpp`),
-so it also shows an installation works without the `-dev` package, and needs no
-server. Every module has a demo like it (`sc-<module>-demo`); they demonstrate,
-they aren't tests, so CTest doesn't run them.
+`sc-core-demo` tours the basics (base64, dates and times, server endpoints, strings and the
+environment), each line a call as written and what it returned. It ships in the runtime package
+(`simply-cpp`), so it also checks an install works without `-dev`, and needs no server. Every
+module has one (`sc-<module>-demo`); they are demonstrations, not tests, so CTest doesn't run them.
 
-sc-core has a closer look at each area too, installed alongside it:
+Closer looks at each area, installed alongside it:
 
 | Demo | Shows |
 |---|---|

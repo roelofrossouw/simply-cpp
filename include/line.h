@@ -9,9 +9,8 @@
 #include <concepts>
 
 namespace sc {
-    /// A straight line from one point to another: line (double) or line_i (whole pixels), like
-    /// point and rect. An int line converts to a double one implicitly; the other way rounds, so
-    /// it's explicit.
+    /// A straight line from one point to another: line (double) or line_i (whole pixels). An int
+    /// line converts to a double one implicitly; the other way rounds, so it's explicit.
     template<Numeric T>
     class line_ {
     public:
@@ -33,8 +32,7 @@ namespace sc {
             return std::hypot(static_cast<double>(to_.x()) - from_.x(), static_cast<double>(to_.y()) - from_.y());
         }
 
-        /// The area it covers: the box with the line as its diagonal (no width: a line is only drawn
-        /// by a stroke).
+        /// The box with the line as its diagonal (no width).
         [[nodiscard]] rect_<T> bounds() const {
             return rect_<T>::ltrb(std::min(from_.x(), to_.x()), std::min(from_.y(), to_.y()), std::max(from_.x(), to_.x()), std::max(from_.y(), to_.y()));
         }

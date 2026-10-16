@@ -19,13 +19,10 @@
 #include <vector>
 
 namespace sc {
-    /// A shape: something with an area it covers, bounds(), and an outline, to_path(shape) (an
-    /// sc::path of lines and curves, exactly the shape). rect, rounded_rect, rotated_rect, polygon,
-    /// circle, line and path are, in both flavours, and so is sc::shape; point and size aren't (they're
-    /// coordinates). sc-graphics' canvas draws any of them: draw(shape, appearance).
-    ///
-    /// A shape of your own is one too with a bounds() member and a to_path(const your_shape &)
-    /// function next to it (found by argument-dependent lookup).
+    /// A shape: bounds(), and a free to_path(shape) giving its exact outline. Every sc-core shape
+    /// is one, in both flavours, as are sc::shape and sc::group; point and size aren't. A shape of
+    /// your own counts with a bounds() member and a to_path() found by argument-dependent lookup.
+    /// sc-graphics' canvas draws any of them.
     template<typename G>
     concept geometry = requires(const G &shape) {
         { shape.bounds() } -> std::convertible_to<rect>;
@@ -35,9 +32,8 @@ namespace sc {
     class shape;
     class transform;
 
-    /// A collection of shapes that is one shape itself: its bounds() cover them all, its path is
-    /// theirs one after the other, and a transform or flip moves them as a whole (each shape mirrored
-    /// in place and moved to the other side). A group can hold groups, as SVG's <g> does.
+    /// Shapes that together are one shape: bounds() covers them all, its path is theirs in turn, and
+    /// a transform or flip moves them as a whole. Groups nest, as SVG's <g> does.
     ///
     ///     sc::group page_marks{sc::rect{50, 50, 100, 40}, sc::circle{{300, 80}, 20}};
     ///     page_marks.flip_horizontal(sc::rect{0, 0, 595, 842});   // mirrored across the A4 page
@@ -66,17 +62,15 @@ namespace sc {
         /// The area its shapes cover together; an empty rect for an empty group.
         [[nodiscard]] rect bounds() const;
 
-        /// Every shape through the transform, which keeps each shape's kind where it can (see
-        /// sc::transform::apply()).
+        /// Every shape through change, each keeping its kind where it can (see sc::transform).
         group &apply(const transform &change);
 
-        /// Mirrored left to right about the vertical line through the middle of its own bounds, so
-        /// it stays where it is; or through the middle of within (a page, say), so it lands on the
-        /// other side of it.
+        /// Mirrored left to right about the middle of its own bounds, staying in place, or of within
+        /// (a page, say), landing on the other side of it.
         group &flip_horizontal();
         group &flip_horizontal(const rect &within);
 
-        /// Mirrored top to bottom, the same way.
+        /// Top to bottom, the same way.
         group &flip_vertical();
         group &flip_vertical(const rect &within);
 
@@ -86,9 +80,8 @@ namespace sc {
         std::vector<shape> items_;
     };
 
-    /// Any one of sc-core's shapes, in doubles, or a group of them: for collections of different
-    /// shapes (a list of annotations: boxes, circles, lines). An int shape converts on the way in
-    /// (sc::rect{box_i}).
+    /// Any one sc-core shape in doubles, or a group: for mixed collections. An int shape converts
+    /// on the way in (sc::rect{box_i}).
     ///
     ///     std::vector<sc::shape> marks{sc::rect{10, 10, 50, 20}, sc::circle{{40, 40}, 5}, sc::line{{0, 0}, {9, 9}}};
     ///     for (const auto &mark: marks) canvas.draw(mark, sc::color::Red);

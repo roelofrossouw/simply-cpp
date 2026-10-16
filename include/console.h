@@ -75,8 +75,7 @@ namespace sc {
             }
         }
 
-        // How a result reads: strings quoted, bool as true/false, an empty optional as (none),
-        // lists as [a, b], maps as {key: value}, anything else with <<.
+        // How a result reads (see above).
         template<typename T>
         static std::string format(const T &value) {
             std::ostringstream text;

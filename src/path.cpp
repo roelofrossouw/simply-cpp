@@ -26,6 +26,11 @@ namespace sc {
         return *this;
     }
 
+    path &path::append(const path &other) {
+        steps_.insert(steps_.end(), other.steps_.begin(), other.steps_.end()); // every path starts with a move
+        return *this;
+    }
+
     rect path::bounds() const {
         bool any = false;
         double left = 0, top = 0, right = 0, bottom = 0;

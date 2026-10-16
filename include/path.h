@@ -44,6 +44,9 @@ namespace sc {
         /// another close().
         path &close();
 
+        /// Adds other's subpaths after this one's.
+        path &append(const path &other);
+
         [[nodiscard]] const std::vector<step> &steps() const noexcept { return steps_; }
         [[nodiscard]] bool empty() const noexcept { return steps_.empty(); }
 

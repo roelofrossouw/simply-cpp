@@ -18,6 +18,7 @@
 #include <timer.h>
 #include <matrix.h>
 #include <geometry.h>
+#include <transform.h>
 #include <ollama.h>
 #include <dual.h>
 #include <ip_address.h>

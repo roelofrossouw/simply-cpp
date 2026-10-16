@@ -161,6 +161,8 @@ namespace sc {
         /// (reading order).
         bool operator<(const rect_ &r) const;
 
+        bool operator==(const rect_ &) const = default;
+
         bool operator^(const rect_ &r) const;
 
         friend std::ostream &operator<<(std::ostream &lhs, const rect_ &rhs) { return lhs << rhs.origin_ << "x" << rhs.rect_size_; }

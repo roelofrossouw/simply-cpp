@@ -96,8 +96,9 @@ It also has DBSCAN clustering (`sc::dbscan`, `sc::dbscan_by`).
 
 Every shape has `bounds()`, the box it covers (a path's is exact, curves included), and a free
 `sc::to_path(shape)` giving its outline as a path. The `sc::geometry` concept is exactly that,
-so a shape of your own with both counts too. `sc::shape` holds any one of them, for a list of
-different shapes. The shapes are only geometry: drawing them is sc-graphics' `sc::canvas`, which
+so a shape of your own with both counts too. `sc::shape` holds any one of them, and `sc::group`
+is a list of them that is a shape itself (its bounds cover them all; groups nest). The shapes are
+only geometry: drawing them is sc-graphics' `sc::canvas`, which
 sc-image's `sc::image` and sc-pdf's `sc::pdf` implement.
 
 ```cpp
@@ -105,9 +106,22 @@ const sc::rounded_rect button{sc::rect{10, 10, 80, 30}, 6};
 const sc::path outline = sc::to_path(button);   // straight sides, a curve per corner
 const sc::rect box = outline.bounds();          // 10, 10, 80 x 30
 
-std::vector<sc::shape> marks{button, sc::circle{{50, 60}, 5}, sc::line{{0, 0}, {9, 9}}};
-auto all = marks.front().bounds();
-for (const auto &mark: marks) all.include(mark.bounds());
+sc::group marks{button, sc::circle{{50, 60}, 5}, sc::line{{0, 0}, {9, 9}}};
+marks.bounds();                                 // all three
+marks.flip_horizontal(sc::rect{0, 0, 595, 842}); // mirrored across an A4 page, as a whole
+```
+
+`transform.h` has `sc::transform`, an affine transform (SVG's `matrix(a b c d e f)`): `translate`,
+`scale`, `rotate` (degrees, clockwise on screen) and `flip_horizontal`/`flip_vertical`, about any
+point or line, composed with `then()`. `apply()` keeps a shape's kind where the transform allows
+it: a rect stays a rect when moved, scaled or flipped, becomes a `rotated_rect` when turned and a
+polygon when sheared; a circle stays a circle unless stretched (then a path). Lines, polygons and
+paths keep their kind under any transform.
+
+```cpp
+const auto turn = sc::transform::rotate(30, {50, 50}).then(sc::transform::translate(10, 0));
+const sc::shape turned = turn.apply(sc::rect{20, 40, 60, 20});   // a rotated_rect
+const sc::point moved = turn.apply(sc::point{50, 50});           // 60, 50
 ```
 
 ### Colours, dates and times

@@ -60,6 +60,7 @@ int main() {
         unreachable.timeout(2);
         CHECK_NOTHROW(unreachable.get());
         CHECK_EQ(unreachable.get(), string{});
+        CHECK_EQ(unreachable.status(), 0L); // no response at all
 
         sc::rest posting{"http://127.0.0.1:9/"};
         posting.connect_timeout(2);
@@ -67,6 +68,16 @@ int main() {
         const auto failure = posting.post(R"({"ping": true})");
         // The POST path reports the curl error as a JSON object.
         CHECK_MSG(failure.find("\"error\"") != string::npos, "got \"" + failure + '"');
+    }
+
+    SECTION("The HTTP status of the last request");
+    {
+        sc::rest found{"https://raw.githubusercontent.com/roelofrossouw/simply-cpp/main/LICENSE"};
+        CHECK(found.get().find("Apache License") != string::npos);
+        CHECK_EQ(found.status(), 200L);
+        sc::rest missing{"https://raw.githubusercontent.com/roelofrossouw/simply-cpp/main/NO-SUCH-FILE"};
+        (void) missing.get(); // the body is GitHub's error page
+        CHECK_EQ(missing.status(), 404L);
     }
 
     SECTION("Headers and timeouts are configurable");

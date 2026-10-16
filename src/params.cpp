@@ -26,7 +26,11 @@ namespace {
         for (auto file = license.files; file && *file; ++file) {
             if (std::ifstream in{*file, std::ios::binary}; in) return {std::istreambuf_iterator<char>{in}, {}};
         }
-        if (license.text_url && *license.text_url) return sc::rest{license.text_url}.get();
+        if (license.text_url && *license.text_url) {
+            sc::rest request{license.text_url};
+            auto text = request.get();
+            if (request.status() == 200) return text; // not an error page's body
+        }
         return {};
     }
 

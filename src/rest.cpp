@@ -35,6 +35,13 @@ namespace sc {
                 return last_error_;
             }
 
+            // The HTTP status of the last request, 0 when there was no response.
+            long status() const {
+                long code = 0;
+                if (curl_) curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &code);
+                return code;
+            }
+
             void option(const CURLoption option, const std::string &value) const {
                 if (!curl_) return;
                 curl_easy_setopt(curl_, option, value.c_str());
@@ -81,7 +88,9 @@ namespace sc {
     std::string rest::get() {
         base64_impl::curl conn;
         setup_curl(conn);
-        if (!conn.run()) {
+        const bool ran = conn.run();
+        status_ = ran ? conn.status() : 0;
+        if (!ran) {
             std::cerr << "Request failed: " << conn.last_error() << std::endl;
             response = "";
         }
@@ -92,7 +101,9 @@ namespace sc {
         base64_impl::curl conn;
         setup_curl(conn);
         conn.option(CURLOPT_POSTFIELDS, jsonData.c_str());
-        if (!conn.run()) {
+        const bool ran = conn.run();
+        status_ = ran ? conn.status() : 0;
+        if (!ran) {
             std::cerr << "Request failed: " << conn.last_error() << std::endl;
             response = std::string(R"({"error": ")") + conn.last_error() + R"("})";
         }

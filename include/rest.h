@@ -59,6 +59,9 @@ namespace sc {
 
         void bearer(const std::string &token);
 
+        /// The HTTP status of the last get() or post() (200, 404, ...), 0 when it got no response.
+        [[nodiscard]] long status() const { return status_; }
+
         rest &timeout(long timeout);
 
         void connect_timeout(long timeout);
@@ -69,6 +72,7 @@ namespace sc {
         std::string url_;
         long connect_timeout_secs_ = 10;
         long timeout_secs_ = 30;
+        long status_ = 0;
         std::map<std::string, std::string> parameters;
         std::map<std::string, std::string> headers_;
         mutable std::string response{};

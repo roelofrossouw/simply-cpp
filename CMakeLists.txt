@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 set(SC_MODULE core)
-project(simply-cpp LANGUAGES CXX)
+project(simply-cpp HOMEPAGE_URL "https://github.com/roelofrossouw/simply-cpp" LANGUAGES CXX)
 include(cmake/SimplyCppFunctions.cmake)
 include(cmake/NamedColors.cmake)
 

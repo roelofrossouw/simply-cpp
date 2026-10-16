@@ -39,6 +39,7 @@ sc_named_colors(${CMAKE_CURRENT_BINARY_DIR}/generated) # the CSS colour names, f
 add_sc_object(color INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/generated)
 add_sc_object(size)
 add_sc_object(rect)
+add_sc_object(path)
 add_sc_object(date)
 add_sc_object(datetime)
 add_sc_object(percent)
@@ -86,6 +87,9 @@ add_sc_example(sc-core-params)
 #############
 # Packaging #
 #############
+# path.h moved here from sc-graphics (before 3.0.0): this -dev package takes the file over.
 package_sc_module(
     DEV_DEPENDS simply-cpp nlohmann-json3-dev libcurl4-openssl-dev
+    DEV_BREAKS "simply-cpp-graphics-dev (<< 3.0.0~)"
+    DEV_REPLACES "simply-cpp-graphics-dev (<< 3.0.0~)"
 )

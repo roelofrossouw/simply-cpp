@@ -19,7 +19,8 @@ namespace sc {
     //     -                            an argument (by convention stdin or stdout)
     //
     // Options and arguments may come in any order. -h and --help are reserved: they show help()
-    // and exit. --version is reserved too when the structure has a version.
+    // and exit. --version is reserved too when the structure has a version, and --license and
+    // --license-text when the program was built with its licence (see the end of this file).
     //
     // The structure is JSON (or JSON text, which is parsed), in this form; every field but the
     // names is optional:
@@ -91,6 +92,8 @@ namespace sc {
         [[nodiscard]] const std::string &program() const { return program_; }
         [[nodiscard]] bool help_requested() const { return help_requested_; }
         [[nodiscard]] bool version_requested() const { return version_requested_; }
+        [[nodiscard]] bool license_requested() const { return license_requested_; }
+        [[nodiscard]] bool license_text_requested() const { return license_text_requested_; }
 
         // "Usage: <name> [OPTION]... INPUT [FILE]..."
         [[nodiscard]] std::string usage() const;
@@ -122,6 +125,8 @@ namespace sc {
         std::string program_;
         bool help_requested_ = false;
         bool version_requested_ = false;
+        bool license_requested_ = false;
+        bool license_text_requested_ = false;
 
         void parse(const std::vector<std::string> &arguments);
 
@@ -138,3 +143,34 @@ namespace sc {
         }
     };
 }
+
+namespace sc::detail {
+    // A program's licence, recorded when it's compiled: its name ("Apache-2.0"), where to read it,
+    // where to fetch its text, and the files that may hold the text (null-terminated), such as the
+    // copyright file its package installs. Trivially destructible: it may live in a static.
+    struct program_license {
+        const char *name = nullptr;
+        const char *url = nullptr;
+        const char *text_url = nullptr;
+        const char *const *files = nullptr;
+    };
+
+    // Kept for sc::params' --license and --license-text. Programs don't call these: see below.
+    void register_program_license(const program_license &license) noexcept;
+    [[nodiscard]] const program_license *registered_program_license() noexcept;
+}
+
+// The program's licence, when its build recorded one. SimplyCppFunctions.cmake's
+// sc_program_info(<target>) (add_sc_example() calls it) generates a header with the licence's
+// name and where to read it, and names that header in SC_PROGRAM_INFO_HEADER for that target only.
+// The values are fixed when the program is compiled, as a version is. A program built without it
+// (any project that doesn't use sc_program_info) compiles exactly as before, without the options.
+// Each file that includes params.h hands them over before main() runs, from an object with
+// internal linkage, so files compiled with and without the header don't clash.
+#ifdef SC_PROGRAM_INFO_HEADER
+#include SC_PROGRAM_INFO_HEADER
+namespace {
+    [[maybe_unused]] const bool sc_program_license_registered = (::sc::detail::register_program_license(
+        {SC_PROGRAM_LICENSE, SC_PROGRAM_LICENSE_URL, SC_PROGRAM_LICENSE_TEXT_URL, sc_program_license_files}), true);
+}
+#endif

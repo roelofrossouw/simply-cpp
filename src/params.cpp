@@ -1,16 +1,34 @@
 #include "params.h"
+#include "rest.h"
 
 #include <algorithm>
 #include <cctype>
 #include <charconv>
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <iterator>
 #include <optional>
 #include <set>
 
 namespace {
     using json = nlohmann::ordered_json;
+
+    // The program's licence, once a file of it registers one (params.h): constant-initialised and
+    // trivially destructible, so it's there whenever a registration runs and is never destroyed.
+    sc::detail::program_license registered_license{};
+    bool license_registered = false;
+
+    // The licence's text: the first of its files that can be read (its package's copyright file,
+    // or the source's LICENSE), else fetched from where it's published; empty when neither works.
+    std::string license_text(const sc::detail::program_license &license) {
+        for (auto file = license.files; file && *file; ++file) {
+            if (std::ifstream in{*file, std::ios::binary}; in) return {std::istreambuf_iterator<char>{in}, {}};
+        }
+        if (license.text_url && *license.text_url) return sc::rest{license.text_url}.get();
+        return {};
+    }
 
     constexpr size_t help_width = 80;
 
@@ -253,6 +271,23 @@ namespace sc {
             std::cout << program_ << ' ' << structure_["version"].get<std::string>() << std::endl;
             std::exit(0);
         }
+        if (license_requested_) {
+            std::cout << program_ << " is licensed under " << registered_license.name;
+            if (registered_license.url && *registered_license.url) std::cout << ": " << registered_license.url;
+            std::cout << std::endl;
+            std::exit(0);
+        }
+        if (license_text_requested_) {
+            const auto text = license_text(registered_license);
+            if (text.empty()) {
+                std::cerr << program_ << ": can't read the licence's text";
+                if (registered_license.url && *registered_license.url) std::cerr << "; it's at " << registered_license.url;
+                std::cerr << std::endl;
+                std::exit(1);
+            }
+            std::cout << text << (text.ends_with('\n') ? "" : "\n") << std::flush;
+            std::exit(0);
+        }
     }
 
     params::params(const std::vector<std::string> &arguments, nlohmann::ordered_json structure)
@@ -327,6 +362,12 @@ namespace sc {
                     version_requested_ = true;
                     continue;
                 }
+                // --license and --license-text, written out: one is the start of the other.
+                if (license_registered && (name == "license" || name == "license-text") &&
+                    std::ranges::none_of(structure.options, [&](const parameter &option) { return option.name == name; })) {
+                    (name == "license" ? license_requested_ : license_text_requested_) = true;
+                    continue;
+                }
                 const auto &option = find_long(name);
                 const auto given_as = "'--" + option.name + "'";
                 if (option.type == "boolean") {
@@ -369,7 +410,7 @@ namespace sc {
             else if (option.multiple) values[option.name] = option.fallback.is_null() ? json::array() : json::array({option.fallback});
             else if (!option.fallback.is_null()) values[option.name] = option.fallback;
         }
-        if (help_requested_ || version_requested_) return finish();
+        if (help_requested_ || version_requested_ || license_requested_ || license_text_requested_) return finish();
 
         for (const auto &option: structure.options) {
             if (option.required && (!values.contains(option.name) || (option.multiple && values[option.name].empty()))) {
@@ -439,6 +480,13 @@ namespace sc {
         }
         options.push_back({"  -h, --help", "display this help and exit"});
         if (!structure.version.empty()) options.push_back({"      --version", "output version information and exit"});
+        if (license_registered) {
+            const auto mine = [&](const std::string &name) {
+                return std::ranges::any_of(structure.options, [&](const parameter &option) { return option.name == name; });
+            };
+            if (!mine("license")) options.push_back({"      --license", std::string{"show the licence ("} + registered_license.name + ") and where to read it"});
+            if (!mine("license-text")) options.push_back({"      --license-text", "output the licence's text and exit"});
+        }
 
         size_t column = 0;
         for (const auto *rows: {&arguments, &options}) {
@@ -469,4 +517,14 @@ namespace sc {
         const auto found = find(std::string{name});
         return found == end() ? nullptr : &*found;
     }
+}
+
+namespace sc::detail {
+    void register_program_license(const program_license &license) noexcept {
+        if (!license.name || !*license.name) return;
+        registered_license = license;
+        license_registered = true;
+    }
+
+    const program_license *registered_program_license() noexcept { return license_registered ? &registered_license : nullptr; }
 }

@@ -193,5 +193,13 @@ int main() {
         CHECK(contains(refused({{"extra", {{"a", nlohmann::ordered_json::object()}, {"b", nlohmann::ordered_json::object()}}}}), "extra must be an object with one name"));
     }
 
+    SECTION("Without a recorded licence, no --license options");
+    {
+        // This test is built without sc_program_info(), as any outside program is.
+        CHECK(sc::detail::registered_program_license() == nullptr);
+        CHECK(sc::params({"--help"}, structure).help().find("--license") == std::string::npos);
+        CHECK_THROWS_AS(sc::params({"--license"}, structure), sc::params::error);
+    }
+
     TEST_SUMMARY();
 }

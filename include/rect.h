@@ -31,6 +31,9 @@ namespace sc {
 
         static rect_ ltrb(T left, T top, T right, T bottom) { return {left, top, right - left, bottom - top}; }
 
+        /// Itself: the area it covers (every shape has bounds(); see sc::geometry).
+        [[nodiscard]] rect_ bounds() const { return *this; }
+
         template<typename U1, typename U2, typename U3, typename U4>
             requires(std::convertible_to<U1, T> && std::convertible_to<U2, T> && std::convertible_to<U3, T> && std::convertible_to<U4, T>)
         rect_(U1 left = 0, U2 top = 0, U3 width = 0, U4 height = 0) : rect_(static_cast<T>(left), static_cast<T>(top), static_cast<T>(width),

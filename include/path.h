@@ -1,8 +1,14 @@
 #pragma once
 
+#include "circle.h"
+#include "line.h"
 #include "point.h"
 #include "polygon.h"
 #include "rect.h"
+#include "rotated_rect.h"
+#include "rounded_rect.h"
+
+#include <algorithm>
 
 #include <vector>
 
@@ -37,8 +43,8 @@ namespace sc {
         [[nodiscard]] const std::vector<step> &steps() const noexcept { return steps_; }
         [[nodiscard]] bool empty() const noexcept { return steps_.empty(); }
 
-        /// The bounding box of every point, control points included (so it may be a little large
-        /// around curves). Empty for an empty path.
+        /// The area it covers, exactly: every point it passes through, curves included (where a
+        /// curve turns, not its control points). Empty for an empty path.
         [[nodiscard]] rect bounds() const;
 
         /// Scaled about the origin, then moved by offset.
@@ -60,4 +66,82 @@ namespace sc {
     private:
         std::vector<step> steps_;
     };
+
+    // Each shape as a path of the same outline, in doubles: rectangles, polygons and rotated
+    // rectangles as closed straight lines, a line as an open one, a circle as four cubic curves and a
+    // rounded rectangle's corners as one each (the usual Bezier approximation of a quarter circle,
+    // within 0.03% of the radius). To draw any shape the same way, or measure it as a path. A shape
+    // of your own satisfies sc::geometry with a bounds() member and a to_path(const your_shape &) of
+    // its own, found next to it (by argument-dependent lookup).
+
+    /// Control point distance for a quarter circle drawn as one cubic Bezier curve, as a fraction of
+    /// its radius.
+    inline constexpr double quarter_circle = 0.5522847498;
+
+    inline path to_path(const path &shape) { return shape; }
+
+    template<typename T>
+    path to_path(const rect_<T> &shape) {
+        const rect box{shape};
+        path result;
+        result.move_to({box.left(), box.top()}).line_to({box.right(), box.top()}).line_to({box.right(), box.bottom()}).line_to({box.left(), box.bottom()}).close();
+        return result;
+    }
+
+    /// The radius as a canvas draws it: at most half the shorter side.
+    template<Numeric T>
+    path to_path(const rounded_rect_<T> &shape) {
+        const rect box{shape.rect()};
+        const double radius = std::min(static_cast<double>(shape.radius()), std::min(box.width(), box.height()) / 2);
+        if (radius <= 0) return to_path(box);
+        const double l = box.left(), t = box.top(), r = box.right(), b = box.bottom(), k = radius * quarter_circle;
+        path result;
+        result.move_to({l + radius, t}).line_to({r - radius, t});
+        result.cubic_to({r - radius + k, t}, {r, t + radius - k}, {r, t + radius}).line_to({r, b - radius});
+        result.cubic_to({r, b - radius + k}, {r - radius + k, b}, {r - radius, b}).line_to({l + radius, b});
+        result.cubic_to({l + radius - k, b}, {l, b - radius + k}, {l, b - radius}).line_to({l, t + radius});
+        result.cubic_to({l, t + radius - k}, {l + radius - k, t}, {l + radius, t}).close();
+        return result;
+    }
+
+    /// Empty without points.
+    template<Numeric T>
+    path to_path(const polygon_<T> &shape) {
+        path result;
+        if (shape.empty()) return result;
+        bool first = true;
+        for (const auto &corner: shape) {
+            const point at{static_cast<double>(corner.x()), static_cast<double>(corner.y())};
+            if (first) result.move_to(at);
+            else result.line_to(at);
+            first = false;
+        }
+        return result.close();
+    }
+
+    template<Numeric T>
+    path to_path(const rotated_rect_<T> &shape) { return to_path(static_cast<polygon>(shape)); }
+
+    /// Empty for a radius of 0.
+    template<Numeric T>
+    path to_path(const circle_<T> &shape) {
+        path result;
+        const double x = shape.center().x(), y = shape.center().y(), r = shape.radius(), k = r * quarter_circle;
+        if (r <= 0) return result;
+        result.move_to({x + r, y});
+        result.cubic_to({x + r, y + k}, {x + k, y + r}, {x, y + r});
+        result.cubic_to({x - k, y + r}, {x - r, y + k}, {x - r, y});
+        result.cubic_to({x - r, y - k}, {x - k, y - r}, {x, y - r});
+        result.cubic_to({x + k, y - r}, {x + r, y - k}, {x + r, y});
+        return result.close();
+    }
+
+    /// Open: a line has no inside.
+    template<Numeric T>
+    path to_path(const line_<T> &shape) {
+        path result;
+        result.move_to({static_cast<double>(shape.from().x()), static_cast<double>(shape.from().y())})
+              .line_to({static_cast<double>(shape.to().x()), static_cast<double>(shape.to().y())});
+        return result;
+    }
 }

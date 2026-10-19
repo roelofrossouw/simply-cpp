@@ -34,6 +34,10 @@ namespace sc {
         /// This transform, then next.
         [[nodiscard]] transform then(const transform &next) const;
 
+        /// The transform that undoes this one; throws std::domain_error when there's none (it squashes
+        /// everything onto a line or a point).
+        [[nodiscard]] transform inverse() const;
+
         [[nodiscard]] double a() const { return a_; }
         [[nodiscard]] double b() const { return b_; }
         [[nodiscard]] double c() const { return c_; }

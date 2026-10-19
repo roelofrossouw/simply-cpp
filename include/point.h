@@ -1,4 +1,6 @@
 #pragma once
+#include "distance.h"
+
 #include <cmath>
 #include <concepts>
 #include <limits>
@@ -9,12 +11,27 @@ namespace sc {
     template<typename T>
     concept Numeric = std::integral<T> || std::floating_point<T>;
 
+    /// What a point's or size's coordinates can be: a plain number, or a distance (sc::distance, or a
+    /// unit from sc::dist), which keeps its unit: sc::size_<sc::distance> prints [595.276pt,841.89pt].
+    template<typename T>
+    concept Coordinate = Numeric<T> || std::derived_from<T, distance>;
+
+    namespace detail {
+        /// A coordinate from a number: as it is for a plain number, as points for a distance (so a
+        /// unit's arithmetic is done in points: dist::mm(10) plus 5 is 10 mm and 5 points).
+        template<Coordinate T>
+        T from_points(const double value) {
+            if constexpr (Numeric<T>) return static_cast<T>(value);
+            else return T(distance(value));
+        }
+    }
+
     /// CRTP base for a pair of coordinates (point_, size_): arithmetic with another
     /// pair or a scalar, each returning Derived so the operators chain naturally.
-    template<typename Derived, Numeric T>
+    template<typename Derived, Coordinate T>
     class pair_ {
     public:
-        pair_(const T &x = 0, const T &y = 0) : x_(x), y_(y) { validate(); }
+        pair_(const T &x = T{}, const T &y = T{}) : x_(x), y_(y) { validate(); }
 
         template<typename U1, typename U2>
             requires(std::convertible_to<U1, T> && std::convertible_to<U2, T>)
@@ -31,8 +48,8 @@ namespace sc {
         bool operator==(const pair_ &) const = default;
 
         Derived operator+=(const pair_ &r) {
-            x_ += r.x_;
-            y_ += r.y_;
+            x_ = combine(x_, r.x_, [](const auto a, const auto b) { return a + b; });
+            y_ = combine(y_, r.y_, [](const auto a, const auto b) { return a + b; });
             validate();
             return *this;
         }
@@ -44,9 +61,8 @@ namespace sc {
 
         template<Numeric U>
         Derived operator+=(const U &r) {
-            const auto value = static_cast<T>(r);
-            x_ += value;
-            y_ += value;
+            x_ = with(x_, r, [](const auto a, const auto b) { return a + b; });
+            y_ = with(y_, r, [](const auto a, const auto b) { return a + b; });
             validate();
             return *this;
         }
@@ -58,8 +74,8 @@ namespace sc {
         }
 
         Derived operator-=(const pair_ &r) {
-            x_ -= r.x_;
-            y_ -= r.y_;
+            x_ = combine(x_, r.x_, [](const auto a, const auto b) { return a - b; });
+            y_ = combine(y_, r.y_, [](const auto a, const auto b) { return a - b; });
             validate();
             return *this;
         }
@@ -71,9 +87,8 @@ namespace sc {
 
         template<Numeric U>
         Derived operator-=(const U &r) {
-            const auto value = static_cast<T>(r);
-            x_ -= value;
-            y_ -= value;
+            x_ = with(x_, r, [](const auto a, const auto b) { return a - b; });
+            y_ = with(y_, r, [](const auto a, const auto b) { return a - b; });
             validate();
             return *this;
         }
@@ -85,8 +100,8 @@ namespace sc {
         }
 
         Derived operator*=(const pair_ &r) {
-            x_ *= r.x_;
-            y_ *= r.y_;
+            x_ = combine(x_, r.x_, [](const auto a, const auto b) { return a * b; });
+            y_ = combine(y_, r.y_, [](const auto a, const auto b) { return a * b; });
             validate();
             return *this;
         }
@@ -98,9 +113,8 @@ namespace sc {
 
         template<Numeric U>
         Derived operator*=(const U &r) {
-            const auto value = static_cast<T>(r);
-            x_ *= value;
-            y_ *= value;
+            x_ = with(x_, r, [](const auto a, const auto b) { return a * b; });
+            y_ = with(y_, r, [](const auto a, const auto b) { return a * b; });
             validate();
             return *this;
         }
@@ -112,8 +126,8 @@ namespace sc {
         }
 
         Derived operator/=(const pair_ &r) {
-            x_ /= r.x_;
-            y_ /= r.y_;
+            x_ = combine(x_, r.x_, [](const auto a, const auto b) { return a / b; });
+            y_ = combine(y_, r.y_, [](const auto a, const auto b) { return a / b; });
             validate();
             return *this;
         }
@@ -125,9 +139,8 @@ namespace sc {
 
         template<Numeric U>
         Derived operator/=(const U &r) {
-            const auto value = static_cast<T>(r);
-            x_ /= value;
-            y_ /= value;
+            x_ = with(x_, r, [](const auto a, const auto b) { return a / b; });
+            y_ = with(y_, r, [](const auto a, const auto b) { return a / b; });
             validate();
             return *this;
         }
@@ -140,6 +153,21 @@ namespace sc {
 
     protected:
         T x_, y_;
+
+        // a op b: for plain numbers as they are, for distances on their points.
+        template<typename Op>
+        static T combine(const T &a, const T &b, Op op) {
+            if constexpr (Numeric<T>) return static_cast<T>(op(a, b));
+            else return detail::from_points<T>(op(a.points(), b.points()));
+        }
+
+        // a op a number: for plain numbers the number as a T (as before), for distances a number of
+        // points to add or take away, or a factor to multiply or divide by.
+        template<typename U, typename Op>
+        static T with(const T &a, const U &r, Op op) {
+            if constexpr (Numeric<T>) return static_cast<T>(op(a, static_cast<T>(r)));
+            else return detail::from_points<T>(op(a.points(), static_cast<double>(r)));
+        }
 
         void validate() {
             if constexpr (requires(Derived &d) { d.on_validate(); })
@@ -161,8 +189,16 @@ namespace sc {
         using pair_<point_<T>, T>::pair_;
 
         template<typename U>
-        operator point_<U>() {
+            requires std::convertible_to<T, U>
+        operator point_<U>() const {
             return {this->x_, this->y_};
+        }
+
+        /// The same position in another unit (or a distance from a number of points):
+        /// static_cast<sc::point_<sc::dist::mm>>(where).
+        template<Coordinate U>
+            requires(!std::same_as<U, T> && !std::convertible_to<U, T> && std::constructible_from<T, U>)
+        explicit point_(const point_<U> &other) : point_(T(other.x()), T(other.y())) {
         }
 
         T x() const { return this->x_; }

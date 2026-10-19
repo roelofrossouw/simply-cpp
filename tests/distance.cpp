@@ -6,8 +6,12 @@
 #include "size.h"
 
 #include <string>
+#include <type_traits>
 
 #include "sc_test.h"
+
+template<typename Size>
+concept has_area = requires(Size s) { s.area(); };
 
 int main() {
     SECTION("Units into points");
@@ -58,6 +62,43 @@ int main() {
     const sc::size a4{sc::dist::mm(210), sc::dist::mm(297)};
     CHECK_NEAR(a4.width(), 595.2756, 1e-4);
     CHECK_NEAR(a4.height(), 841.8898, 1e-4);
+
+    SECTION("Points and sizes of distances keep their units");
+    {
+        const sc::size_<sc::distance> a4{sc::dist::mm(210), sc::dist::mm(297)};
+        CHECK_EQ(sc::console::format(a4), std::string{"[595.276pt,841.89pt]"});
+        const auto in_mm = static_cast<sc::size_<sc::dist::mm>>(a4);           // the same size, in mm
+        CHECK_EQ(sc::console::format(in_mm), std::string{"[210mm,297mm]"});
+        CHECK_EQ(sc::console::format(static_cast<sc::size_<sc::dist::inch>>(sc::size_<sc::distance>{72, 144})), std::string{"[1in,2in]"});
+
+        const sc::size plain = a4;                                              // numbers of points
+        CHECK_NEAR(plain.width(), 595.2756, 1e-4);
+        const sc::size_<sc::distance> back = plain;                             // and back
+        CHECK(back == a4);
+        const sc::size_<sc::distance> from_mm = in_mm;                          // a unit to a plain distance
+        CHECK_NEAR(from_mm.height().points(), 841.8898, 1e-4);
+
+        CHECK_EQ(sc::console::format(a4 * 0.5), std::string{"[297.638pt,420.945pt]"}); // a factor
+        CHECK_EQ(sc::console::format(sc::size_<sc::distance>{10, 20} + 5), std::string{"[15pt,25pt]"}); // a number is points
+        const sc::size_<sc::dist::mm> mm_plus = in_mm + sc::size_<sc::dist::mm>{sc::dist::mm(10), sc::dist::mm(3)};
+        CHECK_EQ(sc::console::format(mm_plus), std::string{"[220mm,300mm]"});
+        CHECK_NEAR((in_mm + 72).width().millimetres(), 235.4, 1e-9);           // 72 points: an inch
+        CHECK_EQ(sc::console::format(sc::size_<sc::distance>{-5, 10}), std::string{"[0pt,10pt]"}); // never below 0
+
+        const sc::point_<sc::dist::mm> corner{sc::dist::mm(10), sc::dist::mm(20)};
+        CHECK_EQ(sc::console::format(corner), std::string{"(10mm,20mm)"});
+        const sc::point at = corner;                                            // points
+        CHECK_NEAR(at.x(), 28.3464567, 1e-6);
+        CHECK_EQ(sc::console::format(static_cast<sc::point_<sc::dist::cm>>(corner)), std::string{"(1cm,2cm)"});
+        CHECK_EQ(sc::console::format(sc::size_<sc::distance>{}), std::string{"[0pt,0pt]"});
+
+        // What doesn't compile: an area of distances, and rounding a size to whole numbers implicitly.
+        static_assert(!has_area<sc::size_<sc::distance>>);
+        static_assert(has_area<sc::size>);
+        static_assert(!std::is_convertible_v<sc::size, sc::size_i>);
+        static_assert(std::is_convertible_v<sc::size_i, sc::size>);
+        static_assert(!std::is_convertible_v<sc::size_<sc::distance>, sc::size_<sc::dist::mm>>); // a unit: say so
+    }
 
     TEST_SUMMARY();
 }

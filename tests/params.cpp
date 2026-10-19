@@ -203,5 +203,19 @@ int main() {
         CHECK_THROWS_AS(sc::params({"--license"}, structure), sc::params::error);
     }
 
+    SECTION("An Apache-2.0 program's help shows its copyright and the licence's notice");
+    {
+        static const char *const no_files[] = {nullptr};
+        sc::detail::register_program_copyright("Copyright 2025-2026 Roelof Rossouw");
+        sc::detail::register_program_license({"AGPL-3.0", "", "", no_files});
+        CHECK(sc::params({"--help"}, structure).help().find("Copyright") == std::string::npos); // only for Apache-2.0
+        sc::detail::register_program_license({"Apache-2.0", "", "", no_files});
+        const auto text = sc::params({"--help"}, structure).help();
+        const auto notice = text.find("Copyright 2025-2026 Roelof Rossouw\n\nLicensed under the Apache License, Version 2.0");
+        CHECK(notice != std::string::npos);
+        CHECK(text.find("limitations under the License.\n") != std::string::npos);
+        CHECK_LT(notice, text.find("Options:")); // after the description, before the lists
+    }
+
     TEST_SUMMARY();
 }

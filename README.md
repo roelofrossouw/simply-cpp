@@ -108,14 +108,16 @@ marks.flip_horizontal(sc::rect{0, 0, 595, 842}); // mirrored across an A4 page, 
 ```
 
 `distance.h` has `sc::distance`, a length kept in points (1/72 inch, the unit PDFs are drawn
-in), with `sc::mm` and `sc::inch` deriving from it: each converts to its number of points as a
-double, so every shape and drawing call takes them as they are, mixed with plain numbers (points).
-`points()`, `millimetres()` and `inches()` read one back.
+in), and the units in `sc::dist` deriving from it: `dist::mm`, `dist::cm`, `dist::inch` and
+`dist::point` (a namespace of their own, so they keep their plain names without clashing with
+`sc::point` or each other). Each converts to its number of points as a double, so every shape
+and drawing call takes them as they are, mixed with plain numbers (points). `points()`,
+`millimetres()` and `inches()` read one back.
 
 ```cpp
-const sc::rect box{sc::mm(10), sc::inch(1.1), sc::distance(72), 72};   // 28.35, 79.2, 72 x 72
-const double margin = sc::mm(15) + sc::inch(0.5);                      // 78.52 points
-const sc::size a4{sc::mm(210), sc::mm(297)};                           // 595.28 x 841.89
+const sc::rect box{sc::dist::mm(10), sc::dist::inch(1.1), sc::dist::point(72), 72}; // 28.35, 79.2, 72 x 72
+const double margin = sc::dist::mm(15) + sc::dist::inch(0.5);                      // 78.52 points
+const sc::size a4{sc::dist::mm(210), sc::dist::mm(297)};                           // 595.28 x 841.89
 ```
 
 `transform.h` has `sc::transform`, an affine transform (SVG's `matrix(a b c d e f)`):

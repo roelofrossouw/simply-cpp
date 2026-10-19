@@ -80,6 +80,8 @@ int main() {
         CHECK_EQ(args.as<std::string>("count"), std::string{"5"});
         CHECK_EQ(args["ratio"].get<double>(), 0.25);
         CHECK_EQ(args["mode"].get<std::string>(), std::string{"fast"});
+        const sc::params shouted{std::vector<std::string>{"in", "--mode=FAST"}, structure};
+        CHECK_EQ(shouted["mode"].get<std::string>(), std::string{"fast"}); // in any case, as the choice is written
         CHECK(args["define"] == nlohmann::ordered_json({"A=1", "B=2"}));
         CHECK_EQ(args["input"].get<std::string>(), std::string{"in"});
         CHECK_EQ(args["output"].get<std::string>(), std::string{"out"});

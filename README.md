@@ -107,6 +107,17 @@ marks.bounds();                                 // all three
 marks.flip_horizontal(sc::rect{0, 0, 595, 842}); // mirrored across an A4 page, as a whole
 ```
 
+`distance.h` has `sc::distance`, a length kept in points (1/72 inch, the unit PDFs are drawn
+in), with `sc::mm` and `sc::inch` deriving from it: each converts to its number of points as a
+double, so every shape and drawing call takes them as they are, mixed with plain numbers (points).
+`points()`, `millimetres()` and `inches()` read one back.
+
+```cpp
+const sc::rect box{sc::mm(10), sc::inch(1.1), sc::distance(72), 72};   // 28.35, 79.2, 72 x 72
+const double margin = sc::mm(15) + sc::inch(0.5);                      // 78.52 points
+const sc::size a4{sc::mm(210), sc::mm(297)};                           // 595.28 x 841.89
+```
+
 `transform.h` has `sc::transform`, an affine transform (SVG's `matrix(a b c d e f)`):
 `translate`, `scale`, `rotate` (degrees, clockwise on screen) and `flip_horizontal`/`flip_vertical`,
 about any point or line, composed with `then()`. `apply()` keeps a shape's kind where it can: a

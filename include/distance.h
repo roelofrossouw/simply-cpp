@@ -1,6 +1,7 @@
 #ifndef SC_DISTANCE_H
 #define SC_DISTANCE_H
 
+#include <concepts>
 #include <ostream>
 
 namespace sc {
@@ -15,7 +16,7 @@ namespace sc {
     ///
     /// points(), millimetres(), centimetres() and inches() read it back, and << writes it with its
     /// unit: a distance in points ("595pt"), each unit in its own ("209.903mm"). A distance becomes
-    /// another unit with static_cast, keeping its length: static_cast<sc::dist::mm>(width). Copying
+    /// another unit with in<Unit>() or static_cast, keeping its length: width.in<sc::dist::mm>(). Copying
     /// a unit into a distance keeps it whole: the value is always in points. Where a canvas's unit isn't points (an sc::image's is
     /// pixels), a distance counts as that many pixels: 72 to the inch.
     class distance {
@@ -36,6 +37,13 @@ namespace sc {
 
         /// Its number of points.
         constexpr operator double() const { return points_; }
+
+        /// The same length in a unit: width.in<sc::dist::mm>(), as static_cast<sc::dist::mm>(width).
+        template<typename Unit>
+            requires std::derived_from<Unit, distance>
+        [[nodiscard]] constexpr Unit in() const {
+            return Unit(*this);
+        }
 
     private:
         double points_;

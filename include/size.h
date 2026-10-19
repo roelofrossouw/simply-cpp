@@ -11,6 +11,14 @@ namespace sc {
     public:
         using pair_<size_<T>, T>::pair_;
 
+        /// The same size in a unit, for a size of distances: pdf.size().in<sc::dist::mm>() is
+        /// [210mm,297mm], the same as static_cast<sc::size_<sc::dist::mm>>(pdf.size()).
+        template<typename Unit>
+            requires(std::derived_from<T, distance> && std::derived_from<Unit, distance>)
+        [[nodiscard]] size_<Unit> in() const {
+            return static_cast<size_<Unit>>(*this);
+        }
+
         /// The same size in another unit (or distances from numbers of points):
         /// static_cast<sc::size_<sc::dist::mm>>(pdf.size()) is [210mm,297mm].
         template<Coordinate U>

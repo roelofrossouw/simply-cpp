@@ -13,6 +13,9 @@
 template<typename Size>
 concept has_area = requires(Size s) { s.area(); };
 
+template<typename Size>
+concept requires_in = requires(Size s) { s.template in<sc::dist::mm>(); };
+
 int main() {
     SECTION("Units into points");
     CHECK_NEAR(sc::dist::mm(25.4).points(), 72.0, 1e-9);
@@ -98,6 +101,23 @@ int main() {
         static_assert(!std::is_convertible_v<sc::size, sc::size_i>);
         static_assert(std::is_convertible_v<sc::size_i, sc::size>);
         static_assert(!std::is_convertible_v<sc::size_<sc::distance>, sc::size_<sc::dist::mm>>); // a unit: say so
+    }
+
+    SECTION("in<Unit>(): the same length, point or size in a unit");
+    {
+        using namespace sc::dist;
+        const sc::distance width = mm(210);
+        CHECK_EQ(sc::console::format(width.in<mm>()), std::string{"210mm"});
+        CHECK_EQ(sc::console::format(width.in<cm>()), std::string{"21cm"});
+        CHECK_EQ(sc::console::format(inch(1).in<point>()), std::string{"72pt"});
+        const sc::size_<sc::distance> a4{mm(210), mm(297)};
+        CHECK_EQ(sc::console::format(a4.in<mm>()), std::string{"[210mm,297mm]"});
+        CHECK_EQ(sc::console::format(a4.in<mm>().in<cm>()), std::string{"[21cm,29.7cm]"}); // unit to unit
+        CHECK_EQ(sc::console::format(sc::size_<sc::distance>{72, 36}.in<inch>()), std::string{"[1in,0.5in]"});
+        const sc::point_<mm> corner{mm(10), mm(20)};
+        CHECK_EQ(sc::console::format(corner.in<cm>()), std::string{"(1cm,2cm)"});
+        CHECK_EQ(sc::console::format(corner.in<sc::distance>()), std::string{"(28.3465pt,56.6929pt)"});
+        static_assert(!requires_in<sc::size>); // plain numbers don't know their unit
     }
 
     TEST_SUMMARY();

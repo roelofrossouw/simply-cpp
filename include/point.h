@@ -194,6 +194,14 @@ namespace sc {
             return {this->x_, this->y_};
         }
 
+        /// The same position in a unit, for a point of distances: where.in<sc::dist::mm>(), the
+        /// same as static_cast<sc::point_<sc::dist::mm>>(where).
+        template<typename Unit>
+            requires(std::derived_from<T, distance> && std::derived_from<Unit, distance>)
+        [[nodiscard]] point_<Unit> in() const {
+            return static_cast<point_<Unit>>(*this);
+        }
+
         /// The same position in another unit (or a distance from a number of points):
         /// static_cast<sc::point_<sc::dist::mm>>(where).
         template<Coordinate U>

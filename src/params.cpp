@@ -212,6 +212,17 @@ namespace {
         } else {
             value = text;
         }
+        // Text matches a choice in any case, and becomes the choice as written ("a4" is "A4").
+        if (!item.choices.is_null() && value.is_string()) {
+            const auto same = [&](const json &choice) {
+                if (!choice.is_string()) return false;
+                const auto &a = choice.get_ref<const std::string &>();
+                return a.size() == text.size() && std::equal(a.begin(), a.end(), text.begin(), [](const unsigned char x, const unsigned char y) {
+                    return std::tolower(x) == std::tolower(y);
+                });
+            };
+            if (const auto found = std::find_if(item.choices.begin(), item.choices.end(), same); found != item.choices.end()) value = *found;
+        }
         if (!item.choices.is_null() && std::find(item.choices.begin(), item.choices.end(), value) == item.choices.end()) {
             std::string list;
             for (const auto &choice: item.choices) list += (list.empty() ? "" : ", ") + (choice.is_string() ? choice.get<std::string>() : choice.dump());

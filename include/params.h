@@ -38,7 +38,8 @@ namespace sc {
     //                 "default": "/etc/x.conf",  set when the option isn't given
     //                 "required": true,          an error when it isn't given
     //                 "multiple": true,          may be given again; the value is a list
-    //                 "choices": ["a", "b"],     the value must be one of these
+    //                 "choices": ["a", "b"],     the value must be one of these (text in any
+    //                                            case, given back as the choice is written)
     //                 "value": "FILE",           the placeholder in help (default: CONFIG)
     //                 "help": "read this file"
     //             }

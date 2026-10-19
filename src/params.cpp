@@ -1,4 +1,5 @@
 #include "params.h"
+#include "console.h"
 #include "rest.h"
 
 #include <algorithm>
@@ -21,19 +22,11 @@ namespace {
     bool license_registered = false;
     const char *registered_copyright = nullptr; // "Copyright 2025-2026 Roelof Rossouw"
 
-    // The notice the Apache License asks to be shown with a program under it, with its copyright.
-    constexpr const char *apache_notice = R"(Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-)";
+    // The notice the Apache License asks to be shown with a program under it: its two paragraphs
+    // and the link between them.
+    constexpr const char *apache_licensed = R"(Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at)";
+    constexpr const char *apache_link = "http://www.apache.org/licenses/LICENSE-2.0";
+    constexpr const char *apache_warranty = R"(Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.)";
 
     // The licence's text: the first of its files that can be read (its package's copyright file,
     // or the source's LICENSE), else fetched from where it's published; empty when neither works.
@@ -479,7 +472,7 @@ namespace sc {
     std::string params::help() const {
         const auto structure = read_layout(structure_);
         std::string text = usage() + '\n';
-        if (!structure.description.empty()) text += wrapped(structure.description, 0, 0) + '\n';
+        if (!structure.description.empty()) text += '\n' + sc::console::justified(structure.description, help_width);
 
         // Each row: the label ("  -c, --config=FILE") and its help, the help in a column.
         struct row {
@@ -539,10 +532,15 @@ namespace sc {
         };
         section("Arguments", arguments);
         section("Options", options);
-        if (!structure.epilog.empty()) text += '\n' + wrapped(structure.epilog, 0, 0) + '\n';
-        // Last, an Apache-2.0 program's notice: its copyright and the licence's boilerplate, as written.
-        if (license_registered && registered_copyright && *registered_copyright && std::string_view{registered_license.name} == "Apache-2.0")
-            text += '\n' + std::string{registered_copyright} + "\n\n" + apache_notice;
+        if (!structure.epilog.empty()) text += '\n' + sc::console::justified(structure.epilog, help_width);
+        // Last, an Apache-2.0 program's notice: its copyright and the link centred, the licence's
+        // words justified.
+        if (license_registered && registered_copyright && *registered_copyright && std::string_view{registered_license.name} == "Apache-2.0") {
+            text += '\n' + sc::console::centred(registered_copyright, help_width) + "\n\n";
+            text += sc::console::justified(apache_licensed, help_width) + '\n';
+            text += sc::console::centred(apache_link, help_width) + "\n\n";
+            text += sc::console::justified(apache_warranty, help_width);
+        }
         return text;
     }
 

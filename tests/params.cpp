@@ -112,7 +112,7 @@ int main() {
 
         const auto text = help.help();
         CHECK_EQ(help.usage(), std::string{"Usage: copy [OPTION]... INPUT [OUTPUT] [FILE]..."});
-        CHECK(text.starts_with("Usage: copy [OPTION]... INPUT [OUTPUT] [FILE]...\nCopies INPUT to OUTPUT"));
+        CHECK(text.starts_with("Usage: copy [OPTION]... INPUT [OUTPUT] [FILE]...\n\nCopies INPUT to OUTPUT")); // a blank line between
         CHECK(contains(text, "\nArguments:\n  INPUT"));
         CHECK(!contains(text, "the file to read (required)"));
         CHECK(contains(text, "  OUTPUT"));
@@ -211,8 +211,11 @@ int main() {
         CHECK(sc::params({"--help"}, structure).help().find("Copyright") == std::string::npos); // only for Apache-2.0
         sc::detail::register_program_license({"Apache-2.0", "", "", no_files});
         const auto text = sc::params({"--help"}, structure).help();
-        const auto notice = text.find("Copyright 2025-2026 Roelof Rossouw\n\nLicensed under the Apache License, Version 2.0");
+        const auto notice = text.find("Copyright 2025-2026 Roelof Rossouw\n");
         CHECK(notice != std::string::npos);
+        CHECK(text.find("                      Copyright 2025-2026 Roelof Rossouw\n") != std::string::npos); // centred
+        CHECK(text.find("            http://www.apache.org/licenses/LICENSE-2.0\n") != std::string::npos);
+        CHECK(text.find("Licensed") != std::string::npos); // justified: the spaces between words vary
         CHECK(text.find("limitations under the License.\n") != std::string::npos);
         CHECK_LT(text.find("Options:"), notice); // last, after the lists
     }

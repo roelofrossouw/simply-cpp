@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdlib>
 #include <iostream>
@@ -8,6 +9,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <vector>
 #include <type_traits>
 #include <unistd.h>
 
@@ -81,6 +83,61 @@ namespace sc {
             std::ostringstream text;
             write(text, value);
             return text.str();
+        }
+
+        // Text in lines at most width characters wide, broken at spaces (a word longer than that
+        // gets a line of its own); runs of spaces count as one.
+        static std::vector<std::string> wrap(const std::string_view text, const std::size_t width) {
+            std::vector<std::string> lines;
+            std::string line;
+            std::size_t at = 0;
+            while (at < text.size()) {
+                const auto start = text.find_first_not_of(' ', at);
+                if (start == std::string_view::npos) break;
+                auto end = text.find(' ', start);
+                if (end == std::string_view::npos) end = text.size();
+                const auto word = text.substr(start, end - start);
+                if (!line.empty() && display_width(line) + 1 + display_width(word) > width) {
+                    lines.push_back(line);
+                    line.clear();
+                }
+                if (!line.empty()) line += ' ';
+                line += word;
+                at = end;
+            }
+            if (!line.empty()) lines.push_back(line);
+            return lines;
+        }
+
+        // Text wrapped to width with its lines but the last spread out to fill it (spaces added
+        // between words, the leftmost gaps first), as a justified paragraph; lines end in '\n'.
+        static std::string justified(const std::string_view text, const std::size_t width) {
+            const auto lines = wrap(text, width);
+            std::string out;
+            for (std::size_t i = 0; i < lines.size(); ++i) {
+                const auto &line = lines[i];
+                const auto gaps = static_cast<std::size_t>(std::count(line.begin(), line.end(), ' '));
+                const auto room = width > display_width(line) ? width - display_width(line) : 0;
+                if (i + 1 == lines.size() || gaps == 0 || room == 0) {
+                    out += line + '\n';
+                    continue;
+                }
+                std::size_t gap = 0;
+                for (const char c: line) {
+                    out += c;
+                    if (c != ' ') continue;
+                    out += std::string(room / gaps + (gap < room % gaps ? 1 : 0), ' ');
+                    ++gap;
+                }
+                out += '\n';
+            }
+            return out;
+        }
+
+        // A line centred in width (left as it is when it's wider).
+        static std::string centred(const std::string_view line, const std::size_t width) {
+            const auto length = display_width(line);
+            return std::string(length < width ? (width - length) / 2 : 0, ' ') + std::string{line};
         }
 
     private:

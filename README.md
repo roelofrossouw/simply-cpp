@@ -113,7 +113,10 @@ in), and the units in `sc::dist` deriving from it: `dist::mm`, `dist::cm`, `dist
 `sc::point` or each other). Each converts to its number of points as a double, so every shape
 and drawing call takes them as they are, mixed with plain numbers (points). `points()`,
 `millimetres()`, `centimetres()` and `inches()` read one back, `<<` writes it with its unit
-(`595pt`, `210mm`), and `static_cast<sc::dist::mm>(width)` gives the same length in another unit.
+(`595pt`, `210mm`), and `width.in<sc::dist::mm>()` (or `static_cast<sc::dist::mm>(width)`) gives the same length in
+another unit. Points and sizes can hold distances too, keeping their units:
+`sc::size_<sc::distance>` prints `[595.276pt,841.89pt]`, and its `in<sc::dist::mm>()` is
+`[210mm,297mm]`; with `using namespace sc::dist;` that's `size.in<mm>()`.
 
 ```cpp
 const sc::rect box{sc::dist::mm(10), sc::dist::inch(1.1), sc::dist::point(72), 72}; // 28.35, 79.2, 72 x 72

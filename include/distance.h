@@ -51,6 +51,8 @@ namespace sc {
         /// Points, PDF's unit: the same as a plain sc::distance, named for clarity.
         class point : public distance {
         public:
+            constexpr point() = default;
+
             constexpr explicit point(const double points) : distance(points) {}
 
             /// The same length, in points: static_cast<sc::dist::point>(width).
@@ -62,6 +64,8 @@ namespace sc {
         /// Millimetres.
         class mm : public distance {
         public:
+            constexpr mm() = default;
+
             constexpr explicit mm(const double millimetres) : distance(millimetres / mm_per_inch * points_per_inch) {}
 
             /// The same length, in millimetres: static_cast<sc::dist::mm>(width).
@@ -73,6 +77,8 @@ namespace sc {
         /// Centimetres.
         class cm : public distance {
         public:
+            constexpr cm() = default;
+
             constexpr explicit cm(const double centimetres) : distance(centimetres * 10 / mm_per_inch * points_per_inch) {}
 
             /// The same length, in centimetres: static_cast<sc::dist::cm>(width).
@@ -84,6 +90,8 @@ namespace sc {
         /// Inches.
         class inch : public distance {
         public:
+            constexpr inch() = default;
+
             constexpr explicit inch(const double inches) : distance(inches * points_per_inch) {}
 
             /// The same length, in inches: static_cast<sc::dist::inch>(width).

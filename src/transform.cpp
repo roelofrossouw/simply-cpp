@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <numbers>
+#include <stdexcept>
 #include <variant>
 
 namespace sc {
@@ -44,6 +45,13 @@ namespace sc {
         return {next.a_ * a_ + next.c_ * b_, next.b_ * a_ + next.d_ * b_,
                 next.a_ * c_ + next.c_ * d_, next.b_ * c_ + next.d_ * d_,
                 next.a_ * e_ + next.c_ * f_ + next.e_, next.b_ * e_ + next.d_ * f_ + next.f_};
+    }
+
+    transform transform::inverse() const {
+        const double determinant = a_ * d_ - b_ * c_;
+        if (std::abs(determinant) <= 1e-300) throw std::domain_error{"sc::transform: this transform can't be undone"};
+        const double a = d_ / determinant, b = -b_ / determinant, c = -c_ / determinant, d = a_ / determinant;
+        return {a, b, c, d, -(a * e_ + c * f_), -(b * e_ + d * f_)};
     }
 
     double transform::scale_factor() const { return std::sqrt(std::abs(a_ * d_ - b_ * c_)); }

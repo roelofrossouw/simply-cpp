@@ -4,6 +4,7 @@
 #include <sc_test.h>
 
 #include <cmath>
+#include <stdexcept>
 #include <variant>
 
 namespace {
@@ -41,6 +42,15 @@ int main() {
         const auto twice = sc::transform::flip_horizontal(5).then(sc::transform::flip_horizontal(5));
         CHECK(near(twice.apply(sc::point{1, 2}), 1, 2));
         CHECK(twice == sc::transform{});
+    }
+
+    SECTION("inverse(): undoing a transform");
+    {
+        const auto t = sc::transform::rotate(30, {5, 5}).then(sc::transform::scale(2, 3)).then(sc::transform::translate(7, -1));
+        const auto back = t.inverse().apply(t.apply(sc::point{3, 4}));
+        CHECK(near(back, 3, 4));
+        CHECK(near(t.then(t.inverse()).apply(sc::point{-2, 9}), -2, 9));
+        CHECK_THROWS_AS(sc::transform::scale(0, 1).inverse(), std::domain_error);
     }
 
     SECTION("What a transform keeps");

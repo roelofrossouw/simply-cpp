@@ -113,6 +113,8 @@ int main() {
         const auto text = help.help();
         CHECK_EQ(help.usage(), std::string{"Usage: copy [OPTION]... INPUT [OUTPUT] [FILE]..."});
         CHECK(text.starts_with("Usage: copy [OPTION]... INPUT [OUTPUT] [FILE]...\n\nCopies INPUT to OUTPUT")); // a blank line between
+        const sc::params linked{std::vector<std::string>{"--help"}, {{"name", "x"}, {"description", "Does a thing.\nMore: https://example.com/a/rather/long/link/to/somewhere"}}};
+        CHECK(linked.help().find("\nDoes a thing.\nMore: https://example.com/a/rather/long/link/to/somewhere\n") != std::string::npos); // a line each
         CHECK(contains(text, "\nArguments:\n  INPUT"));
         CHECK(!contains(text, "the file to read (required)"));
         CHECK(contains(text, "  OUTPUT"));

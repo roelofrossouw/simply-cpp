@@ -266,7 +266,9 @@ prints `<name>: <mistake>` and `Try '<name> --help' for more information.` and e
 Given a vector of arguments instead, it throws `sc::params::error` and only reports
 `help_requested()`. A program built with `sc_program_info(<target>)` (from
 `SimplyCppFunctions.cmake`; every sc demo is) also has `--license`, printing its licence and
-where to read it, and `--license-text`, printing the text. The values are an
+where to read it, and `--license-text`, printing the text. The description and epilog are wrapped and
+justified to 80 columns, and an Apache-2.0 program's help ends with its copyright (from its
+`NOTICE`) and the licence's notice. The values are an
 `nlohmann::ordered_json` keyed by name:
 
 ```cpp
@@ -290,6 +292,7 @@ int main(int argc, char *argv[]) {
 ```text
 $ copy --help
 Usage: copy [OPTION]... INPUT [OUTPUT]
+
 Copies INPUT to OUTPUT.
 
 Arguments:

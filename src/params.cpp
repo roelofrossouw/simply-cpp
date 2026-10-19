@@ -268,6 +268,21 @@ namespace {
         return result;
     }
 
+    // Text justified to help_width, each line of it (a "\n" in it) a paragraph of its own, so a
+    // link can start a line.
+    std::string paragraphs(const std::string_view text) {
+        std::string out;
+        std::size_t start = 0;
+        while (start <= text.size()) {
+            auto end = text.find('\n', start);
+            if (end == std::string_view::npos) end = text.size();
+            const auto paragraph = text.substr(start, end - start);
+            out += paragraph.empty() ? std::string{"\n"} : sc::console::justified(paragraph, help_width);
+            start = end + 1;
+        }
+        return out;
+    }
+
     std::string shown(const json &value) { return value.is_string() ? value.get<std::string>() : value.dump(); }
 }
 
@@ -472,7 +487,7 @@ namespace sc {
     std::string params::help() const {
         const auto structure = read_layout(structure_);
         std::string text = usage() + '\n';
-        if (!structure.description.empty()) text += '\n' + sc::console::justified(structure.description, help_width);
+        if (!structure.description.empty()) text += '\n' + paragraphs(structure.description);
 
         // Each row: the label ("  -c, --config=FILE") and its help, the help in a column.
         struct row {
@@ -532,7 +547,7 @@ namespace sc {
         };
         section("Arguments", arguments);
         section("Options", options);
-        if (!structure.epilog.empty()) text += '\n' + sc::console::justified(structure.epilog, help_width);
+        if (!structure.epilog.empty()) text += '\n' + paragraphs(structure.epilog);
         // Last, an Apache-2.0 program's notice: its copyright and the link centred, the licence's
         // words justified.
         if (license_registered && registered_copyright && *registered_copyright && std::string_view{registered_license.name} == "Apache-2.0") {

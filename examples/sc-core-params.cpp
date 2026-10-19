@@ -13,7 +13,9 @@
 namespace {
     const nlohmann::ordered_json structure{
         {"name", "copy"},
-        {"description", "Copies INPUT to OUTPUT."},
+        {"description", "A pretend copy program that shows how sc::params reads a command line: it copies INPUT to OUTPUT, or "
+                        "would, if it did more than show what it was given.\nMore on the wiki: "
+                        "https://github.com/roelofrossouw/simply-cpp/wiki/Command-Line-Parameters"},
         {"version", "1.0.0"},
         {"options", {
             {"verbose", {{"short", "v"}, {"type", "boolean"}, {"help", "say what is being done"}}},

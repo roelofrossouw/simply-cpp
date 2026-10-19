@@ -480,9 +480,6 @@ namespace sc {
         const auto structure = read_layout(structure_);
         std::string text = usage() + '\n';
         if (!structure.description.empty()) text += wrapped(structure.description, 0, 0) + '\n';
-        // An Apache-2.0 program's notice: its copyright and the licence's boilerplate, as written.
-        if (license_registered && registered_copyright && *registered_copyright && std::string_view{registered_license.name} == "Apache-2.0")
-            text += '\n' + std::string{registered_copyright} + "\n\n" + apache_notice;
 
         // Each row: the label ("  -c, --config=FILE") and its help, the help in a column.
         struct row {
@@ -543,6 +540,9 @@ namespace sc {
         section("Arguments", arguments);
         section("Options", options);
         if (!structure.epilog.empty()) text += '\n' + wrapped(structure.epilog, 0, 0) + '\n';
+        // Last, an Apache-2.0 program's notice: its copyright and the licence's boilerplate, as written.
+        if (license_registered && registered_copyright && *registered_copyright && std::string_view{registered_license.name} == "Apache-2.0")
+            text += '\n' + std::string{registered_copyright} + "\n\n" + apache_notice;
         return text;
     }
 

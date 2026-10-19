@@ -163,7 +163,7 @@ namespace sc::detail {
     [[nodiscard]] const program_license *registered_program_license() noexcept;
 
     // The program's copyright line ("Copyright 2025-2026 Roelof Rossouw"), from its NOTICE file:
-    // help shows it, with the licence's notice, for an Apache-2.0 program. Since sc-core 1.14.0.
+    // help shows it last, with the licence's notice, for an Apache-2.0 program. Since sc-core 1.14.0.
     void register_program_copyright(const char *copyright) noexcept;
     [[nodiscard]] const char *registered_program_copyright() noexcept;
 }

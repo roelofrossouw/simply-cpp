@@ -19,6 +19,21 @@ namespace {
     // trivially destructible, so it's there whenever a registration runs and is never destroyed.
     sc::detail::program_license registered_license{};
     bool license_registered = false;
+    const char *registered_copyright = nullptr; // "Copyright 2025-2026 Roelof Rossouw"
+
+    // The notice the Apache License asks to be shown with a program under it, with its copyright.
+    constexpr const char *apache_notice = R"(Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+)";
 
     // The licence's text: the first of its files that can be read (its package's copyright file,
     // or the source's LICENSE), else fetched from where it's published; empty when neither works.
@@ -465,6 +480,9 @@ namespace sc {
         const auto structure = read_layout(structure_);
         std::string text = usage() + '\n';
         if (!structure.description.empty()) text += wrapped(structure.description, 0, 0) + '\n';
+        // An Apache-2.0 program's notice: its copyright and the licence's boilerplate, as written.
+        if (license_registered && registered_copyright && *registered_copyright && std::string_view{registered_license.name} == "Apache-2.0")
+            text += '\n' + std::string{registered_copyright} + "\n\n" + apache_notice;
 
         // Each row: the label ("  -c, --config=FILE") and its help, the help in a column.
         struct row {
@@ -542,4 +560,8 @@ namespace sc::detail {
     }
 
     const program_license *registered_program_license() noexcept { return license_registered ? &registered_license : nullptr; }
+
+    void register_program_copyright(const char *copyright) noexcept { registered_copyright = copyright; }
+
+    const char *registered_program_copyright() noexcept { return registered_copyright; }
 }

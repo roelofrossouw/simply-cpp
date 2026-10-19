@@ -161,6 +161,11 @@ namespace sc::detail {
     // Kept for sc::params' --license and --license-text. Programs don't call these: see below.
     void register_program_license(const program_license &license) noexcept;
     [[nodiscard]] const program_license *registered_program_license() noexcept;
+
+    // The program's copyright line ("Copyright 2025-2026 Roelof Rossouw"), from its NOTICE file:
+    // help shows it, with the licence's notice, for an Apache-2.0 program. Since sc-core 1.14.0.
+    void register_program_copyright(const char *copyright) noexcept;
+    [[nodiscard]] const char *registered_program_copyright() noexcept;
 }
 
 // The program's licence, when its build recorded one. SimplyCppFunctions.cmake's
@@ -175,5 +180,8 @@ namespace sc::detail {
 namespace {
     [[maybe_unused]] const bool sc_program_license_registered = (::sc::detail::register_program_license(
         {SC_PROGRAM_LICENSE, SC_PROGRAM_LICENSE_URL, SC_PROGRAM_LICENSE_TEXT_URL, sc_program_license_files}), true);
+#ifdef SC_PROGRAM_COPYRIGHT
+    [[maybe_unused]] const bool sc_program_copyright_registered = (::sc::detail::register_program_copyright(SC_PROGRAM_COPYRIGHT), true);
+#endif
 }
 #endif

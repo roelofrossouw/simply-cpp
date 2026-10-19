@@ -65,5 +65,20 @@ int main() {
         "  std::map<std::string, int>{{\"a\", 1}}.size()\n"
         "      -> 1\n"});
 
+    SECTION("Text laid out: wrapped, justified, centred");
+    {
+        using sc::console;
+        CHECK_EQ(console::wrap("the quick  brown fox jumps", 10), (std::vector<std::string>{"the quick", "brown fox", "jumps"}));
+        CHECK_EQ(console::wrap("antidisestablishment yes", 8), (std::vector<std::string>{"antidisestablishment", "yes"}));
+        CHECK(console::wrap("", 10).empty());
+        // Every line but the last as wide as asked, the extra spaces in the leftmost gaps first.
+        CHECK_EQ(console::justified("the quick brown fox jumps over", 12), std::string{"the    quick\nbrown    fox\njumps over\n"});
+        CHECK_EQ(console::justified("a b", 10), std::string{"a b\n"});           // the last line stays as it is
+        CHECK_EQ(console::justified("één twee drie", 8), std::string{"één twee\ndrie\n"}); // characters, not bytes, fill a line
+        CHECK_EQ(console::justified("a bb ccc dd", 7), std::string{"a    bb\nccc dd\n"});
+        CHECK_EQ(console::centred("abc", 9), std::string{"   abc"});
+        CHECK_EQ(console::centred("too wide", 4), std::string{"too wide"});
+    }
+
     TEST_SUMMARY();
 }

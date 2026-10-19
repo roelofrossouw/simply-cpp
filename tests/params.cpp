@@ -214,7 +214,7 @@ int main() {
         const auto notice = text.find("Copyright 2025-2026 Roelof Rossouw\n\nLicensed under the Apache License, Version 2.0");
         CHECK(notice != std::string::npos);
         CHECK(text.find("limitations under the License.\n") != std::string::npos);
-        CHECK_LT(notice, text.find("Options:")); // after the description, before the lists
+        CHECK_LT(text.find("Options:"), notice); // last, after the lists
     }
 
     TEST_SUMMARY();

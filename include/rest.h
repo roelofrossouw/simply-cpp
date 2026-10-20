@@ -29,7 +29,8 @@ namespace sc {
         /// error goes to std::cerr and the body is empty.
         std::string get();
 
-        /// Posts jsonData and returns the response body, whatever the status. When no response
+        /// Posts jsonData (any bytes, zeros included; header("Content-Type", ...) for other than JSON)
+        /// and returns the response body, whatever the status. When no response
         /// came, the error goes to std::cerr and the body is {"error": "<curl's message>"}.
         std::string post(const std::string &jsonData = R"({})");
 
@@ -41,6 +42,9 @@ namespace sc {
 
         /// The HTTP status of the last get() or post() (200, 404, ...), 0 when it got no response.
         [[nodiscard]] long status() const { return status_; }
+        /// The last response's headers by lowercased name ("content-type", "location"); empty when
+        /// none came. Since 1.19.0.
+        [[nodiscard]] const std::map<std::string, std::string> &response_headers() const { return response_headers_; }
 
         /// The whole request's limit in seconds (default 30); connect_timeout() only connecting's
         /// (default 10).
@@ -62,6 +66,7 @@ namespace sc {
         std::map<std::string, std::string> headers_;
         mutable std::string response{};
         static std::map<std::string, std::string> fetch_cache;
+        std::map<std::string, std::string> response_headers_;
 
         bool setup_curl(base64_impl::curl &conn);
     };

@@ -2,7 +2,27 @@
 #include <../include/sc.h>
 #include <curl/curl.h>
 
+#include <cctype>
+
 namespace sc {
+    // One response header line, "Name: value", into the map by its lowercased name. A status line
+    // (a new response, after a redirect or a 100 Continue) starts the map again.
+    static size_t header_data(char *contents, size_t size, size_t nmemb, void *userp) {
+        auto &headers = *static_cast<std::map<std::string, std::string> *>(userp);
+        std::string line(contents, size * nmemb);
+        while (!line.empty() && (line.back() == '\r' || line.back() == '\n')) line.pop_back();
+        if (line.starts_with("HTTP/")) {
+            headers.clear();
+        } else if (const auto colon = line.find(':'); colon != std::string::npos) {
+            std::string name = line.substr(0, colon);
+            for (auto &c: name) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+            auto value = line.substr(colon + 1);
+            value.erase(0, value.find_first_not_of(" \t"));
+            headers[name] = value;
+        }
+        return size * nmemb;
+    }
+
     size_t write_data(void *contents, size_t size, size_t nmemb, void *userp) {
         static_cast<std::string *>(userp)->append((char *) contents, size * nmemb);
         return size * nmemb;
@@ -82,6 +102,9 @@ namespace sc {
         conn.option(CURLOPT_WRITEFUNCTION, write_data);
         response.clear(); // each request starts with an empty body; curl appends to it
         conn.option(CURLOPT_WRITEDATA, &response);
+        response_headers_.clear();
+        conn.option(CURLOPT_HEADERFUNCTION, header_data);
+        conn.option(CURLOPT_HEADERDATA, &response_headers_);
         return true;
     }
 
@@ -100,7 +123,8 @@ namespace sc {
     std::string rest::post(const std::string &jsonData) {
         base64_impl::curl conn;
         setup_curl(conn);
-        conn.option(CURLOPT_POSTFIELDS, jsonData.c_str());
+        conn.option(CURLOPT_POSTFIELDSIZE_LARGE, static_cast<curl_off_t>(jsonData.size())); // binary bodies too
+        conn.option(CURLOPT_POSTFIELDS, jsonData.data());
         const bool ran = conn.run();
         status_ = ran ? conn.status() : 0;
         if (!ran) {

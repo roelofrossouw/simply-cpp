@@ -61,6 +61,7 @@ int main() {
         CHECK_NOTHROW(unreachable.get());
         CHECK_EQ(unreachable.get(), string{});
         CHECK_EQ(unreachable.status(), 0L); // no response at all
+        CHECK(unreachable.response_headers().empty());
 
         sc::rest posting{"http://127.0.0.1:9/"};
         posting.connect_timeout(2);
@@ -75,6 +76,9 @@ int main() {
         sc::rest found{"https://raw.githubusercontent.com/roelofrossouw/simply-cpp/main/LICENSE"};
         CHECK(found.get().find("Apache License") != string::npos);
         CHECK_EQ(found.status(), 200L);
+        // Its headers, by lowercased name.
+        CHECK_MSG(found.response_headers().contains("content-type"), "no content-type among the response headers");
+        CHECK(found.response_headers().at("content-type").starts_with("text/plain"));
         sc::rest missing{"https://raw.githubusercontent.com/roelofrossouw/simply-cpp/main/NO-SUCH-FILE"};
         (void) missing.get(); // the body is GitHub's error page
         CHECK_EQ(missing.status(), 404L);

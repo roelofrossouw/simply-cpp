@@ -323,6 +323,17 @@ Options:
       --version      output version information and exit
 ```
 
+### Log levels
+
+`log_level.h` has `sc::log_level`, syslog's levels from `emergency` (0) to `debug` (7), for
+modules that write warnings: each takes its own level, as each carries its own copy of sc-core.
+`sc::log_level_from(3)` turns a configuration file's number into one (`error`).
+
+```cpp
+sc::image::log_level(sc::log_level::error);      // no libjpeg warnings about damaged files
+sc::teltonika::log_level(sc::log_level::error);  // no "Invalid data length" for bad frames
+```
+
 ### Helpers
 
 `core.h` has small PHP-style helpers: `file_get_contents()`, `file_put_contents()`,

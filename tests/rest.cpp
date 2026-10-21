@@ -52,6 +52,9 @@ int main() {
         CHECK_EQ(sc::rest::fetch(long_url), string{});
     }
 
+    SECTION("fetch of an empty url is empty");
+    CHECK_EQ(sc::rest::fetch(""), string{});
+
     SECTION("A failed request is reported, not thrown");
     {
         // Port 9 is the discard port: nothing is listening, so this fails fast.

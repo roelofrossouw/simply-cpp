@@ -5,13 +5,7 @@
 #include <map>
 #include <memory>
 
-struct curl_slist;
-
 namespace sc {
-    namespace base64_impl {
-        class curl;
-    }
-
     /// HTTP GET and POST to one URL, over libcurl, with headers, a bearer token and timeouts.
     /// Requests send "Content-Type: application/json" unless header() says otherwise.
     ///
@@ -22,8 +16,6 @@ namespace sc {
     class rest {
     public:
         explicit rest(const std::string &url);
-
-        bool setup_curl(base64_impl::curl &conn) const;
 
         /// The response body, whatever the status (see status()). When no response came, the
         /// error goes to std::cerr and the body is empty.
@@ -43,7 +35,7 @@ namespace sc {
         /// The HTTP status of the last get() or post() (200, 404, ...), 0 when it got no response.
         [[nodiscard]] long status() const { return status_; }
         /// The last response's headers by lowercased name ("content-type", "location"); empty when
-        /// none came. Since 1.19.0.
+        /// none came.
         [[nodiscard]] const std::map<std::string, std::string> &response_headers() const { return response_headers_; }
 
         /// The whole request's limit in seconds (default 30); connect_timeout() only connecting's
@@ -54,7 +46,7 @@ namespace sc {
 
         /// The content at url, kept for the rest of the process: a local file of that path (or of it
         /// without its first character, or without base_url) if there is one, else a GET. Empty for a
-        /// url over 100 characters. Not thread-safe: the cache is shared and unguarded.
+        /// url that is empty or over 100 characters. Not thread-safe: the cache is shared and unguarded.
         static std::string fetch(const std::string &url, const std::string &base_url = "");
 
     private:
@@ -62,13 +54,13 @@ namespace sc {
         long connect_timeout_secs_ = 10;
         long timeout_secs_ = 30;
         long status_ = 0;
-        std::map<std::string, std::string> parameters;
         std::map<std::string, std::string> headers_;
-        mutable std::string response{};
+        std::string response;
         static std::map<std::string, std::string> fetch_cache;
         std::map<std::string, std::string> response_headers_;
 
-        bool setup_curl(base64_impl::curl &conn);
+        // A GET, or a POST of *post_body when it is set.
+        std::string perform(const std::string *post_body);
     };
 }
 

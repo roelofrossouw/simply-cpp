@@ -3,7 +3,6 @@
 #include <filesystem>
 #include <fstream>
 #include <sstream>
-#include <random>
 #include <stdexcept>
 
 namespace sc {
@@ -25,11 +24,6 @@ namespace sc {
         output_file.close();
     }
 
-    double rand(double minval, double maxval) {
-        std::random_device r;
-        return static_cast<double>(r()) / RAND_MAX / 2 * (maxval - minval) + minval;
-    }
-
     std::string getenv(const std::string &variable, const std::string &fallback) {
         const char *value = std::getenv(variable.c_str());
         return value && *value ? value : fallback;
@@ -45,5 +39,12 @@ namespace sc {
         }
         items.emplace_back(text.substr(start));
         return items;
+    }
+
+    std::string lowercase(std::string_view text) {
+        std::string out(text);
+        for (auto &c: out)
+            if (c >= 'A' && c <= 'Z') c = static_cast<char>(c - 'A' + 'a');
+        return out;
     }
 }

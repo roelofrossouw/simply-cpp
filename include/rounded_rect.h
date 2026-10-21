@@ -37,10 +37,7 @@ namespace sc {
             return radius_ = value;
         }
 
-        bool operator==(const rounded_rect_ &other) const {
-            return radius_ == other.radius_ && rect_value_.left() == other.rect_value_.left() && rect_value_.top() == other.rect_value_.top() &&
-                   rect_value_.width() == other.rect_value_.width() && rect_value_.height() == other.rect_value_.height();
-        }
+        bool operator==(const rounded_rect_ &) const = default;
 
     private:
         static void validate_radius(const T radius) {

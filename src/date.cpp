@@ -56,15 +56,12 @@ namespace sc {
 
         private:
             void initialize(const string &dateInput) {
-                if (dateInput == "Today") {
-                    time_t now = time(nullptr);
-                    storage = *localtime(&now);
-                    // TODO: Process common words, e.g. tomorrow, etc.
-                } else if (dateInput.find('/') != std::string::npos) {
+                if (dateInput.find('/') != std::string::npos) {
                     strptime(dateInput.c_str(), "%d/%m/%Y", &storage);
                 } else if (dateInput.find('-') != std::string::npos) {
                     strptime(dateInput.c_str(), "%Y-%m-%d", &storage);
                 } else {
+                    // "Today", and anything else. TODO: words such as "tomorrow".
                     time_t now = time(nullptr);
                     storage = *localtime(&now);
                 }

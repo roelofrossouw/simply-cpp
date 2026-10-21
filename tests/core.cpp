@@ -31,5 +31,11 @@ int main() {
     CHECK((sc::explode("a;b", ",") == strings{"a;b"}));
     CHECK_THROWS_AS(sc::explode("a;b", ""), std::invalid_argument);
 
+    SECTION("lowercase");
+    CHECK_EQ(sc::lowercase("Content-Type"), "content-type");
+    CHECK_EQ(sc::lowercase(""), "");
+    CHECK_EQ(sc::lowercase("ABC xyz 123"), "abc xyz 123");
+    CHECK_EQ(sc::lowercase("\xC3\x89T\xC3\x89"), "\xC3\x89t\xC3\x89");
+
     TEST_SUMMARY();
 }

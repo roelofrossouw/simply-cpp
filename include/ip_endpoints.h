@@ -81,13 +81,7 @@ namespace sc {
             return os << endpoints.to_string();
         }
 
-        friend bool operator==(const ip_endpoints &lhs, const ip_endpoints &rhs) {
-            if (lhs.size() != rhs.size()) return false;
-            for (size_type i = 0; i < lhs.size(); ++i) {
-                if (lhs[i].host != rhs[i].host || lhs[i].port != rhs[i].port) return false;
-            }
-            return true;
-        }
+        friend bool operator==(const ip_endpoints &, const ip_endpoints &) = default;
 
         [[nodiscard]] iterator begin() noexcept { return endpoints_.begin(); }
         [[nodiscard]] iterator end() noexcept { return endpoints_.end(); }

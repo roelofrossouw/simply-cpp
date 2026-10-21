@@ -5,6 +5,7 @@
 
 #include <array>
 #include <cmath>
+#include <numbers>
 #include <ostream>
 #include <vector>
 
@@ -43,7 +44,7 @@ namespace sc {
         [[nodiscard]] rect_<T> bounds() const { return static_cast<rect_<T>>(*this); }
 
         [[nodiscard]] operator rect_<T>() const {
-            const double radians = static_cast<double>(angle_) * std::acos(-1.0) / 180.0;
+            const double radians = static_cast<double>(angle_) * std::numbers::pi / 180.0;
             const double cosine = std::abs(std::cos(radians));
             const double sine = std::abs(std::sin(radians));
             const double bounds_width = cosine * width() + sine * height();
@@ -78,7 +79,7 @@ namespace sc {
     template<Numeric T>
     template<Numeric U>
     rotated_rect_<T>::operator polygon_<U>() const {
-        const double radians = static_cast<double>(angle_) * std::acos(-1.0) / 180.0;
+        const double radians = static_cast<double>(angle_) * std::numbers::pi / 180.0;
         const double cosine = std::cos(radians);
         const double sine = std::sin(radians);
         const double half_width = static_cast<double>(width()) / 2;

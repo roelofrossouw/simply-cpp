@@ -70,29 +70,17 @@ namespace sc {
     /// Clusters numbers with DBSCAN: a label per value, counting from 0, and -1 for noise.
     /// minimum_neighbors includes the value itself. A period above 0 makes distances wrap around
     /// (360 for compass bearings). Floating point values must be finite (std::invalid_argument).
-    template<std::integral T>
+    template<typename T>
+        requires std::integral<T> || std::floating_point<T>
     [[nodiscard]] std::vector<int> dbscan(const std::vector<T> &values, const double epsilon,
                                           const std::size_t minimum_neighbors, const double period = 0) {
         detail::validate_dbscan_parameters(epsilon, minimum_neighbors);
         if (!std::isfinite(period) || period < 0)
             throw std::invalid_argument{"DBSCAN period must be finite and non-negative"};
-
-        return detail::dbscan_impl(values, epsilon, minimum_neighbors, [period](const T lhs, const T rhs) {
-            const double difference = std::abs(static_cast<double>(lhs) - static_cast<double>(rhs));
-            if (period == 0) return difference;
-            const double wrapped = std::fmod(difference, period);
-            return std::min(wrapped, period - wrapped);
-        });
-    }
-
-    template<std::floating_point T>
-    [[nodiscard]] std::vector<int> dbscan(const std::vector<T> &values, const double epsilon,
-                                          const std::size_t minimum_neighbors, const double period = 0) {
-        detail::validate_dbscan_parameters(epsilon, minimum_neighbors);
-        if (!std::isfinite(period) || period < 0)
-            throw std::invalid_argument{"DBSCAN period must be finite and non-negative"};
-        if (std::ranges::any_of(values, [](const T value) { return !std::isfinite(value); }))
-            throw std::invalid_argument{"DBSCAN values must be finite"};
+        if constexpr (std::floating_point<T>) {
+            if (std::ranges::any_of(values, [](const T value) { return !std::isfinite(value); }))
+                throw std::invalid_argument{"DBSCAN values must be finite"};
+        }
 
         return detail::dbscan_impl(values, epsilon, minimum_neighbors, [period](const T lhs, const T rhs) {
             const double difference = std::abs(static_cast<double>(lhs) - static_cast<double>(rhs));

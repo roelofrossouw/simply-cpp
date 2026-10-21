@@ -4,11 +4,6 @@
 #include <map>
 #include <vector>
 
-enum {
-    SC_OLLAMA_FORMAT_JSON,
-    SC_OLLAMA_FORMAT_STRING
-};
-
 namespace sc {
     // A client for an Ollama server's generate API, by default at http://127.0.0.1:11434. Without
     // a model it takes the server's first one, so making one asks the server.
@@ -20,7 +15,6 @@ namespace sc {
     public:
         ollama(const std::string &model = {}, const std::string &host = std::string(DEFAULT_IP), int port = DEFAULT_PORT);
 
-        // The models the server has.
         std::vector<std::string> models();
 
         // The model's response to prompt. images are base64 data, or (under 1000 characters) file

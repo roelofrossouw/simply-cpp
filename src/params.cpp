@@ -200,6 +200,22 @@ namespace {
         return result;
     }
 
+    std::string shown(const json &value) { return value.is_string() ? value.get<std::string>() : value.dump(); }
+
+    // "a, b, c".
+    std::string listed(const json &choices) {
+        std::string list;
+        for (const auto &choice: choices) list += (list.empty() ? "" : ", ") + shown(choice);
+        return list;
+    }
+
+    // Parses structure when it is JSON text; returns its name, else fallback.
+    std::string prepare(json &structure, std::string fallback) {
+        if (structure.is_string()) structure = json::parse(structure.get<std::string>());
+        if (structure.is_object() && structure.contains("name") && structure["name"].is_string()) return structure["name"].get<std::string>();
+        return fallback;
+    }
+
     // text as a value of item's type, or a params::error naming what it was given for.
     json convert_value(const parameter &item, const std::string &text, const std::string &given_as) {
         json value;
@@ -232,9 +248,7 @@ namespace {
             if (const auto found = std::find_if(item.choices.begin(), item.choices.end(), same); found != item.choices.end()) value = *found;
         }
         if (!item.choices.is_null() && std::find(item.choices.begin(), item.choices.end(), value) == item.choices.end()) {
-            std::string list;
-            for (const auto &choice: item.choices) list += (list.empty() ? "" : ", ") + (choice.is_string() ? choice.get<std::string>() : choice.dump());
-            throw sc::params::error("invalid value '" + text + "' for " + given_as + ": choose from " + list);
+            throw sc::params::error("invalid value '" + text + "' for " + given_as + ": choose from " + listed(item.choices));
         }
         return value;
     }
@@ -282,19 +296,14 @@ namespace {
         }
         return out;
     }
-
-    std::string shown(const json &value) { return value.is_string() ? value.get<std::string>() : value.dump(); }
 }
 
 namespace sc {
     params::params(const int argc, const char *const argv[], nlohmann::ordered_json structure)
         : structure_(std::move(structure)) {
+        program_ = prepare(structure_, argc > 0 ? std::filesystem::path{argv[0]}.filename().string() : "program");
         std::vector<std::string> arguments;
         for (int i = 1; i < argc; ++i) arguments.emplace_back(argv[i]);
-        if (structure_.is_string()) structure_ = json::parse(structure_.get<std::string>());
-        program_ = structure_.is_object() && structure_.contains("name") && structure_["name"].is_string()
-                       ? structure_["name"].get<std::string>()
-                       : argc > 0 ? std::filesystem::path{argv[0]}.filename().string() : std::string{"program"};
         try {
             parse(arguments);
         } catch (const error &mistake) {
@@ -330,10 +339,7 @@ namespace sc {
 
     params::params(const std::vector<std::string> &arguments, nlohmann::ordered_json structure)
         : structure_(std::move(structure)) {
-        if (structure_.is_string()) structure_ = json::parse(structure_.get<std::string>());
-        program_ = structure_.is_object() && structure_.contains("name") && structure_["name"].is_string()
-                       ? structure_["name"].get<std::string>()
-                       : std::string{"program"};
+        program_ = prepare(structure_, "program");
         parse(arguments);
     }
 
@@ -496,11 +502,7 @@ namespace sc {
         };
         const auto notes = [](const parameter &item, const bool is_option) {
             std::string extra;
-            if (!item.choices.is_null()) {
-                std::string list;
-                for (const auto &choice: item.choices) list += (list.empty() ? "" : ", ") + shown(choice);
-                extra += " (one of: " + list + ')';
-            }
+            if (!item.choices.is_null()) extra += " (one of: " + listed(item.choices) + ')';
             if (!item.fallback.is_null()) extra += " (default: " + shown(item.fallback) + ')';
             if (item.required && is_option) extra += " (required)";
             if (item.multiple) extra += " (can be given more than once)";
@@ -575,6 +577,4 @@ namespace sc::detail {
     const program_license *registered_program_license() noexcept { return license_registered ? &registered_license : nullptr; }
 
     void register_program_copyright(const char *copyright) noexcept { registered_copyright = copyright; }
-
-    const char *registered_program_copyright() noexcept { return registered_copyright; }
 }

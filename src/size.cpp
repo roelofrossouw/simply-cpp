@@ -1,6 +1,6 @@
 #include "size.h"
 
-// Kept in the library as before, for callers built against it.
+// Instantiated in the library too, for callers built against these symbols.
 template class sc::pair_<sc::size_<int>, int>;
 template class sc::size_<int>;
 template class sc::pair_<sc::size_<double>, double>;

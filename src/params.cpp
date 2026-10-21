@@ -202,7 +202,6 @@ namespace {
 
     std::string shown(const json &value) { return value.is_string() ? value.get<std::string>() : value.dump(); }
 
-    // "a, b, c".
     std::string listed(const json &choices) {
         std::string list;
         for (const auto &choice: choices) list += (list.empty() ? "" : ", ") + shown(choice);

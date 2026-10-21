@@ -28,7 +28,6 @@ namespace sc {
         [[nodiscard]] rect_<T> rect() const { return rect_value_; }
         rect_<T> rect(const rect_<T> &value) { return rect_value_ = value; }
 
-        /// Its rectangle.
         [[nodiscard]] rect_<T> bounds() const { return rect_value_; }
         [[nodiscard]] T radius() const { return radius_; }
 

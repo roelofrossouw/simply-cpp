@@ -161,7 +161,7 @@ namespace sc {
             else return detail::from_points<T>(op(a.points(), b.points()));
         }
 
-        // a op a number: for plain numbers the number as a T (as before), for distances a number of
+        // a op a number: for plain numbers the number as a T, for distances a number of
         // points to add or take away, or a factor to multiply or divide by.
         template<typename U, typename Op>
         static T with(const T &a, const U &r, Op op) {

@@ -1,6 +1,7 @@
 #pragma once
 #include <ios>
 #include <string>
+#include <string_view>
 #include <vector>
 
 // Small PHP-style helpers.
@@ -14,9 +15,6 @@ namespace sc {
     // Writes content to the file, replacing it; std::ios::app appends instead.
     void file_put_contents(const std::string &filename, const std::string &content, std::ios_base::openmode mode = std::ios_base::binary);
 
-    // A random number from minval to maxval, from std::random_device.
-    double rand(double minval = 0, double maxval = 1);
-
     // The value of an environment variable, or fallback when it is unset or empty.
     // Takes a std::string so a plain getenv("NAME") still means the C function.
     std::string getenv(const std::string &variable, const std::string &fallback = {});
@@ -25,4 +23,7 @@ namespace sc {
     // kept ("a;;b" gives "a", "", "b") and empty text gives one empty item. Throws
     // std::invalid_argument when separator is empty.
     std::vector<std::string> explode(const std::string &text, const std::string &separator = ";");
+
+    // ASCII letters only; other bytes (UTF-8 included) are kept as they are.
+    std::string lowercase(std::string_view text);
 }

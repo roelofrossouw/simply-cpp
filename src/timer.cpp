@@ -4,26 +4,19 @@
 #include <sstream>
 
 namespace sc {
-    namespace base64_impl {
+    namespace detail {
         class timer {
         public:
-            timer() {
-                startTime = std::chrono::steady_clock::now();
-                stopped = false;
-            }
-
             bool stopped = false;
-            std::chrono::steady_clock::time_point startTime;
+            std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
             std::chrono::nanoseconds taken{};
         };
     }
 
-    timer::timer() {
-        impl = new base64_impl::timer();
+    timer::timer() : impl(std::make_unique<detail::timer>()) {
     }
 
-    timer::timer(const timer &other) {
-        impl = new base64_impl::timer(*other.impl);
+    timer::timer(const timer &other) : impl(std::make_unique<detail::timer>(*other.impl)) {
     }
 
     timer &timer::operator=(const timer &other) {
@@ -31,9 +24,7 @@ namespace sc {
         return *this;
     }
 
-    timer::~timer() {
-        delete impl;
-    }
+    timer::~timer() = default;
 
     void timer::reset() {
         impl->startTime = std::chrono::steady_clock::now();
@@ -54,9 +45,7 @@ namespace sc {
     }
 
     void timer::lap() {
-        if (impl->stopped) {
-            return;
-        }
+        if (impl->stopped) return;
         auto stopTime = std::chrono::steady_clock::now();
         impl->taken += stopTime - impl->startTime;
         impl->startTime = stopTime;
@@ -125,18 +114,12 @@ namespace sc {
     }
 
     timer timer::from_micros(long long us) {
-        timer temp;
-        temp.impl->stopped = true;
-        temp.impl->taken = std::chrono::microseconds(us);
-        return temp;
+        return from_nanos(std::chrono::nanoseconds(std::chrono::microseconds(us)).count());
     }
 
     timer timer::from_millis(long long ms) {
-        timer temp;
-        temp.impl->stopped = true;
-        temp.impl->taken = std::chrono::milliseconds(ms);
-        return temp;
+        return from_nanos(std::chrono::nanoseconds(std::chrono::milliseconds(ms)).count());
     }
 
     std::ostream &operator<<(std::ostream &lhs, timer &rhs) { return lhs << static_cast<std::string>(rhs); }
-} // sc
+}

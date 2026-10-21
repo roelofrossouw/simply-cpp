@@ -20,6 +20,8 @@ namespace sc {
             return host + ':' + std::to_string(port);
         }
 
+        bool operator==(const ip_endpoint &) const = default;
+
         friend std::ostream &operator<<(std::ostream &os, const ip_endpoint &endpoint) {
             return os << endpoint.to_string();
         }

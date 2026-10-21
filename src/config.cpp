@@ -1,6 +1,7 @@
 #include "config.h"
 
 #include "ip_endpoint.h"
+#include "utf8.h"
 
 #include <algorithm>
 #include <cctype>
@@ -329,11 +330,6 @@ namespace {
         return value.is_null();
     }
 
-    // UTF-8 characters, as JSON Schema counts string length.
-    size_t characters(const std::string &text) {
-        return static_cast<size_t>(std::ranges::count_if(text, [](const unsigned char c) { return (c & 0xC0) != 0x80; }));
-    }
-
     bool has_format(const std::string &text, const std::string &format) {
         if (format == "ipv4") {
             static const std::regex ipv4{R"(^((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$)"};
@@ -413,10 +409,11 @@ namespace {
 
         if (value.is_string()) {
             const auto text = value.get<std::string>();
-            if (schema.contains("minLength") && characters(text) < schema["minLength"].get<size_t>()) {
+            // In code points, as JSON Schema counts string length.
+            if (schema.contains("minLength") && sc::utf8::length(text) < schema["minLength"].get<size_t>()) {
                 throw fail(text.empty() ? "must not be empty" : '"' + text + "\" is shorter than " + schema["minLength"].dump() + " characters");
             }
-            if (schema.contains("maxLength") && characters(text) > schema["maxLength"].get<size_t>()) {
+            if (schema.contains("maxLength") && sc::utf8::length(text) > schema["maxLength"].get<size_t>()) {
                 throw fail("longer than " + schema["maxLength"].dump() + " characters");
             }
             if (schema.contains("pattern") && !std::regex_search(text, std::regex{schema["pattern"].get<std::string>(), std::regex::ECMAScript})) {
@@ -486,7 +483,7 @@ namespace {
 
     void collect_keys(const json &node, const std::string &prefix, std::vector<std::string> &keys) {
         for (const auto &[name, value]: node.items()) {
-            const auto key = prefix.empty() ? name : prefix + '.' + name;
+            const auto key = join_key(prefix, name);
             if (value.is_object()) collect_keys(value, key, keys);
             else keys.push_back(key);
         }

@@ -4,7 +4,7 @@ namespace sc {
     std::size_t utf8::find_invalid(std::string_view s) {
         std::size_t i = 0;
         while (i < s.size()) {
-            DecodeResult r = decode_at(s, i);
+            const DecodeResult r = decode_at(s, i);
             if (!r.valid) return r.error_index;
             i += r.length;
         }
@@ -43,16 +43,11 @@ namespace sc {
     std::string utf8::sanitize(std::string_view s) {
         std::string out;
         out.reserve(s.size());
-        std::size_t i = 0;
-        while (i < s.size()) {
-            DecodeResult r = decode_at(s, i);
-            if (r.valid) {
-                out.append(s.substr(i, r.length));
-                i += r.length;
-            } else {
-                append_codepoint(out, kReplacementChar);
-                ++i; // skip one byte and resynchronise
-            }
+        for (std::size_t i = 0; i < s.size();) {
+            const decoded d = decode(s, i);
+            if (d.valid) out.append(s.substr(i, d.length));
+            else append_codepoint(out, kReplacementChar);
+            i += d.length;
         }
         return out;
     }
@@ -67,28 +62,18 @@ namespace sc {
     }
 
     std::size_t utf8::length(std::string_view s) {
-        std::size_t count = 0, i = 0;
-        while (i < s.size()) {
-            DecodeResult r = decode_at(s, i);
-            i += r.valid ? r.length : 1;
-            ++count;
-        }
+        std::size_t count = 0;
+        for (std::size_t i = 0; i < s.size(); ++count) i += decode(s, i).length;
         return count;
     }
 
     std::vector<std::uint32_t> utf8::code_points(std::string_view s) {
         std::vector<std::uint32_t> cps;
         cps.reserve(s.size());
-        std::size_t i = 0;
-        while (i < s.size()) {
-            DecodeResult r = decode_at(s, i);
-            if (r.valid) {
-                cps.push_back(r.code_point);
-                i += r.length;
-            } else {
-                cps.push_back(kReplacementChar);
-                ++i;
-            }
+        for (std::size_t i = 0; i < s.size();) {
+            const decoded d = decode(s, i);
+            cps.push_back(d.code_point);
+            i += d.length;
         }
         return cps;
     }
@@ -141,20 +126,10 @@ namespace sc {
         result.bytes = s.size();
         result.valid_utf8 = is_valid(s);
 
-        std::size_t i = 0;
-
-        while (i < s.size()) {
-            DecodeResult r = decode_at(s, i);
-
-            std::uint32_t cp;
-
-            if (r.valid) {
-                cp = r.code_point;
-                i += r.length;
-            } else {
-                cp = kReplacementChar;
-                ++i;
-            }
+        for (std::size_t i = 0; i < s.size();) {
+            const decoded d = decode(s, i);
+            const std::uint32_t cp = d.code_point;
+            i += d.length;
 
             ++result.codepoints;
 
@@ -235,12 +210,15 @@ namespace sc {
         return r;
     }
 
+    utf8::decoded utf8::decode(std::string_view text, std::size_t at) {
+        const DecodeResult r = decode_at(text, at);
+        if (r.valid) return {static_cast<char32_t>(r.code_point), r.length, true};
+        return {kReplacementChar, 1, false};
+    }
+
     std::size_t utf8::advance(std::string_view s, std::size_t from, std::size_t count) {
         std::size_t i = from;
-        while (count-- && i < s.size()) {
-            DecodeResult r = decode_at(s, i);
-            i += r.valid ? r.length : 1;
-        }
+        while (count-- && i < s.size()) i += decode(s, i).length;
         return i;
     }
 
@@ -252,26 +230,5 @@ namespace sc {
             0x02DC, 0x2122, 0x0161, 0x203A, 0x0153, 0xFFFD, 0x017E, 0xFFFD
         };
         return table[c - 0x80];
-    }
-
-    std::size_t utf8::replacement_count(std::string_view s) {
-        std::size_t count = 0;
-
-        std::size_t i = 0;
-        while (i < s.size()) {
-            DecodeResult r = decode_at(s, i);
-
-            if (r.valid) {
-                if (r.code_point == kReplacementChar)
-                    ++count;
-
-                i += r.length;
-            } else {
-                ++count;
-                ++i;
-            }
-        }
-
-        return count;
     }
 }

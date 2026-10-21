@@ -31,7 +31,7 @@ namespace sc {
                     detail::coordinate<T>(static_cast<double>(other.width())), detail::coordinate<T>(static_cast<double>(other.height()))) {
         }
 
-        /// From its edges (as from_points()).
+        /// From its edges.
         static rect_ ltrb(T left, T top, T right, T bottom) { return {left, top, right - left, bottom - top}; }
 
         /// Itself (see sc::geometry).
@@ -90,7 +90,7 @@ namespace sc {
         rect_ &operator*=(const size_<double> &rhs);
 
         template<typename U> requires std::convertible_to<U, T>
-        rect_ operator*(const U &i) {
+        rect_ operator*(const U &i) const {
             auto tmp = *this;
             return tmp *= i;
         }
@@ -204,6 +204,7 @@ namespace sc {
 
         [[nodiscard]] operator rotated_rect_<T>() const;
 
+        /// The same as ltrb().
         static rect_ from_points(T left, T top, T right, T bottom);
 
         /// Groups boxes that are linked, directly or through others (order doesn't matter): linked
@@ -223,7 +224,7 @@ namespace sc {
 
     using rect = rect_<double>;
     using rect_i = rect_<int>;
-} // namespace sc
+}
 
 // The polygon conversion is defined there, where polygon_ is complete.
 #include "polygon.h"

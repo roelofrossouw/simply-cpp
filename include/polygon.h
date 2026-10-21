@@ -8,6 +8,7 @@
 #include <cmath>
 #include <initializer_list>
 #include <limits>
+#include <numbers>
 #include <ranges>
 #include <stdexcept>
 #include <utility>
@@ -55,15 +56,8 @@ namespace sc {
         /// opposite ones within 5% of each other, and a corner within 10 degrees of square.
         [[nodiscard]] bool is_rect() const noexcept {
             if (points_.size() != 4) return false;
-
-            std::array<double, 4> edge_lengths{};
-            for (size_t i = 0; i < points_.size(); ++i) {
-                const auto &from = points_[i];
-                const auto &to = points_[(i + 1) % points_.size()];
-                edge_lengths[i] = std::hypot(static_cast<double>(to.x()) - from.x(),
-                                             static_cast<double>(to.y()) - from.y());
-                if (edge_lengths[i] == 0) return false;
-            }
+            const auto edge_lengths = side_lengths();
+            if (std::ranges::any_of(edge_lengths, [](const double length) { return length == 0; })) return false;
 
             const auto opposite_sides_match = [](const double lhs, const double rhs) {
                 return std::abs(lhs - rhs) / std::max(lhs, rhs) <= 0.05;
@@ -78,7 +72,7 @@ namespace sc {
             const double second_y = static_cast<double>(points_[2].y()) - points_[1].y();
             const double cosine = (first_x * second_x + first_y * second_y) /
                                   (edge_lengths[0] * edge_lengths[1]);
-            const double angle = std::acos(std::clamp(cosine, -1.0, 1.0)) * 180.0 / std::acos(-1.0);
+            const double angle = std::acos(std::clamp(cosine, -1.0, 1.0)) * 180.0 / std::numbers::pi;
             return angle >= 80.0 && angle <= 100.0;
         }
 
@@ -114,13 +108,11 @@ namespace sc {
             if (points_.size() != 4)
                 throw std::invalid_argument{"Rotated rectangle conversion requires four polygon points"};
 
-            std::array<double, 4> edge_lengths{};
+            const auto edge_lengths = side_lengths();
             std::array<point, 4> midpoints{};
             for (size_t i = 0; i < 4; ++i) {
                 const auto &from = points_[i];
                 const auto &to = points_[(i + 1) % 4];
-                edge_lengths[i] = std::hypot(static_cast<double>(to.x()) - from.x(),
-                                             static_cast<double>(to.y()) - from.y());
                 midpoints[i] = {
                     (static_cast<double>(from.x()) + to.x()) / 2,
                     (static_cast<double>(from.y()) + to.y()) / 2
@@ -134,20 +126,15 @@ namespace sc {
             const bool edges_02_are_short = pair_02 <= pair_13;
             const size_t first_short_edge = edges_02_are_short ? 0 : 1;
             const size_t second_short_edge = edges_02_are_short ? 2 : 3;
-            const double width = edges_02_are_short
-                                     ? (edge_lengths[1] + edge_lengths[3]) / 2
-                                     : (edge_lengths[0] + edge_lengths[2]) / 2;
-            const double height = edges_02_are_short ? pair_02 / 2 : pair_13 / 2;
+            const double width = (edges_02_are_short ? pair_13 : pair_02) / 2;
+            const double height = (edges_02_are_short ? pair_02 : pair_13) / 2;
 
             const double axis_x = midpoints[second_short_edge].x() - midpoints[first_short_edge].x();
             const double axis_y = midpoints[second_short_edge].y() - midpoints[first_short_edge].y();
-            double angle = std::atan2(axis_y, axis_x) * 180.0 / std::acos(-1.0);
+            double angle = std::atan2(axis_y, axis_x) * 180.0 / std::numbers::pi;
             if (angle < -90) angle += 180;
             else if (angle >= 90) angle -= 180;
-            const double center_x = (static_cast<double>(points_[0].x()) + points_[1].x() +
-                                     points_[2].x() + points_[3].x()) / 4;
-            const double center_y = (static_cast<double>(points_[0].y()) + points_[1].y() +
-                                     points_[2].y() + points_[3].y()) / 4;
+            const auto [center_x, center_y] = centre();
             return rotated_rect_<U>{
                 point_<U>{static_cast<U>(center_x), static_cast<U>(center_y)},
                 size_<U>{static_cast<U>(width), static_cast<U>(height)},
@@ -196,26 +183,37 @@ namespace sc {
             double edge_12;
         };
 
+        // The four-point helpers: side i runs from point i to the next.
+        [[nodiscard]] std::pair<double, double> side(const size_t start) const {
+            const auto &from = points_[start];
+            const auto &to = points_[(start + 1) % 4];
+            return {static_cast<double>(to.x()) - from.x(), static_cast<double>(to.y()) - from.y()};
+        }
+
+        [[nodiscard]] std::array<double, 4> side_lengths() const {
+            std::array<double, 4> lengths{};
+            for (size_t i = 0; i < 4; ++i) {
+                const auto [dx, dy] = side(i);
+                lengths[i] = std::hypot(dx, dy);
+            }
+            return lengths;
+        }
+
+        [[nodiscard]] std::pair<double, double> centre() const {
+            return {(static_cast<double>(points_[0].x()) + points_[1].x() + points_[2].x() + points_[3].x()) / 4,
+                    (static_cast<double>(points_[0].y()) + points_[1].y() + points_[2].y() + points_[3].y()) / 4};
+        }
+
         [[nodiscard]] rectangle_geometry rectangle_dimensions() const {
             if (points_.size() != 4)
                 throw std::invalid_argument{"Rotated rectangle dimensions require a four-point polygon"};
 
-            const auto edge = [this](const size_t start) {
-                const auto &from = points_[start];
-                const auto &to = points_[(start + 1) % points_.size()];
-                return std::pair{
-                    static_cast<double>(to.x()) - from.x(),
-                    static_cast<double>(to.y()) - from.y()
-                };
-            };
-            const auto [edge_01_x, edge_01_y] = edge(0);
-            const auto [edge_12_x, edge_12_y] = edge(1);
+            if (!is_rect()) throw std::invalid_argument{"Polygon is not a rotated rectangle"};
+            const auto [edge_01_x, edge_01_y] = side(0);
+            const auto [edge_12_x, edge_12_y] = side(1);
             const double edge_01 = std::hypot(edge_01_x, edge_01_y);
             const double edge_12 = std::hypot(edge_12_x, edge_12_y);
-            if (!is_rect()) throw std::invalid_argument{"Polygon is not a rotated rectangle"};
-
-            const double center_x = (static_cast<double>(points_[0].x()) + points_[1].x() + points_[2].x() + points_[3].x()) / 4;
-            const double center_y = (static_cast<double>(points_[0].y()) + points_[1].y() + points_[2].y() + points_[3].y()) / 4;
+            const auto [center_x, center_y] = centre();
             const bool edge_01_is_width = edge_01 >= edge_12;
             const double width_edge = edge_01_is_width ? edge_01 : edge_12;
             const double height_edge = edge_01_is_width ? edge_12 : edge_01;
@@ -286,4 +284,4 @@ namespace sc {
         };
         return polygon_<U>{corner(left(), top()), corner(right(), top()), corner(right(), bottom()), corner(left(), bottom())};
     }
-} // namespace sc
+}

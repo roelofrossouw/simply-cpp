@@ -2,8 +2,6 @@
 #define SC_COLOR_H
 #include <ostream>
 #include <string>
-#include <tuple>
-#include <unordered_map>
 
 namespace sc {
     /// A colour with alpha, its channels from 0 to 1 (alpha 1 is opaque), readable as RGB or CMYK.
@@ -72,6 +70,6 @@ namespace sc {
         /// CSS: rgb(255, 128, 0), or rgba(255, 128, 0, 0.5) when not opaque; from_string() reads it back.
         friend std::ostream &operator<<(std::ostream &lhs, const color &rhs);
     };
-} // sc
+}
 
 #endif //SC_COLOR_H

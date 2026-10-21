@@ -67,8 +67,6 @@ namespace sc {
             constexpr explicit point(const distance &length) : distance(length) {}
         };
 
-        inline std::ostream &operator<<(std::ostream &out, const point &length) { return out << length.points() << "pt"; }
-
         /// Millimetres.
         class mm : public distance {
         public:

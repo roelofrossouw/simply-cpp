@@ -171,8 +171,8 @@ int main() {
         sc::dual<double> x{3.0};
         CHECK_EQ(static_cast<string>(x), string{"3"});
         CHECK_EQ(static_cast<string>(sc::dual<double>{3.25}), string{"3.25"});
-        CHECK_EQ(static_cast<string>(~x), string{"3 + 1" + sc::EPS_SIGN});
-        CHECK_EQ(static_cast<string>(~~x), string{"(3 + 1" + sc::EPS_SIGN + ") + (1 + 0" + sc::EPS_SIGN + ")" + sc::EPS_SIGN});
+        CHECK_EQ(static_cast<string>(~x), string{"3 + 1" + std::string(sc::EPS_SIGN)});
+        CHECK_EQ(static_cast<string>(~~x), string{"(3 + 1" + std::string(sc::EPS_SIGN) + ") + (1 + 0" + std::string(sc::EPS_SIGN) + ")" + std::string(sc::EPS_SIGN)});
 
         // Streaming prints the numeric cast, not the full expansion.
         ostringstream stream;

@@ -40,6 +40,16 @@ namespace sc {
         static constexpr std::size_t npos = static_cast<std::size_t>(-1);
         static constexpr std::uint32_t kReplacementChar = 0xFFFD;
 
+        struct decoded {
+            char32_t code_point;
+            std::size_t length; // bytes
+            bool valid;
+        };
+
+        /// The code point starting at byte at (at < text.size()). Lenient: an invalid byte gives
+        /// U+FFFD with length 1 and valid false, so stepping by length resynchronises.
+        static decoded decode(std::string_view text, std::size_t at);
+
         /// Index of the first invalid byte, or npos. Overlong encodings, UTF-16 surrogates and
         /// values above U+10FFFF are invalid.
         static std::size_t find_invalid(std::string_view s);
@@ -48,7 +58,6 @@ namespace sc {
             return find_invalid(s) == npos;
         }
 
-        /// 10xxxxxx.
         static bool is_continuation(unsigned char c);
 
         /// ISO-8859-1 (Latin-1) to UTF-8.
@@ -95,20 +104,11 @@ namespace sc {
 
         static DecodeResult decode_at(std::string_view s, std::size_t i);
 
-        // The byte offset count code points after from.
         static std::size_t advance(std::string_view s, std::size_t from,
                                    std::size_t count);
 
         // Windows-1252 mapping for bytes 0x80..0x9F.
         static std::uint32_t cp1252_high(unsigned char c);
-
-        static std::size_t replacement_count(std::string_view s);
-
-        static std::size_t control_count(std::string_view s);
-
-        static std::size_t private_use_count(std::string_view s);
-
-        static bool has_private_use(std::string_view s);
     };
 } // namespace sc
 

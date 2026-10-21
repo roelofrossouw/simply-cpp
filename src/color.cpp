@@ -1,9 +1,11 @@
 #include "color.h"
+#include "core.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <sstream>
 #include <regex>
+#include <tuple>
 #include <unordered_map>
 
 namespace sc {
@@ -51,12 +53,10 @@ namespace sc {
     color color::from_hex(const std::string &hex) {
         double r = 0, g = 0, b = 0;
         if (hex.size() == 7) {
-            // #RRGGBB
             r = std::stoi(hex.substr(1, 2), nullptr, 16) / 255.0;
             g = std::stoi(hex.substr(3, 2), nullptr, 16) / 255.0;
             b = std::stoi(hex.substr(5, 2), nullptr, 16) / 255.0;
         } else if (hex.size() == 4) {
-            // #RGB shorthand
             r = std::stoi(std::string(2, hex[1]), nullptr, 16) / 255.0;
             g = std::stoi(std::string(2, hex[2]), nullptr, 16) / 255.0;
             b = std::stoi(std::string(2, hex[3]), nullptr, 16) / 255.0;
@@ -80,7 +80,7 @@ namespace sc {
 
         double r, g, b;
         if (s == 0) {
-            r = g = b = l; // achromatic
+            r = g = b = l;
         } else {
             double q = l < 0.5 ? l * (1 + s) : l + s - l * s;
             double p = 2 * l - q;
@@ -94,53 +94,36 @@ namespace sc {
     color color::from_string(const std::string &str) {
         if (str.empty()) return {0, 0, 0, 1};
 
-        if (str[0] == '#') {
-            return from_hex(str);
-        }
+        if (str[0] == '#') return from_hex(str);
 
+        static const std::regex rgb(R"(rgba?\(([^)]+)\))");
+        static const std::regex hsl(R"(hsla?\(([^)]+)\))");
         std::smatch match;
-        // rgb() or rgba()
-        if (std::regex_match(str, match, std::regex(R"(rgba?\(([^)]+)\))"))) {
+        if (std::regex_match(str, match, rgb)) {
             std::stringstream ss(match[1].str());
             int r, g, b;
             double a = 1.0;
             char comma;
             ss >> r >> comma >> g >> comma >> b;
-            if (ss >> comma >> a) {
-            } // optional alpha
+            ss >> comma >> a; // optional alpha
             return from_web(r, g, b, a);
         }
 
-        // hsl() or hsla()
-        if (std::regex_match(str, match, std::regex(R"(hsla?\(([^)]+)\))"))) {
+        if (std::regex_match(str, match, hsl)) {
             std::stringstream ss(match[1].str());
             double h, s, l, a = 1.0;
             char comma, percent;
             ss >> h >> comma >> s >> percent >> comma >> l >> percent;
-            if (ss >> comma >> a) {
-            }
+            ss >> comma >> a;
             return from_hsl(h, s, l, a);
         }
 
-
-        auto it = named_colors().find(str);
-        if (it != named_colors().end()) {
-            auto [red,green,blue] = it->second;
+        const auto name = lowercase(str);
+        if (const auto it = named_colors().find(name); it != named_colors().end()) {
+            const auto [red, green, blue] = it->second;
             return from_web(red, green, blue, 1);
         }
-
-        if (str == "transparent" || str == "none") return {0, 0, 0, 0};
-
-        std::string lstr = str;
-        std::transform(lstr.begin(), lstr.end(), lstr.begin(), [](unsigned char c) { return std::tolower(c); });
-
-
-        it = named_colors().find(lstr);
-        if (it != named_colors().end()) {
-            auto [red,green,blue] = it->second;
-            return from_web(red, green, blue, 1);
-        }
-        if (lstr == "transparent" || lstr == "none") return {0, 0, 0, 0};
+        if (name == "transparent" || name == "none") return {0, 0, 0, 0};
 
         return {0, 0, 0, 1};
     }
@@ -191,7 +174,6 @@ namespace sc {
     }
 
     namespace {
-        // A 0..1 channel as 0..255.
         int channel_byte(const double value) {
             return static_cast<int>(std::lround(std::clamp(value, 0.0, 1.0) * 255));
         }
@@ -223,5 +205,4 @@ namespace sc {
     const color color::Black = color(0.0, 0.0, 0.0);
     const color color::White = color(1.0, 1.0, 1.0);
     const color color::Transparent = color(0.0, 0.0, 0.0, 0.0);
-
-} // sc
+}

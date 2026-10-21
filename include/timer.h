@@ -1,10 +1,11 @@
 #pragma once
 
 #include <iosfwd>
+#include <memory>
 #include <string>
 
 namespace sc {
-    namespace base64_impl {
+    namespace detail {
         class timer;
     }
 
@@ -51,7 +52,7 @@ namespace sc {
         static timer from_millis(long long ms);
 
     private:
-        base64_impl::timer *impl;
+        std::unique_ptr<detail::timer> impl;
 
         template<typename T>
         long long getDuration() const;

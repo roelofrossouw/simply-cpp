@@ -31,7 +31,7 @@ namespace
         }
     };
 
-    // Assemble (union-rect, member-indices) groups from a linkage predicate.
+    // (union rect, member indices) groups from a linkage predicate.
     template <typename Linked, typename T>
     std::vector<std::pair<sc::rect_<T>, std::vector<size_t>>>
     components(const std::vector<sc::rect_<T>>& boxes, Linked&& linked)
@@ -58,7 +58,7 @@ namespace
         }
         return groups;
     }
-} // namespace
+}
 
 namespace sc
 {
@@ -158,7 +158,6 @@ namespace sc
         return tmp -= i;
     }
 
-
     template <typename T>
     point_<T> rect_<T>::center() const
     {
@@ -202,12 +201,8 @@ namespace sc
     template <typename T>
     void rect_<T>::include(const rect_& rhs)
     {
-        auto w = std::max(right(), rhs.right()) - std::min(left(), rhs.left());
-        auto h = std::max(bottom(), rhs.bottom()) - std::min(top(), rhs.top());
-        rect_size_ = {w, h};
-        auto x = std::min(left(), rhs.left());
-        auto y = std::min(top(), rhs.top());
-        origin_ = {x, y};
+        *this = ltrb(std::min(left(), rhs.left()), std::min(top(), rhs.top()),
+                     std::max(right(), rhs.right()), std::max(bottom(), rhs.bottom()));
     }
 
     template <typename T>
@@ -215,7 +210,6 @@ namespace sc
     {
         const T dx = std::max({left() - cx, static_cast<T>(0), cx - right()});
         const T dy = std::max({top() - cy, static_cast<T>(0), cy - bottom()});
-        if (dx == 0 && dy == 0) return 0;
         return std::hypot(dx, dy);
     }
 
@@ -224,7 +218,6 @@ namespace sc
     {
         const T dx = gap_x(rhs);
         const T dy = gap_y(rhs);
-        if (dx == 0 && dy == 0) return 0;
         return std::hypot(dx, dy);
     }
 
@@ -263,7 +256,7 @@ namespace sc
     template <typename T>
     rect_<T> rect_<T>::from_points(const T left, const T top, const T right, const T bottom)
     {
-        return {left, top, right - left, bottom - top};
+        return ltrb(left, top, right, bottom);
     }
 
     template <typename T>
@@ -273,9 +266,7 @@ namespace sc
         if (boxes.empty()) return {};
         return components(boxes, [min_iou, max_dist](const rect_& a, const rect_& b)
         {
-            if (min_iou < 1 && a.iou(b) > min_iou) return true; // min_iou == 1 disables
-            if (max_dist >= 0 && a.distance(b) < max_dist) return true; // max_dist < 0 disables
-            return false;
+            return (min_iou < 1 && a.iou(b) > min_iou) || (max_dist >= 0 && a.distance(b) < max_dist);
         });
     }
 

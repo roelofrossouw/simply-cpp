@@ -1,18 +1,19 @@
 #ifndef SC_DUAL_H
 #define SC_DUAL_H
 
+#include "point.h"
+
 #include <cmath>
 #include <concepts>
 #include <iostream>
 #include <sstream>
 #include <iomanip>
+#include <string>
+#include <string_view>
 #include <type_traits>
 
 namespace sc {
-    const std::string EPS_SIGN = "\xCE\xB5";
-
-    template<typename T>
-    concept numeric_type = std::floating_point<T> || std::integral<T>;
+    inline constexpr std::string_view EPS_SIGN = "\xCE\xB5";
 
     template<typename>
     struct is_dual : std::false_type {
@@ -42,7 +43,7 @@ namespace sc {
         dual(T real, T eps = {0}) : real(real), eps(eps) {
         }
 
-        template<numeric_type R>
+        template<Numeric R>
         dual(R scalar) { real = scalar; }
 
         dual<dual> operator~() { return {*this, 1}; }
@@ -57,18 +58,17 @@ namespace sc {
         dual &operator*=(const dual &rhs) { return *this = *this * rhs; }
         dual &operator/=(const dual &rhs) { return *this = *this / rhs; }
 
-        template<numeric_type R>
+        template<Numeric R>
         dual operator+(const R &rhs) const { return *this + dual(rhs); }
 
-        template<numeric_type R>
+        template<Numeric R>
         dual operator-(const R &rhs) const { return *this - dual(rhs); }
 
-        template<numeric_type R>
+        template<Numeric R>
         dual operator*(const R &rhs) const { return *this * dual(rhs); }
 
-        template<numeric_type R>
+        template<Numeric R>
         dual operator/(const R &rhs) const { return *this / dual(rhs); }
-
 
         dual cos() const { return get_cos(*this); }
         dual sin() const { return get_sin(*this); }
@@ -81,19 +81,19 @@ namespace sc {
 
         template<std::floating_point R>
         operator R() const {
-            if (std::is_floating_point_v<decltype(eps)>) return static_cast<R>(real);
-            return static_cast<R>(eps);
+            if constexpr (std::is_floating_point_v<T>) return static_cast<R>(real);
+            else return static_cast<R>(eps);
         }
 
     private:
-        template<std::floating_point R> // Base order - no eps
+        template<std::floating_point R>
         static std::string print(const dual<R> &num) {
             std::ostringstream oss;
             oss << std::setprecision(16) << static_cast<double>(num.real);
             return oss.str();
         }
 
-        template<std::floating_point R> // First order - no brackets.
+        template<std::floating_point R> // first order: no brackets
         static std::string print(const dual<dual<R> > &num) {
             std::ostringstream oss;
             oss << print(num.real) << " + " << print(num.eps) << EPS_SIGN;
@@ -108,8 +108,8 @@ namespace sc {
         }
 
         T get_abs() const {
-            if (std::is_floating_point_v<decltype(eps)>) return std::abs(real);
-            return eps;
+            if constexpr (std::is_floating_point_v<T>) return std::abs(real);
+            else return eps;
         }
 
         template<std::floating_point R>
@@ -161,7 +161,7 @@ namespace sc {
     template<dual_type R>
     std::ostream &operator<<(std::ostream &os, const dual<R> &rhs) { return os << static_cast<double>(rhs); }
 
-    template<dual_type L, numeric_type R>
+    template<dual_type L, Numeric R>
     dual<L> operator*(R lhs, const dual<L> &rhs) { return {rhs * dual<L>(lhs)}; }
 
     template<dual_type R>
@@ -178,6 +178,6 @@ namespace sc {
 
     template<dual_type T>
     dual<T> sqrt(const dual<T> &d) { return d.sqrt(); }
-} // namespace sc
+}
 
 #endif // SC_DUAL_H

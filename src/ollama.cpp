@@ -110,15 +110,18 @@ namespace sc {
             output["ai_data"]["model"] = "Unknown";
             return output;
         }
-        try {
 #ifdef NDEBUG
-            ollama ai(request["model"].get<string>(), request["server"].get<string>(), request["port"].get<int>());
+        constexpr bool debug = false;
 #else
-            if (!request.contains("debug_model")) request["debug_model"] = request["model"].get<std::string>();
-            if (!request.contains("debug_server")) request["debug_server"] = request["server"].get<std::string>();
-            if (!request.contains("debug_port")) request["debug_port"] = request["port"].get<int>();
-            ollama ai(request["debug_model"].get<string>(), request["debug_server"].get<string>(), request["debug_port"].get<int>());
+        constexpr bool debug = true;
 #endif
+        // model, server or port: in a debug build its debug_ version when the request has one.
+        const auto field = [&](const string &name) -> json & {
+            if (debug && request.contains("debug_" + name)) return request["debug_" + name];
+            return request[name];
+        };
+        try {
+            ollama ai(field("model").get<string>(), field("server").get<string>(), field("port").get<int>());
             if (request.contains("temperature")) ai.setTemperature(request["temperature"].get<float>());
             if (request.contains("think")) ai.setThink(request["think"].get<bool>());
             if (request.contains("max_tokens")) ai.setMaxTokens(request["max_tokens"].get<int>());
@@ -148,41 +151,22 @@ namespace sc {
             }
             output["ai_data"] = json::parse(ai.stats());
             try {
-                if (output["ai_data"].contains("total_duration"))
-                    output["ai_data"]["total_duration"] = (string) timer::from_nanos(output["ai_data"]["total_duration"].get<long long>());
-                if (output["ai_data"].contains("load_duration"))
-                    output["ai_data"]["load_duration"] = (string) timer::from_nanos(output["ai_data"]["load_duration"].get<long long>());
-                if (output["ai_data"].contains("prompt_eval_duration"))
-                    output["ai_data"]["prompt_eval_duration"] = (string) timer::from_nanos(output["ai_data"]["prompt_eval_duration"].get<long long>());
-                if (output["ai_data"].contains("eval_duration"))
-                    output["ai_data"]["eval_duration"] = (string) timer::from_nanos(output["ai_data"]["eval_duration"].get<long long>());
+                for (const char *duration: {"total_duration", "load_duration", "prompt_eval_duration", "eval_duration"}) {
+                    auto &value = output["ai_data"];
+                    if (value.contains(duration)) value[duration] = (string) timer::from_nanos(value[duration].get<long long>());
+                }
             } catch (exception &e) {
                 output["ai_data"]["stats_error"] = e.what();
             }
-#ifdef NDEBUG
-            output["ai_data"]["server"] = request["server"].get<string>();
-            output["ai_data"]["requested_model"] = request["model"].get<string>();
-            output["ai_data"]["debug"] = false;
-#else
-            if (!request.contains("debug_server")) request["debug_server"] = request["server"].get<std::string>();
-            output["ai_data"]["server"] = request["debug_server"].get<string>();
-            output["ai_data"]["requested_model"] = request["debug_model"].get<string>();
-            output["ai_data"]["debug"] = true;
-#endif
+            output["ai_data"]["server"] = field("server").get<string>();
+            output["ai_data"]["requested_model"] = field("model").get<string>();
+            output["ai_data"]["debug"] = debug;
         } catch (exception &e) {
             try {
-#ifdef NDEBUG
-                output["ai_data"]["requested_model"] = request["model"].get<string>();
+                output["ai_data"]["requested_model"] = field("model").get<string>();
                 output["ai_data"]["model"] = "Unknown";
-                output["ai_data"]["server"] = request["server"].get<string>();
-#else
-                if (!request.contains("debug_model")) request["debug_model"] = request["model"].get<std::string>();
-                if (!request.contains("debug_server")) request["debug_server"] = request["server"].get<std::string>();
-                output["ai_data"]["requested_model"] = request["debug_model"].get<string>();
-                output["ai_data"]["model"] = "Unknown";
-                output["ai_data"]["server"] = request["debug_server"].get<string>();
-                output["ai_data"]["debug"] = true;
-#endif
+                output["ai_data"]["server"] = field("server").get<string>();
+                if (debug) output["ai_data"]["debug"] = true;
             } catch (exception &e) {
                 output["ai_data"]["model"] = "Unknown";
             }

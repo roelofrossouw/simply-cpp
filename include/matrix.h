@@ -2,10 +2,6 @@
 #define SC_MATRIX_H
 
 #include <iostream>
-#ifndef _RSIZE_T
-#define _RSIZE_T
-typedef ssize_t rsize_t;
-#endif /* _RSIZE_T */
 #include <algorithm>
 #include <cstddef>
 #include <stdexcept>

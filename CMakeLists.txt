@@ -35,6 +35,7 @@ add_sc_object(core)
 add_sc_object(utf8)
 add_sc_object(base64)
 add_sc_object(timer)
+add_sc_object(ip_endpoint)
 sc_named_colors(${CMAKE_CURRENT_BINARY_DIR}/generated) # the CSS colour names, from the spec
 add_sc_object(color INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/generated)
 add_sc_object(size)

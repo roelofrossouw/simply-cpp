@@ -1,3 +1,8 @@
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <optional>
 #include <sc.h>
 
 #include "sc_test.h"
@@ -89,6 +94,56 @@ int main() {
         const auto parsed = sc::ip_endpoint::parse(endpoint.to_string());
         CHECK_EQ(parsed.host, endpoint.host);
         CHECK_EQ(parsed.port, endpoint.port);
+    }
+
+    SECTION("Resolving, and socket addresses back to endpoints");
+    {
+        const auto addresses = sc::ip_endpoint{"127.0.0.1", 8080}.resolve();
+        CHECK(!addresses.empty());
+        CHECK_EQ(addresses.front().family(), AF_INET);
+        CHECK_EQ(addresses.front().socket_type(), SOCK_STREAM);
+        CHECK(sc::ip_endpoint::from(addresses.front()) == (sc::ip_endpoint{"127.0.0.1", 8080}));
+        const auto v6 = sc::ip_endpoint{"::1", 443}.resolve();
+        CHECK_EQ(v6.front().family(), AF_INET6);
+        CHECK(v6.front().ipv6() && !addresses.front().ipv6());
+        CHECK(sc::ip_endpoint::from(v6.front()) == (sc::ip_endpoint{"::1", 443}));
+        const auto every = sc::ip_endpoint{"", 5800}.resolve(sc::ip_use::listen); // every interface
+        CHECK(!every.empty());
+        CHECK_THROWS_AS((void) (sc::ip_endpoint{"nowhere.invalid", 80}.resolve()), std::runtime_error);
+        CHECK(sc::ip_endpoint::from(sc::socket_address{}) == sc::ip_endpoint{});
+    }
+
+    SECTION("A socket's own address and its peer's");
+    {
+        const auto address = sc::ip_endpoint{"127.0.0.1", 0}.resolve(sc::ip_use::listen).front();
+        const int listener = socket(address.family(), address.socket_type(), address.protocol());
+        CHECK(bind(listener, address.get(), address.size()) == 0);
+        CHECK(listen(listener, 1) == 0);
+        const auto bound = sc::ip_endpoint::local_of(listener);
+        CHECK_EQ(bound.host, std::string{"127.0.0.1"});
+        CHECK(bound.port > 0);
+        const auto target = bound.resolve().front();
+        const int client = socket(target.family(), target.socket_type(), target.protocol());
+        CHECK(connect(client, target.get(), target.size()) == 0);
+        sc::socket_address from;
+        const int accepted = accept(listener, from.get(), from.size_pointer());
+        CHECK(accepted >= 0);
+        CHECK(sc::ip_endpoint::from(from) == sc::ip_endpoint::local_of(client)); // the client's side, both ways
+        CHECK(sc::ip_endpoint::peer_of(accepted) == sc::ip_endpoint::local_of(client));
+        CHECK(sc::ip_endpoint::peer_of(client) == bound);
+        close(accepted);
+        close(client);
+        close(listener);
+        CHECK(sc::ip_endpoint::local_of(-1) == sc::ip_endpoint{});
+    }
+
+    SECTION("IPv4 in network byte order, as in_addr keeps it");
+    {
+        in_addr expected{};
+        inet_pton(AF_INET, "192.0.2.7", &expected);
+        CHECK((sc::ip_endpoint{"192.0.2.7", 1}.ipv4() == std::optional<std::uint32_t>{expected.s_addr}));
+        CHECK((!sc::ip_endpoint{"::1", 1}.ipv4()));
+        CHECK((!sc::ip_endpoint{"example.com", 1}.ipv4()));
     }
 
     TEST_SUMMARY();

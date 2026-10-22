@@ -1,12 +1,59 @@
 #pragma once
 
 #include <charconv>
+#include <cstddef>
+#include <cstdint>
+#include <optional>
 #include <ostream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <vector>
+
+struct sockaddr;
 
 namespace sc {
+    // A socket address as the system's socket calls take it (bind, connect, accept), so code
+    // working with ip_endpoint needn't include the socket headers or handle sockaddr itself:
+    //     auto address = endpoint.resolve(sc::ip_use::listen).front();
+    //     bind(fd, address.get(), address.size());
+    //     sc::socket_address peer;
+    //     const int client = accept(fd, peer.get(), peer.size_pointer());
+    //     sc::ip_endpoint::from(peer);   // {"192.0.2.7", 51234}
+    // Since sc-core 1.21.0.
+    class socket_address {
+    public:
+        socket_address() = default;
+
+        [[nodiscard]] sockaddr *get() { return reinterpret_cast<sockaddr *>(storage_); }
+        [[nodiscard]] const sockaddr *get() const { return reinterpret_cast<const sockaddr *>(storage_); }
+        // The address' length (a socklen_t); before an accept() or getsockname(), the room there is.
+        [[nodiscard]] std::uint32_t size() const { return size_; }
+        // For the calls that fill it in and report the length (accept, getsockname, getpeername).
+        [[nodiscard]] std::uint32_t *size_pointer() { return &size_; }
+        // AF_INET, AF_INET6 ...; 0 when empty.
+        [[nodiscard]] int family() const;
+        [[nodiscard]] bool ipv6() const;
+        // The socket's type and protocol to make for it (as getaddrinfo gives them: SOCK_STREAM,
+        // IPPROTO_TCP for a TCP address).
+        [[nodiscard]] int socket_type() const { return socket_type_; }
+        [[nodiscard]] int protocol() const { return protocol_; }
+
+    private:
+        friend struct ip_endpoint;
+        alignas(16) std::byte storage_[128]{}; // sockaddr_storage's size on Linux and macOS
+        std::uint32_t size_ = sizeof storage_;
+        int socket_type_ = 0;
+        int protocol_ = 0;
+    };
+
+    // What an address is resolved for: listening (an empty host or "0.0.0.0" is every interface)
+    // or connecting.
+    enum class ip_use { connect, listen };
+
+    // TCP or UDP, for resolve().
+    enum class ip_protocol { tcp, udp };
+
     // A host (name, IPv4 or IPv6 address) and port; port 0 means none was given.
     struct ip_endpoint {
         std::string host;
@@ -21,6 +68,22 @@ namespace sc {
         }
 
         bool operator==(const ip_endpoint &) const = default;
+
+        // The addresses the host and port name (getaddrinfo), IPv4 and IPv6 as the system orders
+        // them. Throws std::runtime_error, naming the endpoint, when there are none. Since 1.21.0.
+        [[nodiscard]] std::vector<socket_address> resolve(ip_use use = ip_use::connect, ip_protocol protocol = ip_protocol::tcp) const;
+
+        // An address as an endpoint: the numeric host and the port. An IPv4 address on an IPv6
+        // socket ("::ffff:192.0.2.7") comes back as IPv4. Since 1.21.0.
+        [[nodiscard]] static ip_endpoint from(const socket_address &address);
+        // A socket's own address (getsockname), and the other end's (getpeername); empty ({"", 0})
+        // when the call fails. Since 1.21.0.
+        [[nodiscard]] static ip_endpoint local_of(int socket);
+        [[nodiscard]] static ip_endpoint peer_of(int socket);
+
+        // The host as an IPv4 address in network byte order (in_addr's s_addr, as sc::ip_address
+        // keeps it); nothing for an IPv6 address or a name. Since 1.21.0.
+        [[nodiscard]] std::optional<std::uint32_t> ipv4() const;
 
         friend std::ostream &operator<<(std::ostream &os, const ip_endpoint &endpoint) {
             return os << endpoint.to_string();

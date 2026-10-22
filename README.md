@@ -185,6 +185,23 @@ indented line, and `output(stream)` sends it all elsewhere than `std::cout`.
 
 ### Server endpoints
 
+`sc::ip_endpoint` also handles the socket addresses the system calls take (since 1.21.0), so
+code that opens sockets needn't include `arpa/inet.h` or `netdb.h`, or look inside `sockaddr`:
+
+```cpp
+const auto address = sc::ip_endpoint{"0.0.0.0", 5800}.resolve(sc::ip_use::listen).front();
+const int fd = socket(address.family(), address.socket_type(), address.protocol());
+bind(fd, address.get(), address.size());
+sc::socket_address peer;
+const int client = accept(fd, peer.get(), peer.size_pointer());
+sc::ip_endpoint::from(peer);          // {"192.0.2.7", 51234}; an IPv4 client on an IPv6 socket as IPv4
+sc::ip_endpoint::local_of(client);    // the server's side: which port it came in on
+sc::ip_endpoint{"192.0.2.7", 0}.ipv4(); // the address in network byte order, as in_addr keeps it
+```
+
+`resolve()` (getaddrinfo) throws `std::runtime_error` naming the endpoint when the name doesn't
+resolve; `socket_address` holds a `sockaddr_storage` without the header that declares it.
+
 `sc::ip_endpoints` is a list of `sc::ip_endpoint`s that reads and writes the
 `;`-separated form (`"redis1:6379;[::1]:6380"`). Whitespace and empty entries are
 ignored, and an invalid entry throws `std::invalid_argument`. It works like a

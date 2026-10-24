@@ -1,9 +1,15 @@
 #include <sc.h>
+#include <chrono>
+#include <cstdlib>
 #include <filesystem>
+#include <random>
+#include <thread>
 #include <string>
 #include "sc_test.h"
 
 using namespace std;
+
+#define REQUIRE_SYSTEM(command) CHECK_EQ((command), 0)
 
 namespace {
     constexpr auto probe_url = "https://www.1web.co.za/myip.php";
@@ -72,6 +78,74 @@ int main() {
         const auto failure = posting.post(R"({"ping": true})");
         // The POST path reports the curl error as a JSON object.
         CHECK_MSG(failure.find("\"error\"") != string::npos, "got \"" + failure + '"');
+    }
+
+    SECTION("TLS: a client certificate, a server trusted by its own certificate, or by its pinned key");
+    if (std::system("openssl version > /dev/null 2>&1") != 0) {
+        cout << "   (no openssl command, not verified)" << endl;
+    } else {
+        // A self-signed server that wants a client certificate signed by itself (the client's own,
+        // self-signed too), as LXD does. Its certificate names no address, so verify_host(false).
+        const auto dir = work_dir / "tls";
+        filesystem::create_directories(dir);
+        const auto at = [&](const char *name) { return (dir / name).string(); };
+        const auto quiet = string{" > /dev/null 2>&1"};
+        const auto make_pair = [&](const string &name) {
+            return "openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:P-256 -nodes -days 1 -subj /CN=sc-test-" + name +
+                   " -keyout " + at((name + ".key").c_str()) + " -out " + at((name + ".crt").c_str()) + quiet;
+        };
+        REQUIRE_SYSTEM(std::system(make_pair("server").c_str()));
+        REQUIRE_SYSTEM(std::system(make_pair("client").c_str()));
+        REQUIRE_SYSTEM(std::system(make_pair("stranger").c_str()));
+        REQUIRE_SYSTEM(std::system(("openssl x509 -in " + at("server.crt") + " -pubkey -noout | openssl pkey -pubin -outform der | "
+                                    "openssl dgst -sha256 -binary | openssl base64 > " + at("pin.txt")).c_str()));
+        const auto pin = "sha256//" + trimmed(sc::file_get_contents(at("pin.txt")));
+        const int port = 18443 + static_cast<int>(std::random_device{}() % 1000);
+        REQUIRE_SYSTEM(std::system(("openssl s_server -accept " + to_string(port) + " -cert " + at("server.crt") + " -key " + at("server.key") +
+                                    " -Verify 1 -verify_return_error -CAfile " + at("client.crt") + " -www > " + at("server.log") + " 2>&1 & echo $! > " + at("server.pid")).c_str()));
+        const auto url = "https://127.0.0.1:" + to_string(port) + "/";
+        const auto client = [&](const char *certificate = "client") {
+            sc::rest request{url};
+            request.connect_timeout(2);
+            request.timeout(5);
+            request.quiet().client_certificate(at((string{certificate} + ".crt").c_str()), at((string{certificate} + ".key").c_str()));
+            return request;
+        };
+        for (int tries = 0; tries < 50; ++tries) { // until it listens
+            auto probe = client();
+            (void) probe.trust(at("server.crt")).verify_host(false).get();
+            if (probe.status() != 0) break;
+            std::this_thread::sleep_for(std::chrono::milliseconds{100});
+        }
+
+        auto trusted = client();
+        CHECK(trusted.trust(at("server.crt")).verify_host(false).get().find("s_server") != string::npos);
+        CHECK_EQ(trusted.status(), 200L);
+        CHECK(trusted.error().empty());
+
+        auto named = client(); // the certificate names no 127.0.0.1
+        (void) named.trust(at("server.crt")).get();
+        CHECK_EQ(named.status(), 0L);
+        CHECK(!named.error().empty());
+
+        auto system_trust = client(); // not signed by anyone the system knows
+        (void) system_trust.verify_host(false).get();
+        CHECK_EQ(system_trust.status(), 0L);
+
+        auto stranger = client("stranger"); // a certificate the server doesn't know
+        (void) stranger.trust(at("server.crt")).verify_host(false).get();
+        CHECK_EQ(stranger.status(), 0L);
+
+        auto pinned = client(); // its key pinned, the certificate trusted too
+        (void) pinned.trust(at("server.crt")).verify_host(false).pinned_public_key(pin).get();
+        CHECK_EQ(pinned.status(), 200L);
+        auto wrong_pin = client();
+        (void) wrong_pin.trust(at("server.crt")).verify_host(false).pinned_public_key("sha256//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=").get();
+        CHECK_EQ(wrong_pin.status(), 0L);
+        CHECK(!wrong_pin.error().empty());
+
+        (void) std::system(("kill $(cat " + at("server.pid") + ")" + quiet).c_str());
+        filesystem::remove_all(dir);
     }
 
     SECTION("The HTTP status of the last request");

@@ -93,6 +93,13 @@ namespace sc {
         response_headers_.clear();
         conn.option(CURLOPT_HEADERFUNCTION, header_data);
         conn.option(CURLOPT_HEADERDATA, &response_headers_);
+        if (!certificate_file_.empty()) {
+            conn.option(CURLOPT_SSLCERT, certificate_file_.c_str());
+            conn.option(CURLOPT_SSLKEY, key_file_.c_str());
+        }
+        if (!ca_file_.empty()) conn.option(CURLOPT_CAINFO, ca_file_.c_str());
+        if (!verify_host_) conn.option(CURLOPT_SSL_VERIFYHOST, 0L);
+        if (!pins_.empty()) conn.option(CURLOPT_PINNEDPUBLICKEY, pins_.c_str());
         if (post_body) {
             // With the size given, bodies with zero bytes go out whole.
             conn.option(CURLOPT_POSTFIELDSIZE_LARGE, static_cast<curl_off_t>(post_body->size()));
@@ -100,8 +107,9 @@ namespace sc {
         }
         const bool ran = conn.run();
         status_ = ran ? conn.status() : 0;
+        error_ = ran ? std::string{} : conn.last_error();
         if (!ran) {
-            std::cerr << "Request failed: " << conn.last_error() << std::endl;
+            if (!quiet_) std::cerr << "Request failed: " << conn.last_error() << std::endl;
             response = post_body ? R"({"error": ")" + conn.last_error() + R"("})" : "";
         }
         return response;
@@ -121,6 +129,32 @@ namespace sc {
     }
 
     void rest::connect_timeout(const long timeout) { connect_timeout_secs_ = timeout; }
+
+    rest &rest::client_certificate(const std::string &certificate_file, const std::string &key_file) {
+        certificate_file_ = certificate_file;
+        key_file_ = key_file;
+        return *this;
+    }
+
+    rest &rest::trust(const std::string &ca_file) {
+        ca_file_ = ca_file;
+        return *this;
+    }
+
+    rest &rest::verify_host(const bool on) {
+        verify_host_ = on;
+        return *this;
+    }
+
+    rest &rest::pinned_public_key(const std::string &pins) {
+        pins_ = pins;
+        return *this;
+    }
+
+    rest &rest::quiet(const bool on) {
+        quiet_ = on;
+        return *this;
+    }
 
     std::string rest::fetch(const std::string &url, const std::string &base_url) {
         if (url.empty() || url.size() > 100) return "";

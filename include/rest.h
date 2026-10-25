@@ -6,7 +6,7 @@
 #include <memory>
 
 namespace sc {
-    /// HTTP GET and POST to one URL, over libcurl, with headers, a bearer token and timeouts.
+    /// HTTP GET, POST and DELETE to one URL, over libcurl, with headers, a bearer token and timeouts.
     /// Requests send "Content-Type: application/json" unless header() says otherwise.
     ///
     ///     sc::rest api{"https://example.com/api/items"};
@@ -26,13 +26,16 @@ namespace sc {
         /// came, the error goes to std::cerr and the body is {"error": "<curl's message>"}.
         std::string post(const std::string &jsonData = R"({})");
 
+        /// A DELETE; the response body, whatever the status, as with get().
+        std::string del();
+
         /// Sets a request header, replacing one of the same name.
         void header(const std::string &key, const std::string &value);
 
         /// "Authorization: Bearer <token>".
         void bearer(const std::string &token);
 
-        /// The HTTP status of the last get() or post() (200, 404, ...), 0 when it got no response.
+        /// The HTTP status of the last request (200, 404, ...), 0 when it got no response.
         [[nodiscard]] long status() const { return status_; }
         /// The last response's headers by lowercased name ("content-type", "location"); empty when
         /// none came.
@@ -79,8 +82,8 @@ namespace sc {
         static std::map<std::string, std::string> fetch_cache;
         std::map<std::string, std::string> response_headers_;
 
-        // A GET, or a POST of *post_body when it is set.
-        std::string perform(const std::string *post_body);
+        // A GET, or a POST of *post_body when it is set; method replaces either's ("DELETE").
+        std::string perform(const std::string *post_body, const char *method = nullptr);
     };
 }
 

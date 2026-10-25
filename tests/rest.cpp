@@ -148,6 +148,46 @@ int main() {
         filesystem::remove_all(dir);
     }
 
+    SECTION("get(), post() and del() send their methods");
+    if (std::system("python3 --version > /dev/null 2>&1") != 0) {
+        cout << "   (no python3, not verified)" << endl;
+    } else {
+        // A server that answers with the method it got, and the body.
+        const auto script = work_dir / "methods.py";
+        sc::file_put_contents(script.string(), R"(import sys
+from http.server import BaseHTTPRequestHandler, HTTPServer
+class Echo(BaseHTTPRequestHandler):
+    def answer(self):
+        size = int(self.headers.get('Content-Length') or 0)
+        body = (self.command + ' ' + self.rfile.read(size).decode()).encode()
+        self.send_response(200)
+        self.send_header('Content-Length', str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+    do_GET = do_POST = do_DELETE = answer
+    def log_message(self, *args): pass
+HTTPServer(('127.0.0.1', int(sys.argv[1])), Echo).serve_forever()
+)");
+        const int port = 19443 + static_cast<int>(std::random_device{}() % 1000);
+        const auto pid_file = (work_dir / "methods.pid").string();
+        REQUIRE_SYSTEM(std::system(("python3 " + script.string() + " " + to_string(port) + " > /dev/null 2>&1 & echo $! > " + pid_file).c_str()));
+        const auto url = "http://127.0.0.1:" + to_string(port) + "/";
+        for (int tries = 0; tries < 50; ++tries) { // until it listens
+            sc::rest probe{url};
+            (void) probe.quiet().get();
+            if (probe.status() != 0) break;
+            std::this_thread::sleep_for(std::chrono::milliseconds{100});
+        }
+        sc::rest request{url};
+        CHECK_EQ(trimmed(request.get()), string{"GET"});
+        CHECK_EQ(request.post(R"({"a": 1})"), string{R"(POST {"a": 1})"});
+        CHECK_EQ(trimmed(request.del()), string{"DELETE"});
+        CHECK_EQ(request.status(), 200L);
+        // The same object goes back to a GET after a DELETE.
+        CHECK_EQ(trimmed(request.get()), string{"GET"});
+        (void) std::system(("kill $(cat " + pid_file + ") > /dev/null 2>&1").c_str());
+    }
+
     SECTION("The HTTP status of the last request");
     {
         sc::rest found{"https://raw.githubusercontent.com/roelofrossouw/simply-cpp/main/LICENSE"};

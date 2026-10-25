@@ -81,7 +81,7 @@ namespace sc {
         };
     }
 
-    std::string rest::perform(const std::string *post_body) {
+    std::string rest::perform(const std::string *post_body, const char *method) {
         detail::curl conn;
         conn.option(CURLOPT_URL, url_.c_str());
         conn.option(CURLOPT_CONNECTTIMEOUT, connect_timeout_secs_);
@@ -105,6 +105,7 @@ namespace sc {
             conn.option(CURLOPT_POSTFIELDSIZE_LARGE, static_cast<curl_off_t>(post_body->size()));
             conn.option(CURLOPT_POSTFIELDS, post_body->data());
         }
+        if (method) conn.option(CURLOPT_CUSTOMREQUEST, method);
         const bool ran = conn.run();
         status_ = ran ? conn.status() : 0;
         error_ = ran ? std::string{} : conn.last_error();
@@ -118,6 +119,8 @@ namespace sc {
     std::string rest::get() { return perform(nullptr); }
 
     std::string rest::post(const std::string &jsonData) { return perform(&jsonData); }
+
+    std::string rest::del() { return perform(nullptr, "DELETE"); }
 
     void rest::header(const std::string &key, const std::string &value) { headers_[key] = value; }
 

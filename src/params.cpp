@@ -6,6 +6,7 @@
 #include <cctype>
 #include <charconv>
 #include <cstdlib>
+#include <ctime>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -208,6 +209,16 @@ namespace {
         return list;
     }
 
+    // A parameter's help with its choices, default and the rest after it.
+    std::string notes(const parameter &item, const bool is_option) {
+        std::string extra;
+        if (!item.choices.is_null()) extra += " (one of: " + listed(item.choices) + ')';
+        if (!item.fallback.is_null()) extra += " (default: " + shown(item.fallback) + ')';
+        if (item.required && is_option) extra += " (required)";
+        if (item.multiple) extra += " (can be given more than once)";
+        return item.help.empty() ? extra.empty() ? std::string{} : extra.substr(1) : item.help + extra;
+    }
+
     // Parses structure when it is JSON text; returns its name, else fallback.
     std::string prepare(json &structure, std::string fallback) {
         if (structure.is_string()) structure = json::parse(structure.get<std::string>());
@@ -295,12 +306,142 @@ namespace {
         }
         return out;
     }
+
+    // Text for troff: a backslash as \e and a dash that starts a word (an option, "-" for stdin) as
+    // \-, a minus rather than a hyphen.
+    std::string troff(const std::string_view text) {
+        std::string out;
+        for (std::size_t i = 0; i < text.size(); ++i) {
+            const char c = text[i];
+            if (c == '\\') out += "\\e";
+            else if (c == '-' && (i == 0 || std::string_view{" -([|"}.find(text[i - 1]) != std::string_view::npos)) out += "\\-";
+            else out += c;
+        }
+        return out;
+    }
+
+    // A line of text that troff mustn't read as a request (one starting with . or ').
+    std::string text_line(std::string line) {
+        if (line.starts_with('.') || line.starts_with('\'')) line.insert(0, "\\&");
+        return line + '\n';
+    }
+
+    // Markdown's `code` and **bold** as bold, *words* as italic, the rest as troff().
+    std::string marked_up(const std::string_view text) {
+        std::string out;
+        std::size_t plain = 0, i = 0;
+        const auto span = [&](const std::string_view open, const std::string_view font) {
+            if (!text.substr(i).starts_with(open)) return false;
+            const auto close = text.find(open, i + open.size());
+            if (close == std::string_view::npos || close == i + open.size()) return false;
+            out += troff(text.substr(plain, i - plain));
+            out += std::string{"\\f"} + std::string{font} + troff(text.substr(i + open.size(), close - i - open.size())) + "\\fR";
+            i = plain = close + open.size();
+            return true;
+        };
+        while (i < text.size()) {
+            if (!span("`", "B") && !span("**", "B") && !(text[i] == '*' && i + 1 < text.size() && text[i + 1] != ' ' && span("*", "I"))) ++i;
+        }
+        return out + troff(text.substr(plain));
+    }
+
+    std::string uppercase(std::string text) {
+        for (auto &c: text) c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+        return text;
+    }
+
+    std::string trimmed(const std::string_view text) {
+        const auto first = text.find_first_not_of(" \t\r");
+        return first == std::string_view::npos ? std::string{} : std::string{text.substr(first, text.find_last_not_of(" \t\r") - first + 1)};
+    }
+
+    // A man page section: its name ("EXAMPLES") and its troff.
+    struct man_section {
+        std::string name;
+        std::string body;
+    };
+
+    // man_page()'s extra: Markdown sections as troff. Text before the first heading belongs to
+    // DESCRIPTION.
+    std::vector<man_section> read_man_sections(const std::string_view extra) {
+        std::vector<man_section> sections;
+        std::string paragraph;
+        bool item = false, verbatim = false;
+        const auto body = [&]() -> std::string & {
+            if (sections.empty()) sections.push_back({"DESCRIPTION", {}});
+            return sections.back().body;
+        };
+        const auto finish_paragraph = [&] {
+            if (!paragraph.empty()) body() += (item ? ".IP \\(bu 2\n" : ".PP\n") + text_line(marked_up(paragraph));
+            paragraph.clear();
+            item = false;
+        };
+        std::size_t start = 0;
+        while (start < extra.size()) {
+            auto end = extra.find('\n', start);
+            if (end == std::string_view::npos) end = extra.size();
+            const auto line = extra.substr(start, end - start);
+            start = end + 1;
+            if (verbatim) {
+                if (trimmed(line).starts_with("```")) {
+                    body() += ".fi\n.RE\n";
+                    verbatim = false;
+                } else {
+                    body() += text_line(troff(line));
+                }
+                continue;
+            }
+            const auto text = trimmed(line);
+            if (text.starts_with("```")) {
+                finish_paragraph();
+                body() += ".PP\n.RS 4\n.nf\n";
+                verbatim = true;
+            } else if (text.starts_with("# ")) {
+                finish_paragraph();
+                sections.push_back({uppercase(trimmed(text.substr(2))), {}});
+            } else if (text.empty()) {
+                finish_paragraph();
+            } else if (text.starts_with("- ")) {
+                finish_paragraph();
+                paragraph = text.substr(2);
+                item = true;
+            } else {
+                paragraph += (paragraph.empty() ? "" : " ") + text;
+            }
+        }
+        finish_paragraph();
+        if (verbatim) body() += ".fi\n.RE\n";
+        return sections;
+    }
+
+    // A section heading, quoted when the name has a space ("EXIT STATUS").
+    std::string section_heading(const std::string &name) {
+        return name.find(' ') == std::string::npos ? ".SH " + name + '\n' : ".SH \"" + name + "\"\n";
+    }
+
+    // The day the page is dated: SOURCE_DATE_EPOCH's, for a reproducible build, else today (UTC).
+    std::string man_date() {
+        auto now = std::time(nullptr);
+        if (const char *epoch = std::getenv("SOURCE_DATE_EPOCH"); epoch && *epoch) now = static_cast<std::time_t>(std::strtoll(epoch, nullptr, 10));
+        std::tm day{};
+        gmtime_r(&now, &day);
+        char text[16];
+        std::strftime(text, sizeof text, "%Y-%m-%d", &day);
+        return text;
+    }
 }
 
 namespace sc {
     params::params(const int argc, const char *const argv[], nlohmann::ordered_json structure)
         : structure_(std::move(structure)) {
         program_ = prepare(structure_, argc > 0 ? std::filesystem::path{argv[0]}.filename().string() : "program");
+        // The man page, for sc_man_page() at build time; the variable may name a file of extra sections.
+        if (const char *man = std::getenv("SC_PARAMS_MAN_PAGE"); man && *man) {
+            std::string extra;
+            if (std::ifstream file{man}; file) extra.assign(std::istreambuf_iterator<char>{file}, {});
+            std::cout << man_page(extra) << std::flush;
+            std::exit(0);
+        }
         std::vector<std::string> arguments;
         for (int i = 1; i < argc; ++i) arguments.emplace_back(argv[i]);
         try {
@@ -499,14 +640,6 @@ namespace sc {
             std::string label;
             std::string help;
         };
-        const auto notes = [](const parameter &item, const bool is_option) {
-            std::string extra;
-            if (!item.choices.is_null()) extra += " (one of: " + listed(item.choices) + ')';
-            if (!item.fallback.is_null()) extra += " (default: " + shown(item.fallback) + ')';
-            if (item.required && is_option) extra += " (required)";
-            if (item.multiple) extra += " (can be given more than once)";
-            return item.help.empty() ? extra.empty() ? std::string{} : extra.substr(1) : item.help + extra;
-        };
         std::vector<row> arguments;
         for (const auto &argument: structure.positional) arguments.push_back({"  " + argument.value, notes(argument, false)});
         if (structure.extra) arguments.push_back({"  " + structure.extra->value + "...", notes(*structure.extra, false)});
@@ -558,6 +691,120 @@ namespace sc {
             text += sc::console::justified(apache_warranty, help_width);
         }
         return text;
+    }
+
+    std::string params::man_page(const std::string_view extra) const {
+        const auto structure = read_layout(structure_);
+        auto sections = read_man_sections(extra);
+        const auto take = [&](const std::string &name) {
+            std::string body;
+            for (auto each = sections.begin(); each != sections.end();) {
+                if (each->name == name) {
+                    body += each->body;
+                    each = sections.erase(each);
+                } else {
+                    ++each;
+                }
+            }
+            return body;
+        };
+
+        std::string page = ".TH " + uppercase(program_) + " 1 \"" + man_date() + "\" \"" + program_ +
+                           (structure.version.empty() ? "" : ' ' + structure.version) + "\" \"User Commands\"\n";
+
+        // NAME: the description's first sentence, unless extra says it.
+        if (auto name = take("NAME"); !name.empty()) {
+            while (name.starts_with(".PP\n")) name.erase(0, 4); // one line: "html2pdf \- HTML files as PDFs"
+            page += ".SH NAME\n" + name;
+        } else {
+            auto summary = structure.description.substr(0, structure.description.find('\n'));
+            if (const auto stop = summary.find(". "); stop != std::string::npos) summary.resize(stop);
+            if (summary.ends_with('.')) summary.pop_back();
+            if (!summary.empty()) summary[0] = static_cast<char>(std::tolower(static_cast<unsigned char>(summary[0])));
+            page += ".SH NAME\n" + troff(program_) + (summary.empty() ? "" : " \\- " + troff(summary)) + '\n';
+        }
+
+        page += ".SH SYNOPSIS\n.B " + troff(program_) + "\n[\\fIOPTION\\fR]...";
+        for (const auto &argument: structure.positional) {
+            page += argument.required ? " \\fI" + argument.value + "\\fR" : " [\\fI" + argument.value + "\\fR]";
+        }
+        if (structure.extra) page += structure.extra->required ? " \\fI" + structure.extra->value + "\\fR..." : " [\\fI" + structure.extra->value + "\\fR]...";
+        page += '\n';
+
+        // DESCRIPTION: the description and the epilog, a paragraph for each of their lines.
+        std::string description;
+        for (const auto *text: {&structure.description, &structure.epilog}) {
+            std::size_t start = 0;
+            while (start < text->size()) {
+                auto end = text->find('\n', start);
+                if (end == std::string::npos) end = text->size();
+                if (const auto line = trimmed(std::string_view{*text}.substr(start, end - start)); !line.empty()) description += ".PP\n" + text_line(troff(line));
+                start = end + 1;
+            }
+        }
+        description += take("DESCRIPTION");
+        if (!description.empty()) page += ".SH DESCRIPTION\n" + description;
+
+        const auto entry = [](const std::string &label, const std::string &help) {
+            return ".TP\n" + label + '\n' + (help.empty() ? std::string{} : text_line(troff(help)));
+        };
+        std::string arguments;
+        for (const auto &argument: structure.positional) arguments += entry("\\fI" + argument.value + "\\fR", notes(argument, false));
+        if (structure.extra) arguments += entry("\\fI" + structure.extra->value + "\\fR...", notes(*structure.extra, false));
+        if (!arguments.empty()) page += ".SH ARGUMENTS\n" + arguments;
+
+        page += ".SH OPTIONS\n";
+        const auto dashed = [](const std::string &name) {
+            std::string out;
+            for (const char c: name) out += c == '-' ? std::string{"\\-"} : std::string(1, c);
+            return out;
+        };
+        for (const auto &option: structure.options) {
+            std::string label = option.short_name ? std::string{"\\fB\\-"} + option.short_name + "\\fR, " : "";
+            label += "\\fB\\-\\-" + dashed(option.name) + "\\fR";
+            if (option.type != "boolean") label += "=\\fI" + option.value + "\\fR";
+            page += entry(label, notes(option, true));
+        }
+        page += entry("\\fB\\-h\\fR, \\fB\\-\\-help\\fR", "display the help and exit");
+        if (!structure.version.empty()) page += entry("\\fB\\-\\-version\\fR", "output version information and exit");
+        if (license_registered) {
+            const auto mine = [&](const std::string &name) {
+                return std::ranges::any_of(structure.options, [&](const parameter &option) { return option.name == name; });
+            };
+            if (!mine("license")) page += entry("\\fB\\-\\-license\\fR", std::string{"show the licence ("} + registered_license.name + ") and where to read it");
+            if (!mine("license-text")) page += entry("\\fB\\-\\-license\\-text\\fR", "output the licence's text and exit");
+        }
+        page += take("OPTIONS");
+
+        // extra's other sections in man's usual order; ones it doesn't know before COPYRIGHT.
+        for (const std::string name: {"EXIT STATUS", "ENVIRONMENT", "FILES", "NOTES", "CAVEATS", "BUGS", "EXAMPLES", "AUTHORS", "AUTHOR", "REPORTING BUGS"}) {
+            if (auto body = take(name); !body.empty()) page += section_heading(name) + body;
+        }
+        const auto see_also = take("SEE ALSO");
+        auto copyright = take("COPYRIGHT");
+        for (const auto &each: sections) {
+            if (each.name != "COPYRIGHT" && each.name != "SEE ALSO") page += section_heading(each.name) + each.body;
+        }
+        std::string notice;
+        if (registered_copyright && *registered_copyright) notice += text_line(troff(registered_copyright));
+        if (license_registered) {
+            notice += (notice.empty() ? "" : ".br\n") + text_line(troff(std::string{"Licensed under "} + registered_license.name +
+                                                                       (registered_license.url && *registered_license.url ? std::string{": "} + registered_license.url : "") + '.'));
+        }
+        if (!notice.empty() || !copyright.empty()) page += ".SH COPYRIGHT\n" + notice + copyright;
+        if (!see_also.empty()) page += ".SH \"SEE ALSO\"\n" + see_also;
+        // A section's text starts its first paragraph itself: no .PP right after .SH.
+        std::string tidy;
+        std::size_t start = 0;
+        bool after_heading = false;
+        while (start < page.size()) {
+            const auto end = page.find('\n', start);
+            const auto line = std::string_view{page}.substr(start, end - start);
+            if (!(after_heading && line == ".PP")) tidy += std::string{line} + '\n';
+            after_heading = line.starts_with(".SH ");
+            start = end + 1;
+        }
+        return tidy;
     }
 
     const nlohmann::ordered_json *params::lookup(const std::string_view name) const {

@@ -83,6 +83,7 @@ namespace sc {
         // --version the version, for --license the licence's name and where to read it, and for
         // --license-text its text (exiting 1 when it can't be read). For a mistake it prints
         // "<name>: <mistake>" and a pointer to --help to stderr and exits 2, like the GNU tools.
+        // With SC_PARAMS_MAN_PAGE in the environment it prints man_page() and exits 0.
         params(int argc, const char *const argv[], nlohmann::ordered_json structure);
 
         // Reads arguments (without the program name) and throws params::error for a mistake,
@@ -103,6 +104,27 @@ namespace sc {
 
         // The usage line, description, arguments and options, wrapped at 80 columns.
         [[nodiscard]] std::string help() const;
+
+        // The program's man page (troff, section 1), from the same structure as help(): NAME (the
+        // description's first sentence), SYNOPSIS, DESCRIPTION (with the epilog), ARGUMENTS,
+        // OPTIONS and, for a program built with its licence, COPYRIGHT. extra adds sections in a
+        // little Markdown, put in man's usual order (EXIT STATUS, ENVIRONMENT, FILES, NOTES,
+        // EXAMPLES, AUTHORS, SEE ALSO ...); a DESCRIPTION or OPTIONS there adds to the generated
+        // one, a NAME replaces it
+        // ("html2pdf - HTML files as PDFs"):
+        //
+        //     # EXAMPLES                 a section
+        //     Text, joined into a paragraph; a blank line starts the next one.
+        //     - an item in a list
+        //     ```                        lines shown as they are, such as commands
+        //     html2pdf page.html
+        //     ```
+        //     `code` and **words** in text are bold, *words* italic.
+        //
+        // A program prints it and exits when its environment has SC_PARAMS_MAN_PAGE: that's how
+        // SimplyCppFunctions.cmake's sc_man_page(<target>) makes the page at build time. The
+        // variable's value, when it names a file, is read as extra.
+        [[nodiscard]] std::string man_page(std::string_view extra = {}) const;
 
         // The value of a parameter, or nullptr when it has none.
         [[nodiscard]] const nlohmann::ordered_json *lookup(std::string_view name) const;

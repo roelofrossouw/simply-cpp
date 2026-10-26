@@ -197,6 +197,43 @@ int main() {
         CHECK(contains(refused({{"extra", {{"a", nlohmann::ordered_json::object()}, {"b", nlohmann::ordered_json::object()}}}}), "extra must be an object with one name"));
     }
 
+    SECTION("A man page from the same structure, with extra sections in Markdown");
+    {
+        const auto page = sc::params({"--help"}, structure).man_page(
+                "Text before any heading adds to the description.\n"
+                "# Examples\n"
+                "Copy `a` to **b**,\n"
+                "and *quietly*:\n\n"
+                "```\n"
+                "copy -v a b\n"
+                ".hidden starts with a dot\n"
+                "```\n"
+                "- one item\n"
+                "# SEE ALSO\n"
+                "cp(1)\n"
+                "# Exit status\n"
+                "0 when it worked.\n");
+        CHECK(page.starts_with(".TH COPY 1 \""));
+        CHECK(page.find("\"copy 1.2.3\" \"User Commands\"\n") != std::string::npos);
+        CHECK(page.find(".SH NAME\ncopy \\- copies INPUT to OUTPUT, and any FILEs after it\n") != std::string::npos);
+        CHECK(page.find(".B copy\n[\\fIOPTION\\fR]... \\fIINPUT\\fR [\\fIOUTPUT\\fR] [\\fIFILE\\fR]...\n") != std::string::npos);
+        CHECK(page.find("Report bugs to nobody.") < page.find("Text before any heading")); // the epilog, then extra's description
+        CHECK(page.find(".TP\n\\fB\\-c\\fR, \\fB\\-\\-config\\fR=\\fIFILE\\fR\nread settings from FILE (default: /etc/copy.conf)\n") != std::string::npos);
+        CHECK(page.find("\\fB\\-\\-dry\\-run\\fR\n") != std::string::npos);
+        CHECK(page.find("how to copy (one of: fast, safe) (default: safe)") != std::string::npos);
+        CHECK(page.find("Copy \\fBa\\fR to \\fBb\\fR, and \\fIquietly\\fR:\n") != std::string::npos);
+        CHECK(page.find(".nf\ncopy \\-v a b\n\\&.hidden starts with a dot\n.fi\n") != std::string::npos);
+        CHECK(page.find(".IP \\(bu 2\none item\n") != std::string::npos);
+        // man's order: EXIT STATUS before EXAMPLES, SEE ALSO last
+        CHECK(page.find(".SH \"EXIT STATUS\"") < page.find(".SH EXAMPLES"));
+        CHECK(page.find(".SH \"SEE ALSO\"\ncp(1)\n") != std::string::npos);
+        CHECK(page.ends_with(".SH \"SEE ALSO\"\ncp(1)\n"));
+        CHECK(page.find(".SH DESCRIPTION\n.PP") == std::string::npos); // no paragraph mark right after a heading
+        CHECK(page.find(".SH COPYRIGHT") == std::string::npos); // no licence recorded
+        const auto named = sc::params({"--help"}, structure).man_page("# NAME\ncopy - copies files\n");
+        CHECK(named.find(".SH NAME\ncopy \\- copies files\n.SH SYNOPSIS") != std::string::npos);
+    }
+
     SECTION("Without a recorded licence, no --license options");
     {
         // This test is built without sc_program_info(), as any outside program is.

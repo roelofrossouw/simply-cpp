@@ -6,7 +6,7 @@
 #include <memory>
 
 namespace sc {
-    /// HTTP GET, POST and DELETE to one URL, over libcurl, with headers, a bearer token and timeouts.
+    /// HTTP GET, POST, PUT and DELETE to one URL, over libcurl, with headers, a bearer token and timeouts.
     /// Requests send "Content-Type: application/json" unless header() says otherwise.
     ///
     ///     sc::rest api{"https://example.com/api/items"};
@@ -26,6 +26,8 @@ namespace sc {
         /// came, the error goes to std::cerr and the body is {"error": "<curl's message>"}.
         std::string post(const std::string &jsonData = R"({})");
 
+        /// A PUT of jsonData, as post() sends it; the response body, whatever the status.
+        std::string put(const std::string &jsonData = R"({})");
         /// A DELETE; the response body, whatever the status, as with get().
         std::string del();
 

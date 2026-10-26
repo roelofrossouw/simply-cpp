@@ -120,6 +120,8 @@ namespace sc {
 
     std::string rest::post(const std::string &jsonData) { return perform(&jsonData); }
 
+    std::string rest::put(const std::string &jsonData) { return perform(&jsonData, "PUT"); }
+
     std::string rest::del() { return perform(nullptr, "DELETE"); }
 
     void rest::header(const std::string &key, const std::string &value) { headers_[key] = value; }

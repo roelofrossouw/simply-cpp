@@ -148,7 +148,7 @@ int main() {
         filesystem::remove_all(dir);
     }
 
-    SECTION("get(), post() and del() send their methods");
+    SECTION("get(), post(), put() and del() send their methods");
     if (std::system("python3 --version > /dev/null 2>&1") != 0) {
         cout << "   (no python3, not verified)" << endl;
     } else {
@@ -164,7 +164,7 @@ class Echo(BaseHTTPRequestHandler):
         self.send_header('Content-Length', str(len(body)))
         self.end_headers()
         self.wfile.write(body)
-    do_GET = do_POST = do_DELETE = answer
+    do_GET = do_POST = do_PUT = do_DELETE = answer
     def log_message(self, *args): pass
 HTTPServer(('127.0.0.1', int(sys.argv[1])), Echo).serve_forever()
 )");
@@ -181,9 +181,10 @@ HTTPServer(('127.0.0.1', int(sys.argv[1])), Echo).serve_forever()
         sc::rest request{url};
         CHECK_EQ(trimmed(request.get()), string{"GET"});
         CHECK_EQ(request.post(R"({"a": 1})"), string{R"(POST {"a": 1})"});
+        CHECK_EQ(request.put(R"({"b": 2})"), string{R"(PUT {"b": 2})"});
         CHECK_EQ(trimmed(request.del()), string{"DELETE"});
         CHECK_EQ(request.status(), 200L);
-        // The same object goes back to a GET after a DELETE.
+        // The same object goes back to a GET after a PUT and a DELETE.
         CHECK_EQ(trimmed(request.get()), string{"GET"});
         (void) std::system(("kill $(cat " + pid_file + ") > /dev/null 2>&1").c_str());
     }

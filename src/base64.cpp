@@ -9,6 +9,17 @@ namespace sc {
         constexpr uint32_t invalid = 0x01FFFFFF;
         constexpr char padding = '=';
         constexpr std::string_view alphabet{"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"};
+        // Base64url's (RFC 4648 section 5).
+        constexpr std::string_view url_alphabet{"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"};
+
+        constexpr int url_sextet(const char c) {
+            if (c >= 'A' && c <= 'Z') return c - 'A';
+            if (c >= 'a' && c <= 'z') return c - 'a' + 26;
+            if (c >= '0' && c <= '9') return c - '0' + 52;
+            if (c == '-') return 62;
+            if (c == '_') return 63;
+            return -1;
+        }
 
         struct decode_table {
             uint32_t data[256];
@@ -99,19 +110,6 @@ namespace sc {
             if (pad_size == 1) *buffer_out++ = static_cast<char>((value >> 8) & 0xFF);
         }
         return decoded;
-    }
-
-    namespace base64_impl {
-        constexpr std::string_view url_alphabet{"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"};
-
-        constexpr int url_sextet(const char c) {
-            if (c >= 'A' && c <= 'Z') return c - 'A';
-            if (c >= 'a' && c <= 'z') return c - 'a' + 26;
-            if (c >= '0' && c <= '9') return c - '0' + 52;
-            if (c == '-') return 62;
-            if (c == '_') return 63;
-            return -1;
-        }
     }
 
     std::string base64::encode_url(const std::string_view text, const bool pad) {

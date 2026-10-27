@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include "sc_test.h"
 
@@ -101,6 +102,27 @@ int main() {
     // Valid input must not throw.
     CHECK_NOTHROW(sc::base64::decode("Zm9vYmFy"));
     CHECK_NOTHROW(sc::base64::decode(""));
+
+    SECTION("base64url: RFC 4648's vectors, unpadded and padded, and what decode_url refuses");
+    {
+        for (const auto &[plain, url]: {pair<string_view, string_view>{"", ""}, {"f", "Zg"}, {"fo", "Zm8"}, {"foo", "Zm9v"}, {"foob", "Zm9vYg"},
+                                        {"fooba", "Zm9vYmE"}, {"foobar", "Zm9vYmFy"}}) {
+            CHECK_EQ(sc::base64::encode_url(plain), string{url});
+            CHECK_EQ(sc::base64::decode_url(url), string{plain});
+            CHECK_EQ(sc::base64::decode_url(sc::base64::encode_url(plain, true)), string{plain});
+        }
+        CHECK_EQ(sc::base64::encode_url("f", true), string{"Zg=="});
+        CHECK_EQ(sc::base64::encode_url("\xfb\xff"), string{"-_8"});
+        CHECK_EQ(sc::base64::decode_url("-_8"), string{"\xfb\xff"});
+        CHECK_THROWS_AS((void) sc::base64::decode_url("+/8"), std::runtime_error); // standard base64's characters
+        CHECK_THROWS_AS((void) sc::base64::decode_url("Z"), std::runtime_error);   // a length 1 mod 4
+        CHECK_THROWS_AS((void) sc::base64::decode_url("Zh"), std::runtime_error);  // bits past the end
+        CHECK_THROWS_AS((void) sc::base64::decode_url("Zg="), std::runtime_error); // padding short of a quad
+        for (size_t length = 0; length < 70; ++length) {
+            const auto input = byte_pattern(length, 37, 11);
+            CHECK_EQ(sc::base64::decode_url(sc::base64::encode_url(input)), input);
+        }
+    }
 
     TEST_SUMMARY();
 }

@@ -144,7 +144,9 @@ int main() {
         CHECK_EQ(wrong_pin.status(), 0L);
         CHECK(!wrong_pin.error().empty());
 
-        (void) std::system(("kill $(cat " + at("server.pid") + ")" + quiet).c_str());
+        // Whether the kill worked doesn't matter (the server may be gone); GCC with _FORTIFY_SOURCE
+        // warns about a (void) cast, not about a variable kept unused.
+        [[maybe_unused]] const int stopped = std::system(("kill $(cat " + at("server.pid") + ")" + quiet).c_str());
         filesystem::remove_all(dir);
     }
 
@@ -186,7 +188,7 @@ HTTPServer(('127.0.0.1', int(sys.argv[1])), Echo).serve_forever()
         CHECK_EQ(request.status(), 200L);
         // The same object goes back to a GET after a PUT and a DELETE.
         CHECK_EQ(trimmed(request.get()), string{"GET"});
-        (void) std::system(("kill $(cat " + pid_file + ") > /dev/null 2>&1").c_str());
+        [[maybe_unused]] const int stopped = std::system(("kill $(cat " + pid_file + ") > /dev/null 2>&1").c_str());
     }
 
     SECTION("The HTTP status of the last request");

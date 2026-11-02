@@ -46,7 +46,7 @@ namespace sc {
         template<Numeric R>
         dual(R scalar) { real = scalar; }
 
-        dual<dual> operator~() { return {*this, 1}; }
+        dual<dual> operator~() const { return {*this, 1}; }
 
         dual operator+(const dual &rhs) const { return {real + rhs.real, eps + rhs.eps}; }
         dual operator-(const dual &rhs) const { return {real - rhs.real, eps - rhs.eps}; }
@@ -178,6 +178,37 @@ namespace sc {
 
     template<dual_type T>
     dual<T> sqrt(const dual<T> &d) { return d.sqrt(); }
+
+    /// The natural logarithm: (log x)' = x' / x. Only for x > 0, as std::log.
+    template<dual_type T>
+    dual<T> log(const dual<T> &d) {
+        using std::log;
+        return {log(d.real), d.eps / d.real};
+    }
+
+    /// x to a plain power: (xⁿ)' = n xⁿ⁻¹ x'. Any x std::pow takes, a negative one with a whole n too.
+    template<dual_type T, Numeric N>
+    dual<T> pow(const dual<T> &base, const N exponent) {
+        using std::pow;
+        const auto n = static_cast<double>(exponent);
+        return {pow(base.real, n), base.eps * pow(base.real, n - 1) * n};
+    }
+
+    /// A plain number to a dual power: (aʸ)' = aʸ log(a) y'. Only for a > 0.
+    template<Numeric N, dual_type T>
+    dual<T> pow(const N base, const dual<T> &exponent) {
+        using std::log;
+        using std::pow;
+        const auto a = static_cast<double>(base);
+        const auto value = pow(a, exponent.real);
+        return {value, exponent.eps * value * log(a)};
+    }
+
+    /// Both dual: xʸ = exp(y log x), so (xʸ)' = xʸ (y' log x + y x' / x). Only for x > 0.
+    template<dual_type T>
+    dual<T> pow(const dual<T> &base, const dual<T> &exponent) {
+        return exp(exponent * log(base));
+    }
 }
 
 #endif // SC_DUAL_H

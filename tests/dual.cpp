@@ -166,6 +166,49 @@ int main() {
         CHECK_EQ(sc::abs(sc::dual<double>{2.0}), 2.0);
     }
 
+    SECTION("Logarithms and powers, to the second derivative");
+    {
+        sc::dual<double> x{2.0};
+
+        // log x: 1/x, -1/x²
+        const auto logarithm = sc::log(~~x);
+        CHECK_NEAR(logarithm.real.real.real, std::log(2.0), tolerance);
+        CHECK_NEAR(logarithm.eps.real.real, 0.5, tolerance);
+        CHECK_NEAR(logarithm.eps.eps.real, -0.25, tolerance);
+
+        // x³: 3x², 6x
+        const auto cube = sc::pow(~~x, 3);
+        CHECK_NEAR(cube.real.real.real, 8.0, tolerance);
+        CHECK_NEAR(cube.eps.real.real, 12.0, tolerance);
+        CHECK_NEAR(cube.eps.eps.real, 12.0, tolerance);
+
+        // A negative power, as discounting uses: (1 + r)^-n, n (1 + r)^-(n+1) with the sign
+        const sc::dual<double> growth{1.0003};
+        const auto discounted = sc::pow(~growth, -365);
+        CHECK_NEAR(discounted.real.real, std::pow(1.0003, -365), tolerance);
+        CHECK_NEAR(discounted.eps.real, -365 * std::pow(1.0003, -366), tolerance);
+
+        // A negative base with a whole power, as std::pow allows
+        const auto odd = sc::pow(~sc::dual<double>{-2.0}, 3);
+        CHECK_NEAR(odd.real.real, -8.0, tolerance);
+        CHECK_NEAR(odd.eps.real, 12.0, tolerance);
+
+        // 2^y: 2^y log 2
+        const auto exponential = sc::pow(2.0, ~sc::dual<double>{3.0});
+        CHECK_NEAR(exponential.real.real, 8.0, tolerance);
+        CHECK_NEAR(exponential.eps.real, 8.0 * std::log(2.0), tolerance);
+
+        // x^x: x^x (log x + 1)
+        const auto lifted = ~x;
+        const auto self = sc::pow(lifted, lifted);
+        CHECK_NEAR(self.real.real, 4.0, tolerance);
+        CHECK_NEAR(self.eps.real, 4.0 * (std::log(2.0) + 1), tolerance);
+
+        // Plain numbers still go to std::pow and std::log
+        CHECK_EQ(pow(2.0, 10), 1024.0);
+        CHECK_NEAR(log(std::exp(1.0)), 1.0, tolerance);
+    }
+
     SECTION("String conversion shows every order");
     {
         sc::dual<double> x{3.0};

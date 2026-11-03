@@ -54,11 +54,14 @@ curl -fsSL https://apt.roelof.co.za/setup.sh | bash # registers the apt repo - s
 sudo apt -y install simply-cpp-dev
 ```
 
+Since 2.0.0 the HTTP client `sc::rest` (`rest.h`) and `sc::ollama` are in
+[sc-http](https://github.com/roelofrossouw/simply-cpp-http), with the same names, and sc-core no
+longer needs libcurl: a program using them adds `find_package(sc-http)` and links `sc::sc-http`.
+
 ## Dependencies
 
 sc-core is the base of the suite - it doesn't depend on any other `sc-*` module. It does use:
 
-- **libcurl** - a system dependency (`libcurl4-openssl-dev` on apt, `curl` on brew); installed automatically if missing when building from source.
 - **nlohmann_json** - fetched and built from source automatically; nothing to install for it.
 
 ## Usage
@@ -72,7 +75,7 @@ target_link_libraries(myapp PRIVATE sc::sc-core)
 
 Include the aggregate header `sc.h`, or an individual one (`base64.h`, `timer.h`, `date.h`,
 `datetime.h`, `color.h`, `geometry.h`, `ip_endpoint.h`, `ip_endpoints.h`, `console.h`,
-`percent.h`, `rest.h`, `ollama.h`, ...). `config.h` and `params.h` bring in nlohmann/json, so
+`percent.h`, ...). `config.h` and `params.h` bring in nlohmann/json, so
 they are only included individually.
 
 ```cpp

@@ -1,6 +1,5 @@
 #include "params.h"
 #include "console.h"
-#include "rest.h"
 
 #include <algorithm>
 #include <cctype>
@@ -30,15 +29,10 @@ namespace {
     constexpr const char *apache_warranty = R"(Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.)";
 
     // The licence's text: the first of its files that can be read (its package's copyright file,
-    // or the source's LICENSE), else fetched from where it's published; empty when neither works.
+    // or the source's LICENSE); empty when none can (--license names where it's published).
     std::string license_text(const sc::detail::program_license &license) {
         for (auto file = license.files; file && *file; ++file) {
             if (std::ifstream in{*file, std::ios::binary}; in) return {std::istreambuf_iterator<char>{in}, {}};
-        }
-        if (license.text_url && *license.text_url) {
-            sc::rest request{license.text_url};
-            auto text = request.get();
-            if (request.status() == 200) return text; // not an error page's body
         }
         return {};
     }

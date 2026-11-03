@@ -13,13 +13,11 @@
 #include <date.h>
 #include <datetime.h>
 #include <base64.h>
-#include <rest.h>
 #include <color.h>
 #include <timer.h>
 #include <matrix.h>
 #include <geometry.h>
 #include <transform.h>
-#include <ollama.h>
 #include <dual.h>
 #include <ip_address.h>
 #include <ip_endpoint.h>

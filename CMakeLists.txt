@@ -21,7 +21,6 @@ foreach (template ${SC_SCRIPT_TEMPLATES})
 endforeach ()
 
 # Runtime dependencies (required for simply-cpp-dev):
-find_or_install_package(CURL libcurl4-openssl-dev curl)
 find_or_install_package(nlohmann_json nlohmann-json3-dev nlohmann-json)
 
 ###########
@@ -45,10 +44,8 @@ add_sc_object(transform)
 add_sc_object(date)
 add_sc_object(datetime)
 add_sc_object(percent)
-add_sc_object(ollama LINK_LIBRARIES nlohmann_json::nlohmann_json)
 add_sc_object(params LINK_LIBRARIES nlohmann_json::nlohmann_json PUBLIC_LINK_LIBRARIES nlohmann_json::nlohmann_json)
 add_sc_object(config LINK_LIBRARIES nlohmann_json::nlohmann_json PUBLIC_LINK_LIBRARIES nlohmann_json::nlohmann_json)
-add_sc_object(rest LINK_LIBRARIES curl PUBLIC_LINK_LIBRARIES curl)
 
 ######################
 # Exported Libraries #
@@ -91,7 +88,7 @@ add_sc_example(sc-core-params)
 #############
 # path.h moved here from sc-graphics (before 3.0.0): this -dev package takes the file over.
 package_sc_module(
-    DEV_DEPENDS simply-cpp nlohmann-json3-dev libcurl4-openssl-dev
+    DEV_DEPENDS simply-cpp nlohmann-json3-dev
     DEV_BREAKS "simply-cpp-graphics-dev (<< 3.0.0~)"
     DEV_REPLACES "simply-cpp-graphics-dev (<< 3.0.0~)"
 )

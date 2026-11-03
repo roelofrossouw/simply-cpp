@@ -19,8 +19,8 @@ Point it at `build/sc-test` instead to work in the test directory itself.
 
 ### Labels
 
-`rest` and `ollama` reach outside the build – a live http request and a local ollama
-server. Everything else is self contained and labelled `unit`:
+Every test is self contained and labelled `unit` (`rest` and `ollama`, which reached outside the
+build, moved to sc-http in 2.0.0):
 
 ```bash
 ctest --test-dir build -LE network      # skip anything that needs the outside world

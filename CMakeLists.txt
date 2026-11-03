@@ -55,7 +55,9 @@ add_sc_libraries(DESCRIPTION "simply-cpp-core")
 ################
 # Installation #
 ################
-install_sc_module(PATH_VARS CMAKE_INSTALL_INCLUDEDIR)
+# Any newer: every module asks for some sc-core 1.x, and 2.0.0 only moved sc::rest and sc::ollama out
+# (to sc-http), which a module still using them finds out when it compiles.
+install_sc_module(PATH_VARS CMAKE_INSTALL_INCLUDEDIR COMPATIBILITY AnyNewerVersion)
 
 # Core only: what every other module picks up through find_package(sc-core) or the
 # bootstrap instead of keeping its own copy. Goes next to sc-coreConfig.cmake, which is

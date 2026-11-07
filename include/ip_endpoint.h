@@ -85,6 +85,11 @@ namespace sc {
         // keeps it); nothing for an IPv6 address or a name. Since 1.21.0.
         [[nodiscard]] std::optional<std::uint32_t> ipv4() const;
 
+        // The name the host's address has in reverse DNS (its PTR record, through the system's
+        // resolver: getnameinfo), without the trailing dot: "dns.google" for 8.8.8.8. Nothing when
+        // it has none, the lookup fails, or the host isn't an IPv4 or IPv6 address. Since 2.1.0.
+        [[nodiscard]] std::optional<std::string> host_name() const;
+
         friend std::ostream &operator<<(std::ostream &os, const ip_endpoint &endpoint) {
             return os << endpoint.to_string();
         }

@@ -146,5 +146,14 @@ int main() {
         CHECK((!sc::ip_endpoint{"example.com", 1}.ipv4()));
     }
 
+    SECTION("Reverse DNS: the hosts file names 127.0.0.1; a name or junk has none");
+    {
+        const auto local = sc::ip_endpoint{"127.0.0.1"}.host_name();
+        CHECK(local.has_value());
+        CHECK((local && !local->empty() && local->back() != '.'));
+        CHECK((!sc::ip_endpoint{"example.com"}.host_name()));
+        CHECK((!sc::ip_endpoint{"not an address"}.host_name()));
+    }
+
     TEST_SUMMARY();
 }

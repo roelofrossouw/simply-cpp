@@ -73,6 +73,29 @@ sc::ip_endpoint sc::ip_endpoint::peer_of(const int socket) {
     return from(address);
 }
 
+std::optional<std::string> sc::ip_endpoint::host_name() const {
+    sockaddr_storage storage{};
+    socklen_t size = 0;
+    if (auto *v4 = reinterpret_cast<sockaddr_in *>(&storage); inet_pton(AF_INET, host.c_str(), &v4->sin_addr) == 1) {
+        v4->sin_family = AF_INET;
+        size = sizeof(sockaddr_in);
+    } else if (auto *v6 = reinterpret_cast<sockaddr_in6 *>(&storage); inet_pton(AF_INET6, host.c_str(), &v6->sin6_addr) == 1) {
+        v6->sin6_family = AF_INET6;
+        size = sizeof(sockaddr_in6);
+    } else {
+        return std::nullopt;
+    }
+#ifdef __APPLE__
+    storage.ss_len = static_cast<std::uint8_t>(size);
+#endif
+    char name[NI_MAXHOST];
+    if (getnameinfo(reinterpret_cast<const sockaddr *>(&storage), size, name, sizeof name, nullptr, 0, NI_NAMEREQD) != 0) return std::nullopt;
+    std::string out = name;
+    while (!out.empty() && out.back() == '.') out.pop_back();
+    if (out.empty()) return std::nullopt;
+    return out;
+}
+
 std::optional<std::uint32_t> sc::ip_endpoint::ipv4() const {
     in_addr address{};
     if (inet_pton(AF_INET, host.c_str(), &address) != 1) return std::nullopt;

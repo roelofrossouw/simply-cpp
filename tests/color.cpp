@@ -53,6 +53,22 @@ int main() {
         CHECK_NE(sc::color::Black, sc::color::Transparent); // they differ only in alpha
     }
 
+    SECTION("RGB channels come back exactly as given, never outside 0 to 1");
+    {
+        // #990000 once came back with green and blue at -5.6e-17, from a round trip through CMYK.
+        const auto dark = sc::color::from_string("#990000");
+        CHECK_EQ(dark.red(), 0x99 / 255.0);
+        CHECK_EQ(dark.green(), 0.0);
+        CHECK_EQ(dark.blue(), 0.0);
+        bool exact = true;
+        for (int level = 0; level <= 255; ++level)
+            for (int other: {0, 255}) {
+                const auto value = sc::color::from_web(level, other, other);
+                exact = exact && value.red() == level / 255.0 && value.green() == other / 255.0 && value.blue() == other / 255.0;
+            }
+        CHECK(exact);
+    }
+
     SECTION("Hex notation");
     {
         // #RGB shorthand expands each digit, so C becomes CC.

@@ -144,16 +144,18 @@ namespace sc {
         return k;
     }
 
+    // The RGB channels as given, not worked back from CMYK: that round trip isn't exact, and
+    // #990000's green and blue came back as -5.6e-17, below 0 (sc::pdflite refuses such a colour).
     double color::red() const {
-        return k == 1 ? 0 : 1 + c * k - k - c;
+        return r;
     }
 
     double color::green() const {
-        return k == 1 ? 0 : 1 + m * k - k - m;
+        return g;
     }
 
     double color::blue() const {
-        return k == 1 ? 0 : 1 + y * k - k - y;
+        return b;
     }
 
     double color::alpha() const {

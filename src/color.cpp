@@ -3,8 +3,10 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
-#include <sstream>
-#include <regex>
+#include <charconv>
+#include <numbers>
+#include <cctype>
+#include <vector>
 #include <tuple>
 #include <unordered_map>
 
@@ -19,6 +21,48 @@ namespace sc {
 #include "named_colors.inc" // generated from the CSS Color 4 spec by cmake/NamedColors.cmake
             };
             return names;
+        }
+
+        // One argument of rgb() or hsl(): a number and its unit ("", "%", "deg", ...).
+        struct argument {
+            double number;
+            std::string unit;
+        };
+
+        // The arguments of rgb()/hsl() in either CSS form: "255, 0, 0, 0.5" or "255 0 0 / 50%".
+        // Something that isn't a number gives NAN, which the callers turn into black.
+        std::vector<argument> arguments(const std::string &text) {
+            std::vector<argument> out;
+            std::size_t at = 0;
+            while (at < text.size()) {
+                if (std::isspace(static_cast<unsigned char>(text[at])) || text[at] == ',' || text[at] == '/') {
+                    ++at;
+                    continue;
+                }
+                // from_chars, not strtod: the same in every locale (PHP may set one with a decimal comma)
+                if (text[at] == '+') ++at;
+                double number = 0;
+                const auto [end, error] = std::from_chars(text.data() + at, text.data() + text.size(), number);
+                if (error != std::errc{}) return {{NAN, ""}};
+                at = end - text.data();
+                const auto unit_start = at;
+                while (at < text.size() && (std::isalpha(static_cast<unsigned char>(text[at])) || text[at] == '%')) ++at;
+                out.push_back({number, text.substr(unit_start, at - unit_start)});
+            }
+            return out;
+        }
+
+        double alpha_of(const argument &value) {
+            const auto alpha = value.unit == "%" ? value.number / 100 : value.unit.empty() ? value.number : NAN;
+            return std::isfinite(alpha) ? std::clamp(alpha, 0.0, 1.0) : NAN;
+        }
+
+        double degrees_of(const argument &value) {
+            if (value.unit.empty() || value.unit == "deg") return value.number;
+            if (value.unit == "rad") return value.number * 180 / std::numbers::pi;
+            if (value.unit == "grad") return value.number * 0.9;
+            if (value.unit == "turn") return value.number * 360;
+            return NAN;
         }
     }
 
@@ -96,29 +140,40 @@ namespace sc {
 
         if (str[0] == '#') return from_hex(str);
 
-        static const std::regex rgb(R"(rgba?\(([^)]+)\))");
-        static const std::regex hsl(R"(hsla?\(([^)]+)\))");
-        std::smatch match;
-        if (std::regex_match(str, match, rgb)) {
-            std::stringstream ss(match[1].str());
-            int r, g, b;
-            double a = 1.0;
-            char comma;
-            ss >> r >> comma >> g >> comma >> b;
-            ss >> comma >> a; // optional alpha
-            return from_web(r, g, b, a);
+        const auto lower = lowercase(str);
+        const auto open = lower.find('(');
+        if (open != std::string::npos && lower.back() == ')') {
+            const auto function = lower.substr(0, open);
+            const auto values = arguments(lower.substr(open + 1, lower.size() - open - 2));
+            if (function == "rgb" || function == "rgba") {
+                if (values.size() != 3 && values.size() != 4) return {0, 0, 0, 1};
+                double channel[3];
+                for (int i = 0; i < 3; ++i) {
+                    const auto value = values[i].unit == "%" ? values[i].number / 100 : values[i].unit.empty() ? values[i].number / 255 : NAN;
+                    if (!std::isfinite(value)) return {0, 0, 0, 1};
+                    channel[i] = std::clamp(value, 0.0, 1.0);
+                }
+                const auto alpha = values.size() == 4 ? alpha_of(values[3]) : 1.0;
+                if (!std::isfinite(alpha)) return {0, 0, 0, 1};
+                return {channel[0], channel[1], channel[2], alpha};
+            }
+            if (function == "hsl" || function == "hsla") {
+                if (values.size() != 3 && values.size() != 4) return {0, 0, 0, 1};
+                const auto hue = degrees_of(values[0]);
+                // Saturation and lightness in percent; CSS Color 4 also takes plain numbers.
+                const auto percent = [](const argument &value) {
+                    return value.unit == "%" || value.unit.empty() ? std::clamp(value.number, 0.0, 100.0) : NAN;
+                };
+                const auto saturation = percent(values[1]), lightness = percent(values[2]);
+                const auto alpha = values.size() == 4 ? alpha_of(values[3]) : 1.0;
+                if (!std::isfinite(hue) || !std::isfinite(saturation) || !std::isfinite(lightness) || !std::isfinite(alpha))
+                    return {0, 0, 0, 1};
+                return from_hsl(std::fmod(std::fmod(hue, 360) + 360, 360), saturation, lightness, alpha);
+            }
+            return {0, 0, 0, 1};
         }
 
-        if (std::regex_match(str, match, hsl)) {
-            std::stringstream ss(match[1].str());
-            double h, s, l, a = 1.0;
-            char comma, percent;
-            ss >> h >> comma >> s >> percent >> comma >> l >> percent;
-            ss >> comma >> a;
-            return from_hsl(h, s, l, a);
-        }
-
-        const auto name = lowercase(str);
+        const auto &name = lower;
         if (const auto it = named_colors().find(name); it != named_colors().end()) {
             const auto [red, green, blue] = it->second;
             return from_web(red, green, blue, 1);

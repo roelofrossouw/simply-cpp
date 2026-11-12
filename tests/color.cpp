@@ -91,6 +91,20 @@ int main() {
         check_rgba(sc::color::from_string("hsl(0,0%,0%)"), 0, 0, 0, 1);   // achromatic black
         check_rgba(sc::color::from_string("hsl(0,0%,100%)"), 1, 1, 1, 1); // achromatic white
         check_rgba(sc::color::from_string("hsla(240,100%,50%,0.5)"), 0, 0, 1, 0.5);
+        // Percentages, the space-separated form with "/ alpha", units on the hue, any case
+        check_rgba(sc::color::from_string("rgb(100%, 0%, 50%)"), 1, 0, 0.5, 1);
+        check_rgba(sc::color::from_string("rgb(255 0 0 / 0.5)"), 1, 0, 0, 0.5);
+        check_rgba(sc::color::from_string("RGBA(0 128 255 / 25%)"), 0, 128 / 255.0, 1, 0.25);
+        check_rgba(sc::color::from_string("rgb( 10 , 20 , 30 )"), 10 / 255.0, 20 / 255.0, 30 / 255.0, 1);
+        check_rgba(sc::color::from_string("rgb(300, -5, 1.5e2)"), 1, 0, 150 / 255.0, 1); // clamped
+        check_rgba(sc::color::from_string("hsl(120deg 100% 50%)"), 0, 1, 0, 1);
+        check_rgba(sc::color::from_string("hsl(0.5turn, 100%, 50%)"), 0, 1, 1, 1);
+        check_rgba(sc::color::from_string("hsl(-120, 100%, 50%)"), 0, 0, 1, 1);
+        check_rgba(sc::color::from_string("hsl(240 100% 50% / 50%)"), 0, 0, 1, 0.5);
+        // Anything it can't read is black, never garbage
+        for (const auto *bad: {"rgb()", "rgb(1, 2)", "rgb(a, b, c)", "rgb(1, 2, 3, 4, 5)", "rgb(1px, 2, 3)",
+                               "hsl(120, 100%)", "rgb(nan, 0, 0)", "hsl(1em, 50%, 50%)", "foo(1, 2, 3)"})
+            CHECK_MSG(sc::color::from_string(bad) == sc::color::Black, bad);
     }
 
     SECTION("from_web matches the parsed form");

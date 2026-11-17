@@ -8,7 +8,7 @@
 
 namespace sc {
     // What utf8::analyze() found, counted in code points (an invalid byte counts as one U+FFFD).
-    struct TextAnalysis {
+    struct text_analysis {
         std::size_t bytes = 0;
         std::size_t codepoints = 0;
 
@@ -92,7 +92,7 @@ namespace sc {
                                        std::size_t cp_start,
                                        std::size_t cp_count = npos);
 
-        static TextAnalysis analyze(std::string_view s);
+        static text_analysis analyze(std::string_view s);
 
     private:
         struct DecodeResult {

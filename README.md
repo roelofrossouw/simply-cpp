@@ -381,7 +381,7 @@ Closer looks at each area, installed alongside it:
 | `sc-core-time` | `sc::date` calendar arithmetic, `sc::datetime` and Unix time, `sc::timer` |
 | `sc-core-text` | UTF-8 measuring, slicing and repair, base64, `explode`, `getenv`, files |
 | `sc-core-numbers` | `sc::percent`, `sc::color`, `sc::matrix`, dual numbers for derivatives |
-| `sc-core-network` | `ip_address`, `sc::ip_endpoint` and `sc::ip_endpoints` |
+| `sc-core-network` | `sc::ip_address`, `sc::ip_endpoint` and `sc::ip_endpoints` |
 | `sc-core-params` | `sc::params`: reading a command line, the values, its mistakes and `--help` |
 
 Its source is `examples/sc-core-demo.cpp`; the code below is copied from it at

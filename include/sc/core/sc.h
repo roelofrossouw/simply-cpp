@@ -1,7 +1,9 @@
 #pragma once
 
-// All of sc-core but config.h and params.h, which bring in nlohmann/json, plus the common standard
-// headers.
+// A convenience for programs, tests and examples: all of sc-core but config.h and params.h (which
+// bring in nlohmann/json), plus the common standard headers. Library code (a module's public headers
+// and sources) never includes it: it includes the headers it uses, so a consumer doesn't get all of
+// sc-core through one include.
 #include <iostream>
 #include <fstream>
 #include <sstream>

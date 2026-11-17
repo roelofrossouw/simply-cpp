@@ -120,8 +120,8 @@ namespace sc {
         return s.substr(byte_start, byte_end - byte_start);
     }
 
-    TextAnalysis utf8::analyze(std::string_view s) {
-        TextAnalysis result;
+    text_analysis utf8::analyze(std::string_view s) {
+        text_analysis result;
 
         result.bytes = s.size();
         result.valid_utf8 = is_valid(s);

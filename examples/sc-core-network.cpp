@@ -7,9 +7,9 @@
 int main() {
     sc::console::title("simply-cpp core: network addresses");
 
-    sc::console::heading("IPv4 addresses: ip_address");
-    SC_SHOW(ip_address{"192.168.1.10"});
-    SC_SHOW(ip_address{"192.168.1.10"} == ip_address{"192.168.1.10"});
+    sc::console::heading("IPv4 addresses: sc::ip_address");
+    SC_SHOW(sc::ip_address{"192.168.1.10"});
+    SC_SHOW(sc::ip_address{"192.168.1.10"} == sc::ip_address{"192.168.1.10"});
 
     sc::console::heading("One server: sc::ip_endpoint");
     SC_SHOW(sc::ip_endpoint::parse("db.example.com:5432"));

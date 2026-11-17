@@ -1,6 +1,6 @@
 #pragma once
 
-#include "geometry.h"
+#include <sc/core/geometry.h>
 
 namespace sc {
     /// A 2D affine transform: moving, scaling, rotating, mirroring and any mix of them, as SVG's

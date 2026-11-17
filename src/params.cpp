@@ -1,5 +1,5 @@
-#include "params.h"
-#include "console.h"
+#include <sc/core/params.h>
+#include <sc/core/console.h>
 
 #include <algorithm>
 #include <cctype>

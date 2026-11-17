@@ -1,7 +1,7 @@
 #pragma once
 
-#include "point.h"
-#include "rect.h"
+#include <sc/core/point.h>
+#include <sc/core/rect.h>
 
 #include <algorithm>
 

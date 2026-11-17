@@ -1,6 +1,6 @@
 #pragma once
-#include "point.h"
-#include "size.h"
+#include <sc/core/point.h>
+#include <sc/core/size.h>
 
 #include <concepts>
 #include <ostream>
@@ -227,4 +227,4 @@ namespace sc {
 }
 
 // The polygon conversion is defined there, where polygon_ is complete.
-#include "polygon.h"
+#include <sc/core/polygon.h>

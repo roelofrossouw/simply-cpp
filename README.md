@@ -79,7 +79,7 @@ Include the aggregate header `sc.h`, or an individual one (`base64.h`, `timer.h`
 they are only included individually.
 
 ```cpp
-#include <sc.h>
+#include <sc/core/sc.h>
 
 auto encoded = sc::base64::encode("Hello");
 
@@ -267,7 +267,7 @@ topic[] = second
 ```
 
 ```cpp
-#include <config.h>
+#include <sc/core/config.h>
 
 const nlohmann::json structure{
     {"type", "object"},
@@ -309,7 +309,7 @@ justified to 80 columns, and an Apache-2.0 program's help ends with its copyrigh
 `nlohmann::ordered_json` keyed by name:
 
 ```cpp
-#include <params.h>
+#include <sc/core/params.h>
 
 int main(int argc, char *argv[]) {
     const sc::params args{argc, argv, {

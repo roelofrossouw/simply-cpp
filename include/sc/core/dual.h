@@ -1,7 +1,7 @@
 #ifndef SC_DUAL_H
 #define SC_DUAL_H
 
-#include "point.h"
+#include <sc/core/point.h>
 
 #include <cmath>
 #include <concepts>

@@ -1,5 +1,5 @@
 // sc::log_level: syslog's order, and numbers from a configuration file.
-#include <log_level.h>
+#include <sc/core/log_level.h>
 
 #include "sc_test.h"
 

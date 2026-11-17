@@ -1,4 +1,4 @@
-#include "core.h"
+#include <sc/core/core.h>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>

@@ -3,7 +3,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <optional>
-#include <sc.h>
+#include <sc/core/sc.h>
 
 #include "sc_test.h"
 

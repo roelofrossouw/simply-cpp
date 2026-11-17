@@ -1,5 +1,5 @@
 #pragma once
-#include "distance.h"
+#include <sc/core/distance.h>
 
 #include <cmath>
 #include <concepts>

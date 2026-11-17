@@ -1,7 +1,7 @@
 // A short tour of simply-cpp's core: base64, dates and times, server endpoints, and strings and
 // the environment. Each line shows a call, as written, and what it returned. Needs no server.
 
-#include <sc.h>
+#include <sc/core/sc.h>
 
 int main() {
     sc::console::title("simply-cpp core: a few of the basics, each call with what it returned");

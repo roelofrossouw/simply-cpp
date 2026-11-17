@@ -1,4 +1,4 @@
-#include "ip_endpoint.h"
+#include <sc/core/ip_endpoint.h>
 
 #include <arpa/inet.h>
 #include <netdb.h>

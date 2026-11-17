@@ -1,5 +1,5 @@
-#include "color.h"
-#include "core.h"
+#include <sc/core/color.h>
+#include <sc/core/core.h>
 #include <algorithm>
 #include <cmath>
 #include <cstdio>

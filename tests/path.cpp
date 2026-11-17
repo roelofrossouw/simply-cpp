@@ -1,5 +1,5 @@
 // sc::path: building, bounds, transforming, and flattening curves into straight segments.
-#include <path.h>
+#include <sc/core/path.h>
 
 #include "sc_test.h"
 

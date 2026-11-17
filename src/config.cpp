@@ -1,7 +1,7 @@
-#include "config.h"
+#include <sc/core/config.h>
 
-#include "ip_endpoint.h"
-#include "utf8.h"
+#include <sc/core/ip_endpoint.h>
+#include <sc/core/utf8.h>
 
 #include <algorithm>
 #include <cctype>

@@ -5,7 +5,7 @@
 #include <cmath>
 #include <vector>
 
-#include <sc.h>
+#include <sc/core/sc.h>
 
 int main() {
     sc::console::title("simply-cpp core: geometry");

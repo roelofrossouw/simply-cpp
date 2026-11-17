@@ -2,7 +2,7 @@
 // lists of them, as the other modules take their servers. Each line shows a call, as written, and
 // what it returned. Needs no server.
 
-#include <sc.h>
+#include <sc/core/sc.h>
 
 int main() {
     sc::console::title("simply-cpp core: network addresses");

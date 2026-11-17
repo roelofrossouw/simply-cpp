@@ -77,7 +77,7 @@ A test is a plain `main()` that ends in `TEST_SUMMARY()`, which prints the tally
 returns the exit code:
 
 ```cpp
-#include <sc.h>
+#include <sc/core/sc.h>
 #include "sc_test.h"
 
 int main() {

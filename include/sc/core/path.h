@@ -1,12 +1,12 @@
 #pragma once
 
-#include "circle.h"
-#include "line.h"
-#include "point.h"
-#include "polygon.h"
-#include "rect.h"
-#include "rotated_rect.h"
-#include "rounded_rect.h"
+#include <sc/core/circle.h>
+#include <sc/core/line.h>
+#include <sc/core/point.h>
+#include <sc/core/polygon.h>
+#include <sc/core/rect.h>
+#include <sc/core/rotated_rect.h>
+#include <sc/core/rounded_rect.h>
 
 #include <algorithm>
 

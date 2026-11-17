@@ -1,4 +1,4 @@
-#include <sc.h>
+#include <sc/core/sc.h>
 
 #include <vector>
 

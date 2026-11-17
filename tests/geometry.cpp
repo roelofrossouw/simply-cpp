@@ -1,4 +1,4 @@
-#include <geometry.h>
+#include <sc/core/geometry.h>
 
 #include <sc_test.h>
 #include <array>

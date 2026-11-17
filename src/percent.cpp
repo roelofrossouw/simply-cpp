@@ -1,4 +1,4 @@
-#include "percent.h"
+#include <sc/core/percent.h>
 
 #include <algorithm>
 #include <cmath>

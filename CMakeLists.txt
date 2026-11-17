@@ -26,7 +26,7 @@ find_or_install_package(nlohmann_json nlohmann-json3-dev nlohmann-json)
 ###########
 # Objects #
 ###########
-set(SOURCE_OBJECTS include/sc.h)
+set(SOURCE_OBJECTS include/sc/core/sc.h)
 set(SOURCE_LIBRARIES)
 set(SOURCE_LINK_LIBRARIES)
 
@@ -63,7 +63,13 @@ install_sc_module(PATH_VARS CMAKE_INSTALL_INCLUDEDIR COMPATIBILITY AnyNewerVersi
 # bootstrap instead of keeping its own copy. Goes next to sc-coreConfig.cmake, which is
 # where sc_bootstrap.cmake looks for it.
 install(FILES cmake/SimplyCppFunctions.cmake cmake/sc_bootstrap.cmake ${SC_SCRIPT_TEMPLATES} DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/sc-core COMPONENT development)
-install(FILES tests/sc_test.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} COMPONENT development)
+# The tests' helper: <sc/core/test/sc_test.h>, plus a forwarder at the old <sc_test.h> for one release cycle.
+install(FILES tests/sc_test.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/sc/core/test COMPONENT development)
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/sc-compat-test/sc_test.h"
+        "// Forwards the old include path to <sc/core/test/sc_test.h>: include that instead.\n"
+        "// Installed for one release cycle; removed with the next major release of the suite.\n"
+        "#pragma once\n#include <sc/core/test/sc_test.h>\n")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/sc-compat-test/sc_test.h" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} COMPONENT development)
 
 #########
 # Tests #

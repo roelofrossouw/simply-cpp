@@ -1,9 +1,9 @@
 // sc::distance and its units: kept in points, converting to them, and taken by geometry as is.
-#include "console.h"
-#include "distance.h"
-#include "point.h"
-#include "rect.h"
-#include "size.h"
+#include <sc/core/console.h>
+#include <sc/core/distance.h>
+#include <sc/core/point.h>
+#include <sc/core/rect.h>
+#include <sc/core/size.h>
 
 #include <string>
 #include <type_traits>

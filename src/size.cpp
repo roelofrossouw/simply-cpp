@@ -1,4 +1,4 @@
-#include "size.h"
+#include <sc/core/size.h>
 
 // Instantiated in the library too, for callers built against these symbols.
 template class sc::pair_<sc::size_<int>, int>;

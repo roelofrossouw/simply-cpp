@@ -1,4 +1,4 @@
-#include <config.h>
+#include <sc/core/config.h>
 
 #include "sc_test.h"
 

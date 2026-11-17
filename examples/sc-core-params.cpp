@@ -4,8 +4,8 @@
 // and then --help prints and exits by itself. Each line shows a call, as written, and what it
 // returned. Needs no server.
 
-#include <params.h>
-#include <sc.h>
+#include <sc/core/params.h>
+#include <sc/core/sc.h>
 
 #include <string>
 #include <vector>

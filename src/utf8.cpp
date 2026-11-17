@@ -1,4 +1,4 @@
-#include "utf8.h"
+#include <sc/core/utf8.h>
 
 namespace sc {
     std::size_t utf8::find_invalid(std::string_view s) {

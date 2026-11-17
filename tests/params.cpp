@@ -1,4 +1,4 @@
-#include <params.h>
+#include <sc/core/params.h>
 
 #include "sc_test.h"
 

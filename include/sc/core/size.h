@@ -1,5 +1,5 @@
 #pragma once
-#include "point.h"
+#include <sc/core/point.h>
 
 #include <ostream>
 

@@ -1,15 +1,15 @@
 #pragma once
 
-#include "point.h"
-#include "size.h"
-#include "rect.h"
-#include "rotated_rect.h"
-#include "rounded_rect.h"
-#include "path.h"
-#include "polygon.h"
-#include "circle.h"
-#include "line.h"
-#include "dbscan.h"
+#include <sc/core/point.h>
+#include <sc/core/size.h>
+#include <sc/core/rect.h>
+#include <sc/core/rotated_rect.h>
+#include <sc/core/rounded_rect.h>
+#include <sc/core/path.h>
+#include <sc/core/polygon.h>
+#include <sc/core/circle.h>
+#include <sc/core/line.h>
+#include <sc/core/dbscan.h>
 
 #include <concepts>
 #include <cstddef>

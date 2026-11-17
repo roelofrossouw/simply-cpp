@@ -1,6 +1,6 @@
-#include "rect.h"
-#include "polygon.h"
-#include "rotated_rect.h"
+#include <sc/core/rect.h>
+#include <sc/core/polygon.h>
+#include <sc/core/rotated_rect.h>
 
 #include <algorithm>
 #include <cmath>

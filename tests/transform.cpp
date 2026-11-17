@@ -1,5 +1,5 @@
 // sc::transform and sc::group.
-#include <transform.h>
+#include <sc/core/transform.h>
 
 #include <sc_test.h>
 

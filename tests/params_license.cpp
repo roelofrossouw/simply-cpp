@@ -1,6 +1,6 @@
 // sc::params with the licence sc_program_info() records at compile time (tests/CMakeLists.txt
 // builds this test with it, as add_sc_example() builds demos): --license and --license-text.
-#include <params.h>
+#include <sc/core/params.h>
 
 #include "sc_test.h"
 

@@ -1,6 +1,7 @@
 # Several copies of these helpers get included in one configure: sc-core's, and the copy each module's
 # package config includes. A copy older than one already included returns here instead of replacing
-# its functions with older ones (helpers 36 on; copies before 36 don't check).
+# its functions with older ones (helpers 36 on; copies before 36 don't check). Keep both 36s here in step
+# with SC_HELPERS_VERSION below.
 if (DEFINED SC_HELPERS_LOADED_VERSION AND SC_HELPERS_LOADED_VERSION GREATER 36)
     return()
 endif ()

@@ -98,7 +98,7 @@ The `sc::geometry` concept is `bounds()` (a path's exact, curves included) plus 
 `sc::to_path(shape)` giving the outline; a shape of your own with both counts too. `sc::shape`
 holds any one shape, and `sc::group` is a collection of them that is a shape itself (groups
 nest). Shapes are only geometry: sc-graphics' `sc::canvas` draws them, implemented by
-sc-image's `sc::image` and sc-pdf's `sc::pdf`.
+sc-image's `sc::image` and sc-pdflite's `sc::pdflite::writer`.
 
 ```cpp
 const sc::rounded_rect button{sc::rect{10, 10, 80, 30}, 6};

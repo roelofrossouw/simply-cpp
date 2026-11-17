@@ -1,4 +1,4 @@
-#include "../include/sc.h"
+#include <sc/core/timer.h>
 #include <chrono>
 #include <iomanip>
 #include <sstream>

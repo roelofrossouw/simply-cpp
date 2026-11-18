@@ -55,8 +55,9 @@ sudo apt -y install simply-cpp-dev
 ```
 
 Since 2.0.0 the HTTP client `sc::rest` (`rest.h`) and `sc::ollama` are in
-[sc-http](https://github.com/roelofrossouw/simply-cpp-http), with the same names, and sc-core no
-longer needs libcurl: a program using them adds `find_package(sc-http)` and links `sc::sc-http`.
+[sc-http](https://github.com/roelofrossouw/simply-cpp-http) (since sc-http 3.0.0 as `sc::http::client`
+in `<sc/http/client.h>` and `sc::http::ollama`), and sc-core no longer needs libcurl: a program
+using them adds `find_package(sc-http)` and links `sc::sc-http`.
 
 ## Dependencies
 
@@ -210,7 +211,7 @@ resolve; `socket_address` holds a `sockaddr_storage` without the header that dec
 ignored, and an invalid entry throws `std::invalid_argument`. It works like a
 `std::vector<sc::ip_endpoint>` (`begin()`/`end()`, `size()`, `front()`, `push_back()`,
 `[]`, ...). It converts implicitly to and from both that vector and the string
-form, so `sc::redis` and `sc::postgres`, which take an `sc::ip_endpoints`, accept a
+form, so `sc::redis::client` and `sc::db::client`, which take an `sc::ip_endpoints`, accept a
 string, a vector or a braced list. Don't overload a function on both
 `std::string` and `std::vector<sc::ip_endpoint>`: an `sc::ip_endpoints` argument would
 be ambiguous. Use `to_string(separator)` for another separator:
@@ -220,7 +221,7 @@ sc::ip_endpoints servers{"redis1;redis2:7000", 6379};   // default port 6379
 servers.push_back({"redis3", 7001});
 for (const auto &server : servers) std::cout << server << '\n';
 
-sc::redis cache{servers};
+sc::redis::client cache{servers};
 const std::string text = servers;                       // "redis1:6379;redis2:7000;redis3:7001"
 const auto bootstrap = servers.to_string(",");          // for Kafka's bootstrap.servers
 ```

@@ -15,7 +15,7 @@ namespace sc {
     // e.g. "redis1:6379;redis2:6380" - the format SC_<MODULE>_DEMO_SERVER uses.
     // Behaves like a std::vector<ip_endpoint>. It converts implicitly to and from both that
     // vector and the string form, so a string, a vector or a braced list can be passed wherever
-    // an ip_endpoints is expected (sc::redis, sc::postgres). Because of that, don't overload a
+    // an ip_endpoints is expected (sc::redis::client, sc::db::client). Because of that, don't overload a
     // function on both std::string and std::vector<ip_endpoint>: passing an ip_endpoints would
     // be ambiguous. Take an ip_endpoints instead.
     class ip_endpoints {

@@ -7,7 +7,7 @@
 #include <vector>
 
 namespace {
-    // Stands in for constructors such as sc::redis's and sc::postgres's.
+    // Stands in for constructors such as sc::redis::client's and sc::db::client's.
     std::size_t count(const sc::ip_endpoints &endpoints) { return endpoints.size(); }
     std::string text(const std::string &value) { return value; }
 }

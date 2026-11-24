@@ -1,6 +1,8 @@
 #include <sc/core/config.h>
 
-#include <sc/core/ip_endpoint.h>
+#include <charconv>
+#include <string_view>
+
 #include <sc/core/utf8.h>
 
 #include <algorithm>
@@ -330,6 +332,26 @@ namespace {
         return value.is_null();
     }
 
+    // "host:port" or "[ipv6]:port" with a port of 1 to 65535: what sc-net's sc::ip_endpoint::parse()
+    // reads with a port. Checked here so sc-core doesn't need sc-net (it moved out in 4.0.0).
+    bool is_ip_endpoint(const std::string_view text) {
+        std::string_view host, port;
+        if (!text.empty() && text.front() == '[') {
+            const auto close = text.find(']');
+            if (close == std::string_view::npos || close + 1 >= text.size() || text[close + 1] != ':') return false;
+            host = text.substr(1, close - 1);
+            port = text.substr(close + 2);
+        } else {
+            const auto colon = text.find(':');
+            if (colon == std::string_view::npos || colon != text.rfind(':')) return false;
+            host = text.substr(0, colon);
+            port = text.substr(colon + 1);
+        }
+        int number = 0;
+        const auto [end, error] = std::from_chars(port.data(), port.data() + port.size(), number);
+        return !host.empty() && !port.empty() && error == std::errc{} && end == port.data() + port.size() && number >= 1 && number <= 65535;
+    }
+
     bool has_format(const std::string &text, const std::string &format) {
         if (format == "ipv4") {
             static const std::regex ipv4{R"(^((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$)"};
@@ -339,11 +361,7 @@ namespace {
             static const std::regex hostname{R"(^(?=.{1,253}$)([A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$)"};
             return std::regex_match(text, hostname);
         }
-        try { // ip-endpoint
-            return sc::ip_endpoint::parse(text).port != 0;
-        } catch (const std::invalid_argument &) {
-            return false;
-        }
+        return is_ip_endpoint(text);
     }
 
     // Whether schema, or an object schema somewhere under it, gives a default.

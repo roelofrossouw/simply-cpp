@@ -46,7 +46,7 @@ namespace sc {
     //     enum, const
     //     minimum, maximum, exclusiveMinimum, exclusiveMaximum, multipleOf
     //     minLength, maxLength, pattern (ECMAScript, matched anywhere unless anchored)
-    //     format: ipv4, hostname, and ip-endpoint ("host:port", as sc::ip_endpoint parses it)
+    //     format: ipv4, hostname, and ip-endpoint ("host:port" or "[ipv6]:port", as sc-net's sc::ip_endpoint parses it)
     //     title, description, $schema, $id, $comment, examples (ignored)
     //
     // Any other keyword ($ref, allOf, oneOf, if, ...) throws std::invalid_argument, so a schema

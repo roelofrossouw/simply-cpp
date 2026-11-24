@@ -8,6 +8,20 @@
 #include <string>
 #include <vector>
 
+namespace {
+    // A list with its own <<, as sc-net's sc::ip_endpoints has: format() must use the <<.
+    struct joined {
+        std::vector<std::string> items;
+        [[nodiscard]] auto begin() const { return items.begin(); }
+        [[nodiscard]] auto end() const { return items.end(); }
+        friend std::ostream &operator<<(std::ostream &os, const joined &list) {
+            for (std::size_t i = 0; i < list.items.size(); ++i) os << (i ? ";" : "") << list.items[i];
+            return os;
+        }
+    };
+}
+
+
 using strings = std::vector<std::string>;
 
 int main() {
@@ -27,7 +41,7 @@ int main() {
     CHECK_EQ(sc::console::format(std::vector<std::map<std::string, std::string>>{{{"k", "v"}}}),
              std::string{"[{\"k\": \"v\"}]"});
     // A type with its own << (and begin/end) is printed with <<, not as a list.
-    CHECK_EQ(sc::console::format(sc::ip_endpoints{"redis1;redis2:6380", 6379}), std::string{"redis1:6379;redis2:6380"});
+    CHECK_EQ(sc::console::format(joined{{"redis1:6379", "redis2:6380"}}), std::string{"redis1:6379;redis2:6380"});
 
     SECTION("Printing");
     std::ostringstream printed;

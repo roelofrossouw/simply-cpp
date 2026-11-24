@@ -2,7 +2,7 @@
 
 Library that wraps common C++ libraries behind one simple, consistent API.
 
-**Documentation:** the [simply-cpp wiki](https://github.com/roelofrossouw/simply-cpp/wiki) covers the whole suite: [getting started](https://github.com/roelofrossouw/simply-cpp/wiki/Getting-Started), guides to [configuration files](https://github.com/roelofrossouw/simply-cpp/wiki/Configuration-Files), [command-line parameters](https://github.com/roelofrossouw/simply-cpp/wiki/Command-Line-Parameters), [core utilities](https://github.com/roelofrossouw/simply-cpp/wiki/Core-Utilities), [geometry](https://github.com/roelofrossouw/simply-cpp/wiki/Geometry) and [networking](https://github.com/roelofrossouw/simply-cpp/wiki/Networking), and the [sc-core reference](https://github.com/roelofrossouw/simply-cpp/wiki/Reference-sc-core).
+**Documentation:** the [simply-cpp wiki](https://github.com/roelofrossouw/simply-cpp/wiki) covers the whole suite: [getting started](https://github.com/roelofrossouw/simply-cpp/wiki/Getting-Started), guides to [configuration files](https://github.com/roelofrossouw/simply-cpp/wiki/Configuration-Files), [command-line parameters](https://github.com/roelofrossouw/simply-cpp/wiki/Command-Line-Parameters) and [core utilities](https://github.com/roelofrossouw/simply-cpp/wiki/Core-Utilities), and the [sc-core reference](https://github.com/roelofrossouw/simply-cpp/wiki/Reference-sc-core).
 
 The aim is to make C++ easier to use, especially for newcomers, by wrapping existing libraries
 rather than reimplementing them, which keeps maintenance low.
@@ -59,6 +59,14 @@ Since 2.0.0 the HTTP client `sc::rest` (`rest.h`) and `sc::ollama` are in
 in `<sc/http/client.h>` and `sc::http::ollama`), and sc-core no longer needs libcurl: a program
 using them adds `find_package(sc-http)` and links `sc::sc-http`.
 
+Since 4.0.0 the geometry (`sc::point`, `sc::rect`, `sc::path`, `sc::transform`, `sc::distance`,
+`sc::percent`, `sc::matrix`, `sc::dual`, `sc::dbscan`, ...) is in
+[sc-geometry](https://github.com/roelofrossouw/simply-cpp-geometry) (`<sc/geometry/x.h>`) and the
+network values (`sc::ip_address`, `sc::ip_endpoint`, `sc::ip_endpoints`) in
+[sc-net](https://github.com/roelofrossouw/simply-cpp-net) (`<sc/net/x.h>`). Their names are
+unchanged, still in `sc::`; a program using them adds `find_package(sc-geometry)` or
+`find_package(sc-net)` and links `sc::sc-geometry` or `sc::sc-net`.
+
 ## Dependencies
 
 sc-core is the base of the suite - it doesn't depend on any other `sc-*` module. It does use:
@@ -75,8 +83,7 @@ target_link_libraries(myapp PRIVATE sc::sc-core)
 ```
 
 Include the aggregate header `sc.h`, or an individual one (`base64.h`, `timer.h`, `date.h`,
-`datetime.h`, `color.h`, `geometry.h`, `ip_endpoint.h`, `ip_endpoints.h`, `console.h`,
-`percent.h`, ...). `config.h` and `params.h` bring in nlohmann/json, so
+`datetime.h`, `color.h`, `utf8.h`, `console.h`, `log_level.h`, ...). `config.h` and `params.h` bring in nlohmann/json, so
 they are only included individually.
 
 ```cpp
@@ -84,61 +91,7 @@ they are only included individually.
 
 auto encoded = sc::base64::encode("Hello");
 
-const auto clusters = sc::dbscan(std::vector<double>{1, 1.1, 20}, 0.5, 2); // {0, 0, -1}
-```
-
-### Geometry
-
-`geometry.h` has points, sizes and the shapes: `sc::rect`, `sc::rounded_rect`,
-`sc::rotated_rect`, `sc::polygon`, `sc::circle`, `sc::line` and `sc::path` (lines and cubic
-Bezier curves, as in SVG). Each but `path` also comes in whole pixels (`sc::rect_i`, ...); all
-but `rotated_rect` convert int to double implicitly and back explicitly, rounding. Coordinates
-are y down. It also has DBSCAN clustering (`sc::dbscan`, `sc::dbscan_by`).
-
-The `sc::geometry` concept is `bounds()` (a path's exact, curves included) plus a free
-`sc::to_path(shape)` giving the outline; a shape of your own with both counts too. `sc::shape`
-holds any one shape, and `sc::group` is a collection of them that is a shape itself (groups
-nest). Shapes are only geometry: sc-graphics' `sc::canvas` draws them, implemented by
-sc-image's `sc::image` and sc-pdflite's `sc::pdflite::writer`.
-
-```cpp
-const sc::rounded_rect button{sc::rect{10, 10, 80, 30}, 6};
-const sc::path outline = sc::to_path(button);   // straight sides, a curve per corner
-const sc::rect box = outline.bounds();          // 10, 10, 80 x 30
-
-sc::group marks{button, sc::circle{{50, 60}, 5}, sc::line{{0, 0}, {9, 9}}};
-marks.bounds();                                 // all three
-marks.flip_horizontal(sc::rect{0, 0, 595, 842}); // mirrored across an A4 page, as a whole
-```
-
-`distance.h` has `sc::distance`, a length kept in points (1/72 inch, the unit PDFs are drawn
-in), and the units in `sc::dist` deriving from it: `dist::mm`, `dist::cm`, `dist::inch` and
-`dist::point` (a namespace of their own, so they keep their plain names without clashing with
-`sc::point` or each other). Each converts to its number of points as a double, so every shape
-and drawing call takes them as they are, mixed with plain numbers (points). `points()`,
-`millimetres()`, `centimetres()` and `inches()` read one back, `<<` writes it with its unit
-(`595pt`, `210mm`), and `width.in<sc::dist::mm>()` (or `static_cast<sc::dist::mm>(width)`) gives the same length in
-another unit. Points and sizes can hold distances too, keeping their units:
-`sc::size_<sc::distance>` prints `[595.276pt,841.89pt]`, and its `in<sc::dist::mm>()` is
-`[210mm,297mm]`; with `using namespace sc::dist;` that's `size.in<mm>()`.
-
-```cpp
-const sc::rect box{sc::dist::mm(10), sc::dist::inch(1.1), sc::dist::point(72), 72}; // 28.35, 79.2, 72 x 72
-const double margin = sc::dist::mm(15) + sc::dist::inch(0.5);                      // 78.52 points
-const sc::size a4{sc::dist::mm(210), sc::dist::mm(297)};                           // 595.28 x 841.89
-```
-
-`transform.h` has `sc::transform`, an affine transform (SVG's `matrix(a b c d e f)`):
-`translate`, `scale`, `rotate` (degrees, clockwise on screen) and `flip_horizontal`/`flip_vertical`,
-about any point or line, composed with `then()`. `apply()` keeps a shape's kind where it can: a
-rect stays a rect when moved, scaled, flipped or quarter-turned, becomes a `rotated_rect` when
-turned and a polygon when sheared; a circle stays a circle unless stretched (then a path). Lines,
-polygons and paths always keep theirs, and a group applies it to each shape (`group::apply()`).
-
-```cpp
-const auto turn = sc::transform::rotate(30, {50, 50}).then(sc::transform::translate(10, 0));
-const sc::shape turned = turn.apply(sc::rect{20, 40, 60, 20});   // a rotated_rect
-const sc::point moved = turn.apply(sc::point{50, 50});           // 60, 50
+const auto parts = sc::explode("a;b;;c"); // {"a", "b", "", "c"}
 ```
 
 ### Colours, dates and times
@@ -186,45 +139,6 @@ sc::console::show_text("GET /hello", response_body); // a result shown as plain 
 `true`/`false`, an empty optional as `(none)`, lists as `[a, b]`, maps as
 `{key: value}`, nested ones alike, anything else with `<<`. `note(text)` adds an
 indented line, and `output(stream)` sends it all elsewhere than `std::cout`.
-
-### Server endpoints
-
-`sc::ip_endpoint` also handles the socket addresses the system calls take (since 1.21.0), so
-code that opens sockets needn't include `arpa/inet.h` or `netdb.h`, or look inside `sockaddr`:
-
-```cpp
-const auto address = sc::ip_endpoint{"0.0.0.0", 5800}.resolve(sc::ip_use::listen).front();
-const int fd = socket(address.family(), address.socket_type(), address.protocol());
-bind(fd, address.get(), address.size());
-sc::socket_address peer;
-const int client = accept(fd, peer.get(), peer.size_pointer());
-sc::ip_endpoint::from(peer);          // {"192.0.2.7", 51234}; an IPv4 client on an IPv6 socket as IPv4
-sc::ip_endpoint::local_of(client);    // the server's side: which port it came in on
-sc::ip_endpoint{"192.0.2.7", 0}.ipv4(); // the address in network byte order, as in_addr keeps it
-```
-
-`resolve()` (getaddrinfo) throws `std::runtime_error` naming the endpoint when the name doesn't
-resolve; `socket_address` holds a `sockaddr_storage` without the header that declares it.
-
-`sc::ip_endpoints` is a list of `sc::ip_endpoint`s that reads and writes the
-`;`-separated form (`"redis1:6379;[::1]:6380"`). Whitespace and empty entries are
-ignored, and an invalid entry throws `std::invalid_argument`. It works like a
-`std::vector<sc::ip_endpoint>` (`begin()`/`end()`, `size()`, `front()`, `push_back()`,
-`[]`, ...). It converts implicitly to and from both that vector and the string
-form, so `sc::redis::client` and `sc::db::client`, which take an `sc::ip_endpoints`, accept a
-string, a vector or a braced list. Don't overload a function on both
-`std::string` and `std::vector<sc::ip_endpoint>`: an `sc::ip_endpoints` argument would
-be ambiguous. Use `to_string(separator)` for another separator:
-
-```cpp
-sc::ip_endpoints servers{"redis1;redis2:7000", 6379};   // default port 6379
-servers.push_back({"redis3", 7001});
-for (const auto &server : servers) std::cout << server << '\n';
-
-sc::redis::client cache{servers};
-const std::string text = servers;                       // "redis1:6379;redis2:7000;redis3:7001"
-const auto bootstrap = servers.to_string(",");          // for Kafka's bootstrap.servers
-```
 
 ### Configuration files
 
@@ -369,7 +283,7 @@ const auto parts = sc::explode("x,,y", ",");                     // {"x", "", "y
 
 ## Demo
 
-`sc-core-demo` tours the basics (base64, dates and times, server endpoints, strings and the
+`sc-core-demo` tours the basics (base64, dates and times, colours, strings and the
 environment), each line a call as written and what it returned. It ships in the runtime package
 (`simply-cpp`), so it also checks an install works without `-dev`, and needs no server. Every
 module has one (`sc-<module>-demo`); they are demonstrations, not tests, so CTest doesn't run them.
@@ -378,11 +292,9 @@ Closer looks at each area, installed alongside it:
 
 | Demo | Shows |
 |---|---|
-| `sc-core-geometry` | points and sizes, rectangles (overlap, distance, grouping), rotated rectangles and polygons, DBSCAN clustering |
 | `sc-core-time` | `sc::date` calendar arithmetic, `sc::datetime` and Unix time, `sc::timer` |
 | `sc-core-text` | UTF-8 measuring, slicing and repair, base64, `explode`, `getenv`, files |
-| `sc-core-numbers` | `sc::percent`, `sc::color`, `sc::matrix`, dual numbers for derivatives |
-| `sc-core-network` | `sc::ip_address`, `sc::ip_endpoint` and `sc::ip_endpoints` |
+| `sc-core-colors` | `sc::color`: CSS names, hex, rgb()/rgba(), HSL and CMYK, flattening |
 | `sc-core-params` | `sc::params`: reading a command line, the values, its mistakes and `--help` |
 
 Its source is `examples/sc-core-demo.cpp`; the code below is copied from it at
@@ -399,9 +311,8 @@ SC_SHOW(sc::date{"2026-01-31"}.add(1, "M"));                         // calendar
 SC_SHOW(sc::datetime{"2026-10-09 14:30:00"}.add(90, "i").format()); // 90 minutes later
 SC_SHOW(sc::datetime::from_unix(0).format("%d %b %Y %H:%M %Z", true));
 
-sc::console::heading("Server endpoints");
-SC_SHOW(sc::ip_endpoints("redis1;redis2:6380", 6379)); // ';'-separated, with a default port
-SC_SHOW(sc::ip_endpoint::parse("[::1]:5432").host);
+sc::console::heading("Colours");
+SC_SHOW(sc::color{"rgba(255, 0, 0, 0.5)"}.to_hex()); // CSS colours, names included
 
 sc::console::heading("Strings and the environment");
 SC_SHOW(sc::explode("a;b;;c"));
@@ -411,7 +322,7 @@ SC_SHOW(sc::getenv("HOME", "(not set)"));
 
 Demos in other modules that talk to a server read it from
 `SC_<MODULE>_DEMO_SERVER`: one or more `host[:port]` / `[ipv6]:port` entries
-separated by `;` (quote it in a shell). Unset or empty means
+separated by `;` (quote it in a shell), read with sc-net's `sc::ip_endpoints`. Unset or empty means
 `127.0.0.1:<default port>`; an invalid value is an error:
 
 ```cpp

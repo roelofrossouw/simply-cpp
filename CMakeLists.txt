@@ -34,16 +34,10 @@ add_sc_object(core)
 add_sc_object(utf8)
 add_sc_object(base64)
 add_sc_object(timer)
-add_sc_object(ip_endpoint)
 sc_named_colors(${CMAKE_CURRENT_BINARY_DIR}/generated) # the CSS colour names, from the spec
 add_sc_object(color INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/generated)
-add_sc_object(size)
-add_sc_object(rect)
-add_sc_object(path)
-add_sc_object(transform)
 add_sc_object(date)
 add_sc_object(datetime)
-add_sc_object(percent)
 add_sc_object(params LINK_LIBRARIES nlohmann_json::nlohmann_json PUBLIC_LINK_LIBRARIES nlohmann_json::nlohmann_json)
 add_sc_object(config LINK_LIBRARIES nlohmann_json::nlohmann_json PUBLIC_LINK_LIBRARIES nlohmann_json::nlohmann_json)
 
@@ -79,11 +73,9 @@ endif ()
 # Examples #
 ############
 add_sc_example(sc-core-demo)
-add_sc_example(sc-core-geometry)
 add_sc_example(sc-core-time)
 add_sc_example(sc-core-text)
-add_sc_example(sc-core-numbers)
-add_sc_example(sc-core-network)
+add_sc_example(sc-core-colors)
 add_sc_example(sc-core-params)
 
 #############

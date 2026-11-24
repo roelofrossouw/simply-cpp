@@ -1,5 +1,5 @@
-// A short tour of simply-cpp's core: base64, dates and times, server endpoints, and strings and
-// the environment. Each line shows a call, as written, and what it returned. Needs no server.
+// A short tour of simply-cpp's core: base64, dates and times, colours, and strings and the
+// environment. Each line shows a call, as written, and what it returned. Needs no server.
 
 #include <sc/core/sc.h>
 
@@ -17,9 +17,8 @@ int main() {
     SC_SHOW(sc::datetime{"2026-10-09 14:30:00"}.add(90, "i").format()); // 90 minutes later
     SC_SHOW(sc::datetime::from_unix(0).format("%d %b %Y %H:%M %Z", true));
 
-    sc::console::heading("Server endpoints");
-    SC_SHOW(sc::ip_endpoints("redis1;redis2:6380", 6379)); // ';'-separated, with a default port
-    SC_SHOW(sc::ip_endpoint::parse("[::1]:5432").host);
+    sc::console::heading("Colours");
+    SC_SHOW(sc::color{"rgba(255, 0, 0, 0.5)"}.to_hex()); // CSS colours, names included
 
     sc::console::heading("Strings and the environment");
     SC_SHOW(sc::explode("a;b;;c"));

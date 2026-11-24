@@ -17,13 +17,4 @@
 #include <sc/core/base64.h>
 #include <sc/core/color.h>
 #include <sc/core/timer.h>
-#include <sc/core/matrix.h>
-#include <sc/core/geometry.h>
-#include <sc/core/transform.h>
-#include <sc/core/dual.h>
-#include <sc/core/ip_address.h>
-#include <sc/core/ip_endpoint.h>
-#include <sc/core/ip_endpoints.h>
 #include <sc/core/console.h>
-#include <sc/core/percent.h>
-#include <sc/core/distance.h>
